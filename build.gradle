@@ -16,6 +16,15 @@ compileJava   {
     targetCompatibility = '1.7'
 }
 
+sourceSets {
+    example {
+        java {
+            compileClasspath = main.compileClasspath + main.output
+            runtimeClasspath = main.runtimeClasspath + main.output
+        }
+    }
+}
+
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: "org.mockito", name: "mockito-core", version: "1.10.19"

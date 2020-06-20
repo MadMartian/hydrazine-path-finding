@@ -4,6 +4,12 @@ import java.util.Iterator;
 
 /**
  * Represents a logical columnar division of space 16x16 blocks in size on the x/z plane with full extent along the y-axis
+ *
+ * Implementors ought to define a one-dimensional array of {@link OcclusionField} on the concrete type.  The implementation
+ * for the associated {@link OcclusionField} functions here then become lazy-initialization and accessor functions for
+ * that array.
+ *
+ * @see OcclusionField
  */
 public interface IColumnarSpace {
     /**

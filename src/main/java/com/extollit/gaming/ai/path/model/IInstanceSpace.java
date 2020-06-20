@@ -4,7 +4,14 @@ package com.extollit.gaming.ai.path.model;
  * Abstraction for a world instance capable of yielding smaller virtual units of space.  It also yields occlusion
  * fields representing those spaces.
  *
+ * In order to avoid forcing implementors to maintain separate topologies, this contract requires implementors to
+ * maintain the storage for {@link OcclusionField} objects (typically a one-dimensional array on {@link IColumnarSpace}).
+ * The implementation for the associated methods then become simple array accessor and lazy-initialization functions.
+ *
  * Many of these functions use chunk coordinates, which are at intervals of 16 blocks (cx = x >> 4).
+ *
+ * @see IColumnarSpace
+ * @see OcclusionField
  */
 public interface IInstanceSpace {
     /**
