@@ -18,5 +18,4 @@ Then the primary entry-point for using the engine is `com.extollit.gaming.ai.pat
 This module depends on ''JUnit'' but also on a utility library I wrote called ''data-structures'', you can also find that on my GitHub channel.
 
 # Examples
-There are some skeletal example concrete implementations of the interfaces beneath the `src/example/java` directory demonstrating
-how to implement these interfaces. 
+There are some skeletal example concrete implementations of the interfaces in the [examples](src/example/java/com/extollit/gaming/ai/path) directory demonstrating how to implement these interfaces. 
