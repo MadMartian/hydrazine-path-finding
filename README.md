@@ -13,3 +13,6 @@ Then the primary entry-point for using the engine is `com.extollit.gaming.ai.pat
         do {
             path.update(myEntity);
         } while (game.running());            
+
+## Dependencies
+This module depends on ''JUnit'' but also on a utility library I wrote called ''data-structures'', you can also find that on my GitHub channel.
