@@ -1,4 +1,4 @@
-# hydrazine-path-finding
+# Hydrazine Path Finding Engine
 This is a rather basic A* path-finding engine inspired by a certain blocky sandbox game that everyone has played before.
 
 ## How to use this Engine
