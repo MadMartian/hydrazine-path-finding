@@ -1,3 +1,11 @@
+repositories {
+    maven {
+        name = "central"
+        url = "https://repo1.maven.org/maven2/"
+    }
+    maven { url 'https://jitpack.io' }
+}
+
 group 'com.extollit.gaming'
 version '1.02'
 
@@ -12,5 +20,5 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: "org.mockito", name: "mockito-core", version: "1.10.19"
 
-    compile project(':data-structures')
+    compile group: 'com.github.MadMartian', name: 'data-structures', version: '2.8.1'
 }
