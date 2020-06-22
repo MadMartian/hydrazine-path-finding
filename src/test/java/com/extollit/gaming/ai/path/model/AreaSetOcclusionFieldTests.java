@@ -26,8 +26,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void west() {
         set(0, 50, 5, lava);
 
-        verify(instanceSpace, times(7)).optOcclusionFieldAt(-1, 3, 0);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(7)).columnarSpaceAt(-1, 0);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(0, 50, 5);
     }
@@ -36,8 +36,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void east() {
         set(15, 50, 5, lava);
 
-        verify(instanceSpace, times(7)).optOcclusionFieldAt(+1, 3, 0);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(7)).columnarSpaceAt(+1, 0);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(15, 50, 5);
     }
@@ -46,8 +46,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void north() {
         set(5, 50, 0, lava);
 
-        verify(instanceSpace, times(7)).optOcclusionFieldAt(0, 3, -1);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(7)).columnarSpaceAt(0, -1);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(5, 50, 0);
     }
@@ -56,8 +56,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void south() {
         set(5, 50, 15, lava);
 
-        verify(instanceSpace, times(7)).optOcclusionFieldAt(0, 3, +1);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(7)).columnarSpaceAt(0, +1);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(5, 50, 15);
     }
@@ -66,10 +66,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void northWest() {
         set(0, 50, 0, lava);
 
-        verify(instanceSpace, times(2)).optOcclusionFieldAt(-1, 3, -1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(0, 3, -1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(-1, 3, 0);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(2)).columnarSpaceAt(-1, -1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(0, -1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(-1, 0);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(0, 50, 0);
     }
@@ -78,10 +78,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void northEast() {
         set(15, 50, 0, lava);
 
-        verify(instanceSpace, times(2)).optOcclusionFieldAt(+1, 3, -1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(0, 3, -1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(+1, 3, 0);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(2)).columnarSpaceAt(+1, -1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(0, -1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(+1, 0);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(15, 50, 0);
     }
@@ -90,10 +90,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void southWest() {
         set(0, 50, 15, lava);
 
-        verify(instanceSpace, times(2)).optOcclusionFieldAt(-1, 3, +1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(0, 3, +1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(-1, 3, 0);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(2)).columnarSpaceAt(-1, +1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(0, +1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(-1, 0);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(0, 50, 15);
     }
@@ -102,10 +102,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void southEast() {
         set(15, 50, 15, lava);
 
-        verify(instanceSpace, times(2)).optOcclusionFieldAt(+1, 3, +1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(0, 3, +1);
-        verify(instanceSpace, times(5)).optOcclusionFieldAt(+1, 3, 0);
-        verify(instanceSpace, times(13)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, times(2)).columnarSpaceAt(+1, +1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(0, +1);
+        verify(instanceSpace, times(5)).columnarSpaceAt(+1, 0);
+        verify(instanceSpace, times(13)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(15, 50, 15);
     }
@@ -114,8 +114,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void westInner() {
         set(1, 50, 5, lava);
 
-        verify(instanceSpace).optOcclusionFieldAt(-1, 3, 0);
-        verify(instanceSpace, times(4)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace).columnarSpaceAt(-1, 0);
+        verify(instanceSpace, times(4)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(1, 50, 5);
     }
@@ -124,8 +124,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void eastInner() {
         set(14, 50, 5, lava);
 
-        verify(instanceSpace).optOcclusionFieldAt(+1, 3, 0);
-        verify(instanceSpace, times(4)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace).columnarSpaceAt(+1, 0);
+        verify(instanceSpace, times(4)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(14, 50, 5);
     }
@@ -134,8 +134,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void northInner() {
         set(5, 50, 1, lava);
 
-        verify(instanceSpace).optOcclusionFieldAt(0, 3, -1);
-        verify(instanceSpace, times(4)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace).columnarSpaceAt(0, -1);
+        verify(instanceSpace, times(4)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(5, 50, 1);
     }
@@ -144,8 +144,8 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void southInner() {
         set(5, 50, 14, lava);
 
-        verify(instanceSpace).optOcclusionFieldAt(0, 3, +1);
-        verify(instanceSpace, times(4)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace).columnarSpaceAt(0, +1);
+        verify(instanceSpace, times(4)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(5, 50, 14);
     }
@@ -154,10 +154,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void northWestInner() {
         set(1, 50, 1, lava);
 
-        verify(instanceSpace, never()).optOcclusionFieldAt(-1, 3, -1);
-        verify(instanceSpace).optOcclusionFieldAt(0, 3, -1);
-        verify(instanceSpace).optOcclusionFieldAt(-1, 3, 0);
-        verify(instanceSpace, times(8)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, never()).columnarSpaceAt(-1, -1);
+        verify(instanceSpace).columnarSpaceAt(0, -1);
+        verify(instanceSpace).columnarSpaceAt(-1, 0);
+        verify(instanceSpace, times(8)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(1, 50, 1);
     }
@@ -166,10 +166,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void northEastInner() {
         set(14, 50, 1, lava);
 
-        verify(instanceSpace, never()).optOcclusionFieldAt(+1, 3, -1);
-        verify(instanceSpace).optOcclusionFieldAt(0, 3, -1);
-        verify(instanceSpace).optOcclusionFieldAt(+1, 3, 0);
-        verify(instanceSpace, times(8)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, never()).columnarSpaceAt(+1, -1);
+        verify(instanceSpace).columnarSpaceAt(0, -1);
+        verify(instanceSpace).columnarSpaceAt(+1, 0);
+        verify(instanceSpace, times(8)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(14, 50, 1);
     }
@@ -178,10 +178,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void southWestInner() {
         set(1, 50, 14, lava);
 
-        verify(instanceSpace, never()).optOcclusionFieldAt(-1, 3, +1);
-        verify(instanceSpace).optOcclusionFieldAt(0, 3, +1);
-        verify(instanceSpace).optOcclusionFieldAt(-1, 3, 0);
-        verify(instanceSpace, times(8)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, never()).columnarSpaceAt(-1, +1);
+        verify(instanceSpace).columnarSpaceAt(0, +1);
+        verify(instanceSpace).columnarSpaceAt(-1, 0);
+        verify(instanceSpace, times(8)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(1, 50, 14);
     }
@@ -190,10 +190,10 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void southEastInner() {
         set(14, 50, 14, lava);
 
-        verify(instanceSpace, never()).optOcclusionFieldAt(+1, 3, +1);
-        verify(instanceSpace).optOcclusionFieldAt(0, 3, +1);
-        verify(instanceSpace).optOcclusionFieldAt(+1, 3, 0);
-        verify(instanceSpace, times(8)).optOcclusionFieldAt(0, 3, 0);
+        verify(instanceSpace, never()).columnarSpaceAt(+1, +1);
+        verify(instanceSpace).columnarSpaceAt(0, +1);
+        verify(instanceSpace).columnarSpaceAt(+1, 0);
+        verify(instanceSpace, times(8)).columnarSpaceAt(0, 0);
 
         assertNeighborhood(14, 50, 14);
     }
@@ -202,7 +202,7 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void wallUp() {
         set(5, 63, 5, wall);
 
-        verify(instanceSpace, atLeastOnce()).optOcclusionFieldAt(0, +4, 0);
+        verify(instanceSpace, atLeastOnce()).columnarSpaceAt(0, 0);
 
         final byte top = areaOcclusionProvider.elementAt(5, 64, 5);
 
@@ -212,14 +212,14 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     @Test
     public void undoWallUp() {
         blockAt(5, 63, 5, wall);
-        centerField.loadFrom(centerSpace, 0, 3, 0);
+        centerField().loadFrom(centerSpace, 0, 3, 0);
 
         final byte pre = areaOcclusionProvider.elementAt(5, 64, 5);
         assertTrue(Element.earth.in(pre) && Logic.fuzzy.in(pre));
 
         set(5, 63, 5, air);
 
-        verify(instanceSpace, atLeastOnce()).optOcclusionFieldAt(0, +4, 0);
+        verify(instanceSpace, atLeastOnce()).columnarSpaceAt(0, 0);
 
         final byte top = areaOcclusionProvider.elementAt(5, 64, 5);
 
@@ -232,8 +232,6 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
 
         blockAt(5, 48, 5, wall);
 
-        verify(instanceSpace, never()).optOcclusionFieldAt(0, +4, 0);
-
         final byte top = areaOcclusionProvider.elementAt(5, 49, 5);
 
         assertTrue(Element.earth.in(top) && Logic.fuzzy.in(top));
@@ -243,14 +241,12 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     public void undoWallDown() {
         blockAt(5, 48, 5, wall);
 
-        centerField.loadFrom(centerSpace, 0, 3, 0);
+        centerField().loadFrom(centerSpace, 0, 3, 0);
 
         final byte pre = areaOcclusionProvider.elementAt(5, 49, 5);
         assertTrue(Element.earth.in(pre) && Logic.fuzzy.in(pre));
 
         set(5, 48, 5, air);
-
-        verify(instanceSpace, never()).optOcclusionFieldAt(0, +4, 0);
 
         final byte top = areaOcclusionProvider.elementAt(5, 49, 5);
 
@@ -283,20 +279,20 @@ public class AreaSetOcclusionFieldTests extends AbstractAreaInitOcclusionFieldTe
     @Test
     public void doorOpened() {
         door(false, 4, 63, 6);
-        centerField.loadFrom(centerSpace, 0, 3, 0);
+        centerField().loadFrom(centerSpace, 0, 3, 0);
         door(true, 4, 63, 6);
 
-        centerField.set(centerSpace, 4, 63, 6, door);
+        centerField().set(centerSpace, 4, 63, 6, door);
         assertDoorway(areaOcclusionProvider, true, 4, 63, 6);
     }
 
     @Test
     public void doorClosed() {
         door(true, 4, 63, 6);
-        centerField.loadFrom(centerSpace, 0, 3, 0);
+        centerField().loadFrom(centerSpace, 0, 3, 0);
         door(false, 4, 63, 6);
 
-        centerField.set(centerSpace, 4, 63, 6, door);
+        centerField().set(centerSpace, 4, 63, 6, door);
         assertDoorway(areaOcclusionProvider, false, 4, 63, 6);
     }
 }

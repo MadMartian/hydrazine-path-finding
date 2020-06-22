@@ -30,9 +30,7 @@ abstract class AbstractHydrazinePathFinderTests {
         when(destinationEntity.width()).thenReturn(0.6f);
         when(destinationEntity.height()).thenReturn(1.8f);
 
-        when(instanceSpace.occlusionProviderFor(anyInt(), anyInt(), anyInt(), anyInt())).thenReturn(occlusionProvider);
-
-        pathFinder = new HydrazinePathFinder(pathingEntity, instanceSpace);
+        pathFinder = new TestableHydrazinePathFinder(pathingEntity, instanceSpace, occlusionProvider);
         pathFinder.schedulingPriority(SchedulingPriority.high);
         pathFinder.occlusionProvider(occlusionProvider);
         when(capabilities.cautious()).thenReturn(true);

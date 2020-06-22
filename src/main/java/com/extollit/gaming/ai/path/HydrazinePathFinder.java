@@ -420,7 +420,7 @@ public class HydrazinePathFinder {
             windowTest = cx0 < this.cx0 || cz0 < this.cz0 || cxN > this.cxN || czN > this.czN;
 
         if (aop == null || windowTest) {
-            this.occlusionProvider = this.instanceSpace.occlusionProviderFor(cx0, cz0, cxN, czN);
+            this.occlusionProvider = occlusionProviderFor(cx0, cz0, cxN, czN);
             this.cx0 = cx0;
             this.cz0 = cz0;
             this.cxN = cxN;
@@ -974,6 +974,10 @@ public class HydrazinePathFinder {
 
     void occlusionProvider(IOcclusionProvider occlusionProvider) {
         this.occlusionProvider = occlusionProvider;
+    }
+
+    protected IOcclusionProvider occlusionProviderFor(int cx0, int cz0, int cxN, int czN) {
+        return AreaOcclusionProvider.fromInstanceSpace(this.instanceSpace, cx0, cz0, cxN, czN);
     }
 
     public boolean sameDestination(PathObject delegate, com.extollit.linalg.immutable.Vec3d target) {

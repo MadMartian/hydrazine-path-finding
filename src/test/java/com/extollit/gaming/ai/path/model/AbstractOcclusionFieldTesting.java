@@ -9,15 +9,17 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
 
 public class AbstractOcclusionFieldTesting extends AbstractOcclusionProviderTesting {
+    protected ColumnarOcclusionFieldList columnarOcclusionFieldList;
     protected OcclusionField occlusionField;
 
     @Before
     public void setup () {
         super.setup();
 
+        this.columnarOcclusionFieldList = new ColumnarOcclusionFieldList(centerSpace);
         this.occlusionField = new TestOcclusionField();
         when(centerSpace.blockAt(anyInt(), anyInt(), anyInt())).thenReturn(air);
-        when(centerSpace.optOcclusionFieldAt(anyInt())).thenReturn(occlusionField);
+        when(centerSpace.occlusionFields()).thenReturn(this.columnarOcclusionFieldList);
     }
 
     protected void verifyNeighborhood(final int x, final int y, final int z,

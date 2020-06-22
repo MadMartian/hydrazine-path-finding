@@ -9,9 +9,9 @@ import static org.mockito.Mockito.when;
 
 public abstract class AbstractAreaInitOcclusionFieldTesting extends AbstractOcclusionProviderTesting {
     private final IColumnarSpace [] columnarSpaces = new IColumnarSpace[OcclusionField.AreaInit.values().length - 2];
-    private final OcclusionField [] fields = new OcclusionField[OcclusionField.AreaInit.values().length];
+    private final ColumnarOcclusionFieldList[] fieldLists = new ColumnarOcclusionFieldList[OcclusionField.AreaInit.values().length - 2];
 
-    protected OcclusionField centerField;
+    protected ColumnarOcclusionFieldList centerFieldList;
     protected AreaOcclusionProvider areaOcclusionProvider;
 
     protected final int cy0;
@@ -24,26 +24,36 @@ public abstract class AbstractAreaInitOcclusionFieldTesting extends AbstractOccl
     public void setup () {
         super.setup();
 
-        this.centerField = new TestOcclusionField();
+        this.centerFieldList = new TestColumnarOcclusionFieldList(centerSpace);
 
         for (OcclusionField.AreaInit area : OcclusionField.AreaInit.values()) {
-            final IColumnarSpace columnarSpace = area == OcclusionField.AreaInit.up || area == OcclusionField.AreaInit.down ? centerSpace : (columnarSpaces[area.ordinal()] = mock(IColumnarSpace.class));
-            final OcclusionField field = fields[area.ordinal()] = new TestOcclusionField(area);
+            final IColumnarSpace columnarSpace;
+            final ColumnarOcclusionFieldList fieldList;
+
+            if (area == OcclusionField.AreaInit.up || area == OcclusionField.AreaInit.down) {
+                columnarSpace = centerSpace;
+                fieldList = centerFieldList;
+            } else {
+                columnarSpace = columnarSpaces[area.ordinal()] = mock(IColumnarSpace.class);
+                fieldList = fieldLists[area.ordinal()] = new TestColumnarOcclusionFieldList(columnarSpace);
+            }
 
             when(columnarSpace.instance()).thenReturn(instanceSpace);
             when(columnarSpace.blockAt(anyInt(), anyInt(), anyInt())).thenReturn(air);
             when(columnarSpace.toString()).thenReturn("Chunk to the " + area.name());
+            when(columnarSpace.occlusionFields()).thenReturn(fieldList);
 
-            when(columnarSpace.optOcclusionFieldAt(area.offset.dy)).thenReturn(field);
-            when(columnarSpace.occlusionFieldAt(area.offset.dx, area.offset.dy + cy0, area.offset.dz)).thenReturn(field);
-            when(instanceSpace.optOcclusionFieldAt(area.offset.dx, area.offset.dy + cy0, area.offset.dz)).thenReturn(field);
+            fieldList.occlusionFieldAt(area.offset.dx, area.offset.dy + cy0, area.offset.dz);
+
+            when(instanceSpace.columnarSpaceAt(area.offset.dx, area.offset.dz)).thenReturn(columnarSpace);
         }
         when(centerSpace.blockAt(anyInt(), anyInt(), anyInt())).thenReturn(air);
         when(centerSpace.toString()).thenReturn("Center space");
+        when(centerSpace.occlusionFields()).thenReturn(centerFieldList);
+        when(centerSpace.instance()).thenReturn(instanceSpace);
 
-        when(centerSpace.optOcclusionFieldAt(cy0)).thenReturn(centerField);
-        when(centerSpace.occlusionFieldAt(0, cy0, 0)).thenReturn(centerField);
-        when(instanceSpace.optOcclusionFieldAt(0, cy0, 0)).thenReturn(centerField);
+        when(instanceSpace.columnarSpaceAt(0, 0)).thenReturn(centerSpace);
+        centerFieldList.occlusionFieldAt(0, cy0, 0);
 
         this.areaOcclusionProvider = new AreaOcclusionProvider(
             new IColumnarSpace[][] {
@@ -57,7 +67,20 @@ public abstract class AbstractAreaInitOcclusionFieldTesting extends AbstractOccl
     }
 
     protected final OcclusionField field(final OcclusionField.AreaInit area) {
-        return fields[area.ordinal()];
+        return occlusionFieldList(area).occlusionFieldAt(area.offset.dx, area.offset.dy, area.offset.dz);
+    }
+
+    private ColumnarOcclusionFieldList occlusionFieldList(OcclusionField.AreaInit area) {
+        final ColumnarOcclusionFieldList columnarOcclusionFieldList;
+        switch (area) {
+            case up:
+            case down:
+                columnarOcclusionFieldList = centerFieldList;
+                break;
+            default:
+                columnarOcclusionFieldList = fieldLists[area.ordinal()];
+        }
+        return columnarOcclusionFieldList;
     }
 
     protected final IColumnarSpace columnarSpace(final OcclusionField.AreaInit area) {
@@ -70,6 +93,13 @@ public abstract class AbstractAreaInitOcclusionFieldTesting extends AbstractOccl
     }
     protected final void set(final int x, final int y, final int z, final IBlockObject block) {
         blockAt(x, y, z, block);
-        centerField.set(centerSpace, x, y, z, block);
+        centerFieldList.occlusionFieldAt(x >> 4, y >> 4, z >> 4).set(centerSpace, x, y, z, block);
+    }
+
+    protected OcclusionField centerField() {
+        return centerFieldAt(cy0);
+    }
+    protected OcclusionField centerFieldAt(int cy) {
+        return centerFieldList.occlusionFieldAt(0, cy, 0);
     }
 }

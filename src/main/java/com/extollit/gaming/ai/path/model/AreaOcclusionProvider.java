@@ -13,6 +13,19 @@ public class AreaOcclusionProvider implements IOcclusionProvider {
         this.czN = columnarSpaces.length + cz0 - 1;
     }
 
+    public static AreaOcclusionProvider fromInstanceSpace(IInstanceSpace instance, int cx0, int cz0, int cxN, int czN) {
+        IColumnarSpace[][] array = new IColumnarSpace[czN - cz0 + 1][cxN - cx0 + 1];
+
+        for (int cz = cz0; cz <= czN; ++cz)
+            for (int cx = cx0; cx <= cxN; ++cx) {
+                final IColumnarSpace columnarSpace = instance.columnarSpaceAt(cx, cz);
+                if (columnarSpace != null)
+                    array[cz - cz0][cx - cx0] = columnarSpace;
+            }
+
+        return new AreaOcclusionProvider(array, cx0, cz0);
+    }
+
     @Override
     public byte elementAt(int x, int y, int z) {
         final IColumnarSpace[][] columnarSpaces = this.columnarSpaces;
@@ -29,7 +42,7 @@ public class AreaOcclusionProvider implements IOcclusionProvider {
 
             final IColumnarSpace columnarSpace = columnarSpaces[czz][cxx];
             if (columnarSpace != null) {
-                final OcclusionField field = columnarSpace.occlusionFieldAt(cx, cy, cz);
+                final OcclusionField field = columnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz);
 
                 if (!field.areaInitFull())
                     areaInit(field, x, y, z);
@@ -67,8 +80,8 @@ public class AreaOcclusionProvider implements IOcclusionProvider {
 
             if (northColumnarSpace != null && westColumnarSpace != null)
                 field.areaInitNorthWest(
-                        northColumnarSpace.occlusionFieldAt(cx - 1, cy, cz),
-                        westColumnarSpace.occlusionFieldAt(cx, cy, cz - 1)
+                        northColumnarSpace.occlusionFields().occlusionFieldAt(cx - 1, cy, cz),
+                        westColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz - 1)
                 );
         } else if (xx == OcclusionField.DIMENSION_EXTENT && zz == 0 && !field.areaInitAt(OcclusionField.AreaInit.northEast) && cxx < cxN && czz > 0) {
             final IColumnarSpace
@@ -77,8 +90,8 @@ public class AreaOcclusionProvider implements IOcclusionProvider {
 
             if (eastColumnarSpace != null && westColumnarSpace != null)
                 field.areaInitNorthEast(
-                        eastColumnarSpace.occlusionFieldAt(cx + 1, cy, cz),
-                        westColumnarSpace.occlusionFieldAt(cx, cy, cz - 1)
+                        eastColumnarSpace.occlusionFields().occlusionFieldAt(cx + 1, cy, cz),
+                        westColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz - 1)
                 );
         } else if (xx == 0 && zz == OcclusionField.DIMENSION_EXTENT && !field.areaInitAt(OcclusionField.AreaInit.southWest) && cxx > 0 && czz < czN) {
             final IColumnarSpace
@@ -87,8 +100,8 @@ public class AreaOcclusionProvider implements IOcclusionProvider {
 
             if (northColumnarSpace != null && southColumnarSpace != null)
                 field.areaInitSouthWest(
-                        northColumnarSpace.occlusionFieldAt(cx - 1, cy, cz),
-                        southColumnarSpace.occlusionFieldAt(cx, cy, cz + 1)
+                        northColumnarSpace.occlusionFields().occlusionFieldAt(cx - 1, cy, cz),
+                        southColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz + 1)
                 );
         } else if (xx == OcclusionField.DIMENSION_EXTENT && zz == OcclusionField.DIMENSION_EXTENT && !field.areaInitAt(OcclusionField.AreaInit.southEast) && cxx < cxN && czz < czN) {
             final IColumnarSpace
@@ -97,39 +110,39 @@ public class AreaOcclusionProvider implements IOcclusionProvider {
 
             if (eastColumnarSpace != null && southColumnarSpace != null)
                 field.areaInitSouthEast(
-                        eastColumnarSpace.occlusionFieldAt(cx + 1, cy, cz),
-                        southColumnarSpace.occlusionFieldAt(cx, cy, cz + 1)
+                        eastColumnarSpace.occlusionFields().occlusionFieldAt(cx + 1, cy, cz),
+                        southColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz + 1)
                 );
         } else if (xx == 0 && !field.areaInitAt(OcclusionField.AreaInit.west) && cxx > 0) {
             final IColumnarSpace
                 northColumnarSpace = columnarSpaces[czz][cxx - 1];
 
             if (northColumnarSpace != null)
-                field.areaInitWest(northColumnarSpace.occlusionFieldAt(cx - 1, cy, cz));
+                field.areaInitWest(northColumnarSpace.occlusionFields().occlusionFieldAt(cx - 1, cy, cz));
         } else if (xx == OcclusionField.DIMENSION_EXTENT && !field.areaInitAt(OcclusionField.AreaInit.east) && cxx < cxN) {
             final IColumnarSpace
                 eastColumnarSpace = columnarSpaces[czz][cxx + 1];
 
             if (eastColumnarSpace != null)
-                field.areaInitEast(eastColumnarSpace.occlusionFieldAt(cx + 1, cy, cz));
+                field.areaInitEast(eastColumnarSpace.occlusionFields().occlusionFieldAt(cx + 1, cy, cz));
         } else if (zz == 0 && !field.areaInitAt(OcclusionField.AreaInit.north) && czz > 0) {
             final IColumnarSpace
                 westColumnarSpace = columnarSpaces[czz - 1][cxx];
 
             if (westColumnarSpace != null)
-                field.areaInitNorth(westColumnarSpace.occlusionFieldAt(cx, cy, cz - 1));
+                field.areaInitNorth(westColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz - 1));
         } else if (zz == OcclusionField.DIMENSION_EXTENT && !field.areaInitAt(OcclusionField.AreaInit.south) && czz < czN) {
             final IColumnarSpace
                 southColumnarSpace = columnarSpaces[czz + 1][cxx];
 
             if (southColumnarSpace != null)
-                field.areaInitSouth(southColumnarSpace.occlusionFieldAt(cx, cy, cz + 1));
+                field.areaInitSouth(southColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy, cz + 1));
         }
 
         if (yy == OcclusionField.DIMENSION_EXTENT && !field.areaInitAt(OcclusionField.AreaInit.up)) {
-            field.areaInitUp(centerColumnarSpace, cy, cy < OcclusionField.DIMENSION_EXTENT ? centerColumnarSpace.occlusionFieldAt(cx, cy + 1, cz) : null);
+            field.areaInitUp(centerColumnarSpace, cy, cy < OcclusionField.DIMENSION_EXTENT ? centerColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy + 1, cz) : null);
         } else if (yy == 0 && !field.areaInitAt(OcclusionField.AreaInit.down)) {
-            field.areaInitDown(centerColumnarSpace, cy, cy > 0 ? centerColumnarSpace.occlusionFieldAt(cx, cy - 1, cz) : null);
+            field.areaInitDown(centerColumnarSpace, cy, cy > 0 ? centerColumnarSpace.occlusionFields().occlusionFieldAt(cx, cy - 1, cz) : null);
         }
     }
 

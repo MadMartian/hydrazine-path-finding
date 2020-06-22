@@ -6,6 +6,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.extollit.gaming.ai.path.TestingBlocks.*;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -20,7 +21,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         final IColumnarSpace columnarSpace = centerSpace;
         when(columnarSpace.blockAt(5, 5, 5)).thenReturn(lava);
 
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.loadFrom(columnarSpace, 0, 0, 0);
 
         assertFalse(Logic.fuzzy.in(main.elementAt(5, 5, 5)));
@@ -37,7 +38,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
     @Test
     public void west() {
         set(OcclusionField.AreaInit.west, -1, 5, 5, lava);
-        final OcclusionField field = centerField;
+        final OcclusionField field = centerField();
         field.areaInitWest(field(OcclusionField.AreaInit.west));
 
         assertTrue(Logic.fuzzy.in(field.elementAt(0, 5, 5)));
@@ -49,7 +50,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
     @Test
     public void north() {
         set(OcclusionField.AreaInit.north, 5, 5, -1, lava);
-        final OcclusionField field = centerField;
+        final OcclusionField field = centerField();
         field.areaInitNorth(field(OcclusionField.AreaInit.north));
 
         assertTrue(Logic.fuzzy.in(field.elementAt(5, 5, 0)));
@@ -61,7 +62,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
     @Test
     public void east() {
         set(OcclusionField.AreaInit.east, 16, 5, 5, lava);
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.areaInitEast(field(OcclusionField.AreaInit.east));
 
         assertTrue(Logic.fuzzy.in(main.elementAt(15, 5, 5)));
@@ -73,7 +74,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
     @Test
     public void south() {
         set(OcclusionField.AreaInit.south, 5, 5, 16, lava);
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.areaInitSouth(field(OcclusionField.AreaInit.south));
 
         assertTrue(Logic.fuzzy.in(main.elementAt(5, 5, 15)));
@@ -88,7 +89,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         set(OcclusionField.AreaInit.north, 0, 5, -1, lava);
         set(OcclusionField.AreaInit.west, -1, 6, 0, lava);
         set(OcclusionField.AreaInit.north, 0, 7, -1, lava);
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.areaInitNorthWest(field(OcclusionField.AreaInit.west), field(OcclusionField.AreaInit.north));
 
         assertTrue(Logic.fuzzy.in(main.elementAt(0, 5, 0)));
@@ -110,7 +111,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         set(OcclusionField.AreaInit.north, 15, 5, -1, lava);
         set(OcclusionField.AreaInit.east, 16, 6, 0, lava);
         set(OcclusionField.AreaInit.north, 15, 7, -1, lava);
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.areaInitNorthEast(field(OcclusionField.AreaInit.east), field(OcclusionField.AreaInit.north));
 
         assertTrue(Logic.fuzzy.in(main.elementAt(15, 5, 0)));
@@ -132,7 +133,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         set(OcclusionField.AreaInit.south, 0, 5, 16, lava);
         set(OcclusionField.AreaInit.west, -1, 6, 15, lava);
         set(OcclusionField.AreaInit.south, 0, 7, 16, lava);
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.areaInitSouthWest(field(OcclusionField.AreaInit.west), field(OcclusionField.AreaInit.south));
 
         assertTrue(Logic.fuzzy.in(main.elementAt(0, 5, 15)));
@@ -154,7 +155,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         set(OcclusionField.AreaInit.south, 15, 5, 16, lava);
         set(OcclusionField.AreaInit.east, 16, 6, 15, lava);
         set(OcclusionField.AreaInit.south, 15, 7, 16, lava);
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.areaInitSouthEast(field(OcclusionField.AreaInit.east), field(OcclusionField.AreaInit.south));
 
         assertTrue(Logic.fuzzy.in(main.elementAt(15, 5, 15)));
@@ -175,7 +176,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         final IColumnarSpace columnarSpace = centerSpace;
         blockAt(5, 63, 5, wall);
 
-        final OcclusionField main = centerField, up = field(OcclusionField.AreaInit.up);
+        final OcclusionField main = centerField(), up = field(OcclusionField.AreaInit.up);
         main.loadFrom(columnarSpace, 0, 3, 0);
         up.loadFrom(columnarSpace, 0, 4, 0);
 
@@ -209,9 +210,12 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         final IColumnarSpace columnarSpace = centerSpace;
         blockAt(5, 63, 5, wall);
 
-        final OcclusionField up = field(OcclusionField.AreaInit.up);
+        final OcclusionField
+                up = field(OcclusionField.AreaInit.up),
+                main = centerField();
+
         up.loadFrom(columnarSpace, 0, 4, 0);
-        centerField.loadFrom(centerSpace, 0, 3, 0);
+        main.loadFrom(centerSpace, 0, 3, 0);
 
         final byte flags = areaOcclusionProvider.elementAt(5, 64, 5);
         assertTrue(Element.earth.in(flags) && Logic.fuzzy.in(flags));
@@ -219,17 +223,17 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
 
     @Test
     public void tooLow() {
-        final OcclusionField bottomField = new OcclusionField();
-        when(centerSpace.occlusionFieldAt(0, 0, 0)).thenReturn(bottomField);
         areaOcclusionProvider.elementAt(5, 0, 5);
+        final OcclusionField bottomField = centerSpace.occlusionFields().optOcclusionFieldAt(0);
+        assertNotNull(bottomField);
         assertTrue(bottomField.areaInitAt(OcclusionField.AreaInit.down));
     }
 
     @Test
     public void tooHigh() {
-        final OcclusionField topField = new OcclusionField();
-        when(centerSpace.occlusionFieldAt(0, 15, 0)).thenReturn(topField);
         areaOcclusionProvider.elementAt(5, 255, 5);
+        final OcclusionField topField = centerSpace.occlusionFields().optOcclusionFieldAt(15);
+        assertNotNull(topField);
         assertTrue(topField.areaInitAt(OcclusionField.AreaInit.up));
     }
 
@@ -237,7 +241,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
     public void doorOpened() {
         door(true, 4, 63, 6);
 
-        final OcclusionField main = centerField, up = field(OcclusionField.AreaInit.up);
+        final OcclusionField main = centerField(), up = field(OcclusionField.AreaInit.up);
         final IColumnarSpace columnarSpace = this.centerSpace;
 
         main.loadFrom(columnarSpace, 0, 3, 0);
@@ -250,7 +254,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
     public void doorClosed() {
         door(false, 4, 63, 6);
 
-        final OcclusionField main = centerField, up = field(OcclusionField.AreaInit.up);
+        final OcclusionField main = centerField(), up = field(OcclusionField.AreaInit.up);
         final IColumnarSpace columnarSpace = this.centerSpace;
 
         main.loadFrom(columnarSpace, 0, 3, 0);
@@ -269,7 +273,7 @@ public class AreaInitOcclusionFieldTests extends AbstractAreaInitOcclusionFieldT
         blockAt(1, 1, 1, lava);
 
         final IColumnarSpace columnarSpace = centerSpace;
-        final OcclusionField main = centerField;
+        final OcclusionField main = centerField();
         main.loadFrom(columnarSpace, 0, 0, 0);
 
         final byte lava = main.elementAt(1, 1, 1);

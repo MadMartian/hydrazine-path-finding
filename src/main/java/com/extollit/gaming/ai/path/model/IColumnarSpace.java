@@ -1,15 +1,9 @@
 package com.extollit.gaming.ai.path.model;
 
-import java.util.Iterator;
-
 /**
- * Represents a logical columnar division of space 16x16 blocks in size on the x/z plane with full extent along the y-axis
+ * Represents a logical columnar division of space 16x16 blocks wide and deep (x/z plane) and 256 blocks high (along the y-axis)
  *
- * Implementors ought to define a one-dimensional array of {@link OcclusionField} on the concrete type.  The implementation
- * for the associated {@link OcclusionField} functions here then become lazy-initialization and accessor functions for
- * that array.
- *
- * @see OcclusionField
+ * @see ColumnarOcclusionFieldList
  */
 public interface IColumnarSpace {
     /**
@@ -38,35 +32,16 @@ public interface IColumnarSpace {
     int metaDataAt(int x, int y, int z);
 
     /**
-     * Retrieves the occlusion field located at the specified absolute chunk coordinates (relative to the instance,
-     * not the columnar space).  Populates the field from block data if not yet loaded.
+     * Retrieves the list of occlusion fields (aligned-along the y-axis) associated with this columnar space.
+     * Typically this would retrieve a final field member that the implementor defines on the concrete
+     * {@link IColumnarSpace} type.
      *
-     * @param cx absolute chunk x-coordinate
-     * @param cy absolute chunk y coordinate
-     * @param cz absolute chunk z-coordinate
-     * @return the occlusion field at the specified absolute chunk coordinates in the parent instance.
+     * @return the object that manages the occlusion fields stored in this columnar space.
      */
-    OcclusionField occlusionFieldAt(int cx, int cy, int cz);
+    ColumnarOcclusionFieldList occlusionFields();
 
     /**
-     * Retrieves the occlusion field located at the specified y chunk coordinate in the columnar space.  If the
-     * field is not yet loaded at that chunk coordinate then no work is done.
-     *
-     * @param cy absolute y chunk coordinate of the field to retrieve
-     * @return a pre-existing occlusion field in the columnar space at the aforementioned y chunk coordinate or null if
-     *         there is not one yet loaded there
-     */
-    OcclusionField optOcclusionFieldAt(int cy);
-
-    /**
-     * Provides an iterator of all the loaded / populated occlusion fields in a columnar space.
-     *
-     * @return iterator of pre-existing occlusion fields in the columnar space
-     */
-    Iterator<OcclusionField> iterateOcclusionFields();
-
-    /**
-     * Each columnar space belongs to an instance, this is its parent.
+     * Each columnar space belongs to an instance in a many-to-one (columnar-to-instance) relationship, this is its parent.
      *
      * @return parent instance that contains this columnar space
      */

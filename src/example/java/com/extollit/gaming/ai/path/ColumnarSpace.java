@@ -1,13 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.IBlockDescription;
-import com.extollit.gaming.ai.path.model.IColumnarSpace;
-import com.extollit.gaming.ai.path.model.IInstanceSpace;
-import com.extollit.gaming.ai.path.model.OcclusionField;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import com.extollit.gaming.ai.path.model.*;
 
 public class ColumnarSpace implements IColumnarSpace {
     public static final class Pointer {
@@ -37,7 +30,7 @@ public class ColumnarSpace implements IColumnarSpace {
     public final IInstanceSpace container;
     public final Pointer location;
 
-    private final OcclusionField [] occlusionFields = new OcclusionField[16];
+    private final ColumnarOcclusionFieldList columnarOcclusionFieldList = new ColumnarOcclusionFieldList(this);
     private final BlockObject [][][] blocks = new BlockObject[16][256][16];
     private final int [][][] metaDatas = new int[16][256][16];
 
@@ -57,32 +50,20 @@ public class ColumnarSpace implements IColumnarSpace {
     }
 
     @Override
-    public OcclusionField occlusionFieldAt(int cx, int cy, int cz) {
-        final OcclusionField[] occlusionFields = this.occlusionFields;
-
-        if (occlusionFields[cy] == null)
-            occlusionFields[cy] = new OcclusionField();
-
-        return occlusionFields[cy];
-    }
-
-    @Override
-    public OcclusionField optOcclusionFieldAt(int cy) {
-        return this.occlusionFields[cy];
-    }
-
-    @Override
-    public Iterator<OcclusionField> iterateOcclusionFields() {
-        List<OcclusionField> list = new ArrayList<OcclusionField>();
-        for (OcclusionField field : this.occlusionFields)
-            if (field != null)
-                list.add(field);
-
-        return list.iterator();
+    public ColumnarOcclusionFieldList occlusionFields() {
+        return this.columnarOcclusionFieldList;
     }
 
     @Override
     public IInstanceSpace instance() {
         return this.container;
+    }
+
+    public void load() {
+        occlusionFields().reset();
+    }
+
+    public void unload() {
+        occlusionFields().reset();
     }
 }

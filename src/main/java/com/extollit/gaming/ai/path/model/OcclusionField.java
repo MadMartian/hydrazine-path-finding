@@ -29,6 +29,41 @@ public class OcclusionField implements IOcclusionProvider {
 
         public boolean in(short flags) { return (flags & mask) != 0; }
         public short to(short flags) { return (short)(flags | mask); }
+
+        public static AreaInit given(int dx, int dy, int dz) {
+            if (dx == -1 && dz == -1)
+                return northWest;
+            else
+            if (dx == 0 && dz == -1)
+                return north;
+            else
+            if (dx == +1 && dz == -1)
+                return northEast;
+            else
+            if (dx == +1 && dz == 0)
+                return east;
+            else
+            if (dx == +1 && dz == +1)
+                return southEast;
+            else
+            if (dx == 0 && dz == +1)
+                return south;
+            else
+            if (dx == -1 && dz == +1)
+                return southWest;
+            else
+            if (dx == -1 && dz == 0)
+                return west;
+            else
+            if (dx == 0 && dz == 0)
+                if (dy == -1)
+                    return down;
+                else
+                if (dy == +1)
+                    return up;
+
+            return null;
+        }
     }
 
     private static final byte
@@ -699,16 +734,16 @@ public class OcclusionField implements IOcclusionProvider {
         final IInstanceSpace instance = columnarSpace.instance();
 
         final OcclusionField
-            center = instance.optOcclusionFieldAt(cx, cy, cz);
+            center = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, cx, cy, cz);
 
         if (center == null)
             return;
 
         final OcclusionField
-            north = instance.optOcclusionFieldAt(cx, cy, (z - 1) >> DIMENSION_ORDER),
-            east = instance.optOcclusionFieldAt((x + 1) >> DIMENSION_ORDER, cy, cz),
-            south = instance.optOcclusionFieldAt(cx, cy, (z + 1) >> DIMENSION_ORDER),
-            west = instance.optOcclusionFieldAt((x - 1) >> DIMENSION_ORDER, cy, cz);
+            north = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, cx, cy, (z - 1) >> DIMENSION_ORDER),
+            east = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, (x + 1) >> DIMENSION_ORDER, cy, cz),
+            south = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, cx, cy, (z + 1) >> DIMENSION_ORDER),
+            west = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, (x - 1) >> DIMENSION_ORDER, cy, cz);
 
         byte
             centerFlags = center.elementAt(dx, dy, dz),
@@ -734,14 +769,14 @@ public class OcclusionField implements IOcclusionProvider {
         final IInstanceSpace instance = columnarSpace.instance();
 
         final OcclusionField
-                center = instance.optOcclusionFieldAt(cx, cy, cz);
+                center = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, cx, cy, cz);
 
         if (center == null)
             return;
 
         final OcclusionField
-                up = instance.optOcclusionFieldAt(cx, (y + 1) >> DIMENSION_ORDER, cz),
-                down = instance.optOcclusionFieldAt(cx, (y - 1) >> DIMENSION_ORDER, cz);
+                up = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, cx, (y + 1) >> DIMENSION_ORDER, cz),
+                down = ColumnarOcclusionFieldList.optOcclusionFieldAt(instance, cx, (y - 1) >> DIMENSION_ORDER, cz);
 
         byte
                 centerFlags = center.elementAt(dx, dy, dz),
