@@ -538,4 +538,18 @@ public class OcclusionFieldTests extends AbstractOcclusionFieldTesting {
         assertTrue(Element.air.in(top));
         assertTrue(Element.air.in(bottom));
     }
+
+    @Test
+    public void lowerBounded() {
+        when(instanceSpace.columnarSpaceAt(0, 0)).thenReturn(centerSpace);
+        centerSpace.occlusionFields().occlusionFieldAt(0, 0, 0);
+        occlusionField.set(centerSpace, 0, 1, 0, stone);
+    }
+
+    @Test
+    public void upperBounded() {
+        when(instanceSpace.columnarSpaceAt(0, 0)).thenReturn(centerSpace);
+        centerSpace.occlusionFields().occlusionFieldAt(0, 15, 0);
+        occlusionField.set(centerSpace, 0, 254, 0, stone);
+    }
 }
