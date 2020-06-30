@@ -544,6 +544,7 @@ public class OcclusionFieldTests extends AbstractOcclusionFieldTesting {
         when(instanceSpace.columnarSpaceAt(0, 0)).thenReturn(centerSpace);
         centerSpace.occlusionFields().occlusionFieldAt(0, 0, 0);
         occlusionField.set(centerSpace, 0, 1, 0, stone);
+        occlusionField.set(centerSpace, 0, 0, 0, stone);
     }
 
     @Test
@@ -551,5 +552,6 @@ public class OcclusionFieldTests extends AbstractOcclusionFieldTesting {
         when(instanceSpace.columnarSpaceAt(0, 0)).thenReturn(centerSpace);
         centerSpace.occlusionFields().occlusionFieldAt(0, 15, 0);
         occlusionField.set(centerSpace, 0, 254, 0, stone);
+        occlusionField.set(centerSpace, 0, 255, 0, stone);
     }
 }

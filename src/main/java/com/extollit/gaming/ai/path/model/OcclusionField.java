@@ -659,7 +659,7 @@ public class OcclusionField implements IOcclusionProvider {
 
             if (dy > 0 && dy < DIMENSION_EXTENT)
                 fencesAndDoorsComputeAt(columnarSpace, dx, y, dz, true);
-            else
+            else if (y > 0 && y < (DIMENSION_SIZE << 4) - 2)
                 greaterFencesAndDoorsComputeAt(columnarSpace, x, y, z, true);
 
             if (dy > 1)
