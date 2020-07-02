@@ -8,6 +8,7 @@ import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FastMath;
 import com.extollit.num.FloatRange;
+import com.extollit.tuple.Pair;
 
 import java.text.MessageFormat;
 import java.util.HashSet;
@@ -228,7 +229,7 @@ public class HydrazinePathFinder {
                 floor(sourcePosition.z),
 
                 floor(destinationPosition.x),
-                floor(destinationPosition.z)
+                floor(destinationPosition.z), true
         );
 
         applySubject();
@@ -366,9 +367,9 @@ public class HydrazinePathFinder {
                     max.z = pp.z;
             }
 
-        updateFieldWindow(min.x, min.z, max.x, max.z);
+        updateFieldWindow(min.x, min.z, max.x, max.z, true);
     }
-    private void updateFieldWindow(int sourceX, int sourceZ, int targetX, int targetZ) {
+    private void updateFieldWindow(int sourceX, int sourceZ, int targetX, int targetZ, final boolean cull) {
         int x0, xN, z0, zN;
 
         if (sourceX > targetX) {
@@ -390,9 +391,9 @@ public class HydrazinePathFinder {
         final IDynamicMovableObject destinationEntity = this.destinationEntity;
         final float entityWidth = this.subject.width();
         int entitySize = ceil(
-            destinationEntity != null ?
-                    Math.max(entityWidth, destinationEntity.width()) :
-                    entityWidth
+                destinationEntity != null ?
+                        Math.max(entityWidth, destinationEntity.width()) :
+                        entityWidth
         );
 
         final float searchAreaRange = this.subject.searchRange();
@@ -401,10 +402,6 @@ public class HydrazinePathFinder {
         xN += searchAreaRange + entitySize;
         zN += searchAreaRange + entitySize;
 
-        updateFieldWindow(x0, z0, xN, zN, true);
-    }
-
-    private void updateFieldWindow(int x0, int z0, int xN, int zN, boolean cull) {
         final int
                 cx0 = x0 >> 4,
                 cz0 = z0 >> 4,
@@ -999,5 +996,23 @@ public class HydrazinePathFinder {
 
     private float pathTimeAge() {
         return this.subject.age() * this.capabilities.speed();
+    }
+
+    public Pair.Sealed<Passibility, Vec3i> passibilityNear(int tx, int ty, int tz) {
+        updateSourcePosition();
+
+        final int
+                x = floor(sourcePosition.x),
+                y = floor(sourcePosition.y),
+                z = floor(sourcePosition.z);
+
+        applySubject();
+        updateFieldWindow(x, tx, z, tz, false);
+
+        final HydrazinePathPoint point = cachedPassiblePointNear(tx, ty, tz, null);
+        if (point == null)
+            return Pair.Sealed.of(Passibility.impassible, null);
+
+        return Pair.Sealed.of(point.passibility(), point.key);
     }
 }
