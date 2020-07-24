@@ -829,6 +829,8 @@ public class OcclusionField implements IOcclusionProvider {
                 flags |= Element.fire.mask | Logic.fuzzy.mask;
             else
                 flags |= Element.air.mask;
+        else if (block.isIncinerating())
+            flags |= Element.fire.mask;
         else
             flags |= Element.earth.mask;
 

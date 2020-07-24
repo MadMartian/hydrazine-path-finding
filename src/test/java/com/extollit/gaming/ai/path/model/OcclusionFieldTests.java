@@ -554,4 +554,18 @@ public class OcclusionFieldTests extends AbstractOcclusionFieldTesting {
         occlusionField.set(centerSpace, 0, 254, 0, stone);
         occlusionField.set(centerSpace, 0, 255, 0, stone);
     }
+
+    @Test
+    public void incineratingOverSolid() {
+        class SolidIncinerating extends Stone {
+            @Override
+            public boolean isIncinerating() {
+                return true;
+            }
+        }
+
+        occlusionField.set(centerSpace, 2, 9, 6, new SolidIncinerating());
+        final byte element = occlusionField.elementAt(2, 9, 6);
+        assertTrue(Element.fire.in(element));
+    }
 }
