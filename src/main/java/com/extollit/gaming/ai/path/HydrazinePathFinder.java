@@ -1007,7 +1007,7 @@ public class HydrazinePathFinder {
                 z = floor(sourcePosition.z);
 
         applySubject();
-        updateFieldWindow(x, tx, z, tz, false);
+        updateFieldWindow(x, z, tx, tz, false);
 
         final HydrazinePathPoint point = cachedPassiblePointNear(tx, ty, tz, null);
         if (point == null)
