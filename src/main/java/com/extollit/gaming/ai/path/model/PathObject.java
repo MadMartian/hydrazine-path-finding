@@ -94,6 +94,8 @@ public final class PathObject implements Iterable<Vec3i> {
             return null;
     }
 
+    public static boolean active(PathObject path) { return path != null && !path.done(); }
+
     public final boolean done() { return this.i >= this.length; }
 
     public void update(final IPathingEntity subject) {
@@ -395,5 +397,15 @@ public final class PathObject implements Iterable<Vec3i> {
                 i = c;
             }
         }
+    }
+
+    public boolean reachableFrom(PathObject otherPath) {
+        final Vec3i point = otherPath.current();
+
+        for (Vec3i p : this.points)
+            if (p.equals(point))
+                return true;
+
+        return false;
     }
 }

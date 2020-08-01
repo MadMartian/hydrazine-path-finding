@@ -12,17 +12,64 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PathObjectTests {
+    private final PathObject
+        pathAlpha = new PathObject(
+            1,
+            new Vec3i(-10, 42, -10),
+            new Vec3i(-10, 42, -9),
+            new Vec3i(-10, 41, -8),
+            new Vec3i(-10, 41, -7),
+            new Vec3i(-10, 41, -6),
+            new Vec3i(-10, 41, -5),
+            new Vec3i(-10, 40, -4),
+            new Vec3i(-10, 40, -3),
+            new Vec3i(-10, 39, -2),
+            new Vec3i(-10, 39, -1),
+            new Vec3i(-10, 39, 0),
+            new Vec3i(-10, 38, 1),
+            new Vec3i(-10, 38, 2),
+            new Vec3i(-10, 37, 3),
+            new Vec3i(-9, 37, 3),
+            new Vec3i(-8, 37, 3),
+            new Vec3i(-8, 37, 4),
+            new Vec3i(-8, 36, 5)
+        ),
+        pathBeta = new PathObject(
+            1,
+            new Vec3i(-10, 42, -10),
+            new Vec3i(-10, 42, -9),
+            new Vec3i(-10, 41, -8),
+            new Vec3i(-10, 41, -7),
+            new Vec3i(-10, 41, -6),
+            new Vec3i(-10, 41, -5),
+            new Vec3i(-10, 40, -4),
+            new Vec3i(-9, 40, -4),
+            new Vec3i(-8, 40, -4),
+            new Vec3i(-8, 40, -3),
+            new Vec3i(-8, 39, -2),
+            new Vec3i(-7, 39, -2),
+            new Vec3i(-7, 39, -1),
+            new Vec3i(-6, 39, -1),
+            new Vec3i(-6, 38, 0),
+            new Vec3i(-6, 38, 1),
+            new Vec3i(-6, 37, 2),
+            new Vec3i(-6, 37, 3)
+        );
+
     @Mock private IPathingEntity pathingEntity;
 
     @Before
     public void setup() {
         when(pathingEntity.width()).thenReturn(0.6f);
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(0.5, 0, 0.5));
+
+        pathAlpha.i = pathBeta.i = 0;
     }
 
     @Test
@@ -281,55 +328,17 @@ public class PathObjectTests {
 
     @Test
     public void disparatePathAdjustment() {
-        final PathObject
-            formerPath = new PathObject(
-                1, 
-                new Vec3i(-10, 42, -10),
-                new Vec3i(-10, 42, -9),
-                new Vec3i(-10, 41, -8),
-                new Vec3i(-10, 41, -7),
-                new Vec3i(-10, 41, -6),
-                new Vec3i(-10, 41, -5),
-                new Vec3i(-10, 40, -4),
-                new Vec3i(-10, 40, -3),
-                new Vec3i(-10, 39, -2),
-                new Vec3i(-10, 39, -1),
-                new Vec3i(-10, 39, 0),
-                new Vec3i(-10, 38, 1),
-                new Vec3i(-10, 38, 2),
-                new Vec3i(-10, 37, 3),
-                new Vec3i(-9, 37, 3),
-                new Vec3i(-8, 37, 3),
-                new Vec3i(-8, 37, 4),
-                new Vec3i(-8, 36, 5)
-            ),
-            newPath = new PathObject(
-                1,
-                new Vec3i(-10, 42, -10),
-                new Vec3i(-10, 42, -9),
-                new Vec3i(-10, 41, -8),
-                new Vec3i(-10, 41, -7),
-                new Vec3i(-10, 41, -6),
-                new Vec3i(-10, 41, -5),
-                new Vec3i(-10, 40, -4),
-                new Vec3i(-9, 40, -4),
-                new Vec3i(-8, 40, -4),
-                new Vec3i(-8, 40, -3),
-                new Vec3i(-8, 39, -2),
-                new Vec3i(-7, 39, -2),
-                new Vec3i(-7, 39, -1),
-                new Vec3i(-6, 39, -1),
-                new Vec3i(-6, 38, 0),
-                new Vec3i(-6, 38, 1),
-                new Vec3i(-6, 37, 2),
-                new Vec3i(-6, 37, 3)
-            );
-
-        formerPath.i = 11;
+        pathAlpha.i = 11;
 
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(-9.5, 38.0, 1.5));
-        newPath.adjustPathPosition(formerPath, pathingEntity);
+        pathBeta.adjustPathPosition(pathAlpha, pathingEntity);
 
-        assertEquals(10, newPath.i);
+        assertEquals(10, pathBeta.i);
+    }
+
+    @Test
+    public void unreachablePath() {
+        pathAlpha.i = 11;
+        assertFalse(pathBeta.reachableFrom(pathAlpha));
     }
 }

@@ -159,8 +159,7 @@ public class HydrazinePathFinder {
     private boolean triageTimeout() {
         final PathObject currentPath = this.currentPath;
         final boolean status =
-                currentPath != null &&
-                !currentPath.done() &&
+                PathObject.active(currentPath) &&
                 currentPath.length() > 0 &&
                 currentPath.stagnantFor(this.subject) > this.passiblePointPathTimeLimit;
 
@@ -478,7 +477,7 @@ public class HydrazinePathFinder {
     }
 
     private PathObject updatePath(PathObject newPath) {
-        if (newPath != null && !newPath.done()) {
+        if (PathObject.active(newPath)) {
             if (this.currentPath != null) {
                 if (this.currentPath.sameAs(newPath))
                     return this.currentPath;
@@ -495,8 +494,7 @@ public class HydrazinePathFinder {
     }
 
     private PathObject triage(int iterations) {
-        PathObject currentPath = this.currentPath;
-
+        final PathObject currentPath = this.currentPath;
         final SortedPointQueue queue = this.queue;
 
         if (queue.isEmpty())
@@ -507,7 +505,7 @@ public class HydrazinePathFinder {
             else
                 resetTriage();
 
-        currentPath = null;
+        PathObject nextPath = null;
         while (!queue.isEmpty() && iterations-- > 0) {
             final HydrazinePathPoint current = queue.dequeue();
 
@@ -515,10 +513,14 @@ public class HydrazinePathFinder {
                 this.closest = current;
 
             if (current == this.target) {
-                currentPath = PathObject.fromHead(this.capabilities.speed(), this.target);
-                if (currentPath != null && !currentPath.done()) {
-                    currentPath.setRandomNumberGenerator(this.random);
+                nextPath = PathObject.fromHead(this.capabilities.speed(), this.target);
+                if (PathObject.active(nextPath)) {
+                    nextPath.setRandomNumberGenerator(this.random);
                     this.queue.clear();
+
+                    if (PathObject.active(currentPath) && !nextPath.reachableFrom(currentPath))
+                        nextPath = currentPath;
+
                     break;
                 }
 
@@ -529,10 +531,10 @@ public class HydrazinePathFinder {
             processNode(current);
         }
 
-        if (currentPath == null && this.closest != null && !queue.isEmpty())
-            currentPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
+        if (nextPath == null && this.closest != null && !queue.isEmpty())
+            nextPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
 
-        return updatePath(currentPath);
+        return updatePath(nextPath);
     }
 
     private void processNode(HydrazinePathPoint current) {
