@@ -498,6 +498,9 @@ public class HydrazinePathFinder {
             if (this.occlusionProvider == null)
                 updateFieldWindow(newPath);
 
+            if (newPath.done())
+                newPath = null;
+
             return this.currentPath = newPath;
         } else
             return this.currentPath = null;

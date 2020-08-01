@@ -377,6 +377,7 @@ public final class PathObject implements Iterable<Vec3i> {
         int c = -1;
 
         while(++c < formerPath.i && c < length && at(c).equals(formerPath.at(c)));
+        c--;
 
         while(++c < length) {
             final Vec3i p = at(c);
