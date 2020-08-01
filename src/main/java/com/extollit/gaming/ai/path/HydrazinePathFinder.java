@@ -122,6 +122,9 @@ public class HydrazinePathFinder {
         final PathObject path = update();
         if (PathObject.active(path)) {
             path.update(pathingEntity);
+            if (path.done())
+                return null;
+
             return path;
         }
 
@@ -490,7 +493,7 @@ public class HydrazinePathFinder {
         if (PathObject.active(newPath)) {
             if (this.currentPath != null) {
                 if (this.currentPath.sameAs(newPath))
-                    return this.currentPath;
+                    newPath = this.currentPath;
                 else if (!this.currentPath.done())
                     newPath.adjustPathPosition(this.currentPath, this.subject);
             }
