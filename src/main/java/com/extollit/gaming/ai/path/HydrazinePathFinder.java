@@ -533,8 +533,8 @@ public class HydrazinePathFinder {
 
                     if (PathObject.active(currentPath) && !nextPath.reachableFrom(currentPath))
                         nextPath = currentPath;
-
-                    break;
+                    else
+                        break;
                 }
 
                 resetTriage();
