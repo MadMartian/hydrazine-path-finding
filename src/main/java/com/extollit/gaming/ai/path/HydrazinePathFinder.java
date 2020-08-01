@@ -531,7 +531,7 @@ public class HydrazinePathFinder {
             processNode(current);
         }
 
-        if (nextPath == null && this.closest != null && !queue.isEmpty())
+        if (nextPath == null && this.closest != null)
             nextPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
 
         return updatePath(nextPath);
