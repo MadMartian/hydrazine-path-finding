@@ -223,7 +223,7 @@ public class HydrazinePathFinder {
 
         this.queue.clear();
         this.queue.add(source);
-        this.closest = source;
+        this.closest = null;
         this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
     }
 
