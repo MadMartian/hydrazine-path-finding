@@ -186,39 +186,6 @@ public class HydrazinePathFinder {
         return false;
     }
 
-    private void adjustPathPosition(PathObject formerPath, PathObject currentPath) {
-        double minSquareDistFromSource = Double.MAX_VALUE;
-        final Vec3i
-                sourceKey = this.source.key,
-                currentPoint = formerPath.current();
-
-        final int
-                sourceX = sourceKey.x,
-                sourceY = sourceKey.y,
-                sourceZ = sourceKey.z;
-
-        int c = -1;
-        while(++c < currentPath.length()) {
-            final Vec3i p = currentPath.at(c);
-            if (p.equals(currentPoint)) {
-                currentPath.i = c;
-                break;
-            }
-
-            final int
-                    dx = p.x - sourceX,
-                    dy = p.y - sourceY,
-                    dz = p.z - sourceZ,
-
-                    squareDelta = dx * dx + dy * dy + dz * dz;
-
-            if (squareDelta < minSquareDistFromSource) {
-                minSquareDistFromSource = squareDelta;
-                currentPath.i = c;
-            }
-        }
-    }
-
     protected final void resetTriage() {
         final Vec3d
                 sourcePosition = this.sourcePosition,
@@ -516,7 +483,7 @@ public class HydrazinePathFinder {
                 if (this.currentPath.sameAs(newPath))
                     return this.currentPath;
                 else if (!this.currentPath.done())
-                    adjustPathPosition(this.currentPath, newPath);
+                    newPath.adjustPathPosition(this.currentPath, this.subject);
             }
 
             if (this.occlusionProvider == null)

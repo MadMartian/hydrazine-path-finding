@@ -278,4 +278,58 @@ public class PathObjectTests {
 
         assertEquals(4, path.i);
     }
+
+    @Test
+    public void disparatePathAdjustment() {
+        final PathObject
+            formerPath = new PathObject(
+                1, 
+                new Vec3i(-10, 42, -10),
+                new Vec3i(-10, 42, -9),
+                new Vec3i(-10, 41, -8),
+                new Vec3i(-10, 41, -7),
+                new Vec3i(-10, 41, -6),
+                new Vec3i(-10, 41, -5),
+                new Vec3i(-10, 40, -4),
+                new Vec3i(-10, 40, -3),
+                new Vec3i(-10, 39, -2),
+                new Vec3i(-10, 39, -1),
+                new Vec3i(-10, 39, 0),
+                new Vec3i(-10, 38, 1),
+                new Vec3i(-10, 38, 2),
+                new Vec3i(-10, 37, 3),
+                new Vec3i(-9, 37, 3),
+                new Vec3i(-8, 37, 3),
+                new Vec3i(-8, 37, 4),
+                new Vec3i(-8, 36, 5)
+            ),
+            newPath = new PathObject(
+                1,
+                new Vec3i(-10, 42, -10),
+                new Vec3i(-10, 42, -9),
+                new Vec3i(-10, 41, -8),
+                new Vec3i(-10, 41, -7),
+                new Vec3i(-10, 41, -6),
+                new Vec3i(-10, 41, -5),
+                new Vec3i(-10, 40, -4),
+                new Vec3i(-9, 40, -4),
+                new Vec3i(-8, 40, -4),
+                new Vec3i(-8, 40, -3),
+                new Vec3i(-8, 39, -2),
+                new Vec3i(-7, 39, -2),
+                new Vec3i(-7, 39, -1),
+                new Vec3i(-6, 39, -1),
+                new Vec3i(-6, 38, 0),
+                new Vec3i(-6, 38, 1),
+                new Vec3i(-6, 37, 2),
+                new Vec3i(-6, 37, 3)
+            );
+
+        formerPath.i = 11;
+
+        when(pathingEntity.coordinates()).thenReturn(new Vec3d(-9.5, 38.0, 1.5));
+        newPath.adjustPathPosition(formerPath, pathingEntity);
+
+        assertEquals(10, newPath.i);
+    }
 }

@@ -358,4 +358,42 @@ public final class PathObject implements Iterable<Vec3i> {
         }
         return sb.toString();
     }
+
+    public void adjustPathPosition(PathObject formerPath, final IPathingEntity pathingEntity) {
+        final float pointOffset = pointToPositionOffset(pathingEntity.width());
+        final int length = this.length;
+        final Vec3i
+                lastPointVisited = formerPath.current();
+
+        final com.extollit.linalg.immutable.Vec3d coordinates = pathingEntity.coordinates();
+        final double
+            x = coordinates.x,
+            y = coordinates.y,
+            z = coordinates.z;
+
+        double minSquareDistFromSource = Double.MAX_VALUE;
+        int c = -1;
+
+        while(++c < formerPath.i && c < length && at(c).equals(formerPath.at(c)));
+
+        while(++c < length) {
+            final Vec3i p = at(c);
+            if (p.equals(lastPointVisited)) {
+                i = c;
+                break;
+            }
+
+            final double
+                    dx = p.x - x + pointOffset,
+                    dy = p.y - y,
+                    dz = p.z - z + pointOffset,
+
+                    squareDelta = dx * dx + dy * dy + dz * dz;
+
+            if (squareDelta < minSquareDistFromSource) {
+                minSquareDistFromSource = squareDelta;
+                i = c;
+            }
+        }
+    }
 }
