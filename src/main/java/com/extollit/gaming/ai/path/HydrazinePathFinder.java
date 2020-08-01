@@ -118,7 +118,17 @@ public class HydrazinePathFinder {
         return triage(this.initComputeIterations);
     }
 
-    public PathObject update() {
+    public PathObject updatePathFor(IPathingEntity pathingEntity) {
+        final PathObject path = update();
+        if (PathObject.active(path)) {
+            path.update(pathingEntity);
+            return path;
+        }
+
+        return null;
+    }
+
+    protected PathObject update() {
         if (this.destinationEntity != null)
             updateDestination(this.destinationEntity.coordinates());
 

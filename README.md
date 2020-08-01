@@ -11,7 +11,7 @@ Then the primary entry-point for using the engine is `com.extollit.gaming.ai.pat
 
     if (path != null)
     do {
-        path.update(myEntity);
+        path = pathFinder.updatePathFor(myEntity);
     } while (game.running());            
 
 ### Notifying the Engine of Changes
