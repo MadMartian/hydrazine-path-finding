@@ -102,8 +102,8 @@ public class HydrazinePathFinder {
     }
 
     public PathObject initiatePathTo(double x, double y, double z) {
-        updateSourcePosition();
         applySubject();
+        updateSourcePosition();
 
         final float rangeSquared = this.searchRangeSquared;
         final com.extollit.linalg.immutable.Vec3d sourcePos = new com.extollit.linalg.immutable.Vec3d(this.sourcePosition);
