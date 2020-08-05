@@ -8,8 +8,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -455,8 +453,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     public void linearRegression() {
         this.pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        when(occlusionProvider.elementAt(anyInt(), eq(-1), anyInt())).thenReturn(Element.earth.mask);
-        when(instanceSpace.blockObjectAt(anyInt(), eq(-1), anyInt())).thenReturn(TestingBlocks.stone);
+        defaultGround();
 
         solid(-1, 0, 3);
         solid(-1, 0, 4);
@@ -524,6 +521,75 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
             new Vec3i(2, 0, 7),
             new Vec3i(1, 0, 7),
             new Vec3i(0, 0, 7)
+        );
+    }
+
+    @Test
+    public void longWayRound() {
+        defaultGround();
+
+        solid(-1, 0, 3);
+        solid(-1, 0, 4);
+        solid(-1, 0, 5);
+        solid(-1, 0, 6);
+        solid(+1, 0, 3);
+        solid(+1, 0, 4);
+        solid(+1, 0, 5);
+        solid(+1, 0, 6);
+        solid(-1, 1, 3);
+        solid(-1, 1, 4);
+        solid(-1, 1, 5);
+        solid(-1, 1, 6);
+        solid(+1, 1, 3);
+        solid(+1, 1, 4);
+        solid(+1, 1, 5);
+        solid(+1, 1, 6);
+        solid(0, 0, 6);
+        solid(0, 1, 6);
+
+        pos(0, 0, 5);
+
+        PathObject path = pathFinder.initiatePathTo(0, 0, 7);
+
+        assertNotNull(path);
+        assertPath(path,
+            new Vec3i(0, 0, 5),
+            new Vec3i(0, 0, 4)
+        );
+
+        pos(0, 0, 4);
+
+        path = pathFinder.updatePathFor(this.pathingEntity);
+        assertPath(path,
+                new Vec3i(0, 0, 5),
+                new Vec3i(0, 0, 4),
+                new Vec3i(0, 0, 3),
+                new Vec3i(0, 0, 2),
+                new Vec3i(-1, 0, 2),
+                new Vec3i(-2, 0, 2),
+                new Vec3i(-2, 0, 3),
+                new Vec3i(-2, 0, 4),
+                new Vec3i(-2, 0, 5),
+                new Vec3i(-2, 0, 6)
+        );
+        path = pathFinder.updatePathFor(this.pathingEntity);
+        assertNotNull(path);
+        path = pathFinder.updatePathFor(this.pathingEntity);
+
+        assertPath(path,
+                new Vec3i(0, 0, 5),
+                new Vec3i(0, 0, 4),
+                new Vec3i(0, 0, 3),
+                new Vec3i(0, 0, 2),
+                new Vec3i(1, 0, 2),
+                new Vec3i(2, 0, 2),
+                new Vec3i(2, 0, 3),
+                new Vec3i(2, 0, 4),
+                new Vec3i(2, 0, 5),
+                new Vec3i(2, 0, 6),
+                new Vec3i(2, 0, 7),
+                new Vec3i(1, 0, 7),
+                new Vec3i(0, 0, 7)
         );
     }
 }

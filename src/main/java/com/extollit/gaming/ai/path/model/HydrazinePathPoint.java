@@ -115,6 +115,9 @@ public class HydrazinePathPoint {
 
         return false;
     }
+    public boolean orphaned() {
+        return this.previous == null;
+    }
     public void orphan() {
         this.previous = null;
     }

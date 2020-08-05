@@ -544,7 +544,7 @@ public class HydrazinePathFinder {
             }
 
             if (!resetTriage) {
-                if (this.closest == null || HydrazinePathPoint.squareDelta(current, this.target) < HydrazinePathPoint.squareDelta(this.closest, this.target))
+                if (this.closest == null || this.closest.orphaned() || HydrazinePathPoint.squareDelta(current, this.target) < HydrazinePathPoint.squareDelta(this.closest, this.target))
                     this.closest = current;
 
                 if (current == this.target) {
@@ -568,7 +568,7 @@ public class HydrazinePathFinder {
             processNode(current);
         }
 
-        if (nextPath == null && this.closest != null)
+        if (nextPath == null && this.closest != null && !queue.isEmpty())
             nextPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
 
         return updatePath(nextPath);

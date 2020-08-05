@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.mockito.Mock;
 
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -151,5 +152,10 @@ abstract class AbstractHydrazinePathFinderTests {
         when(instanceSpace.blockObjectAt(x, y + 1, z)).thenReturn(block);
         when(block.bounds()).thenReturn(bounds);
         when(block.isImpeding()).thenReturn(true);
+    }
+
+    protected void defaultGround() {
+        when(occlusionProvider.elementAt(anyInt(), eq(-1), anyInt())).thenReturn(Element.earth.mask);
+        when(instanceSpace.blockObjectAt(anyInt(), eq(-1), anyInt())).thenReturn(TestingBlocks.stone);
     }
 }
