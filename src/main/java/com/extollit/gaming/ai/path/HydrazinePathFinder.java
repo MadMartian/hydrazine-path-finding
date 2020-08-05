@@ -45,7 +45,7 @@ public class HydrazinePathFinder {
     private IOcclusionProvider occlusionProvider;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private HydrazinePathPoint source, target, closest;
+    private HydrazinePathPoint current, source, target, closest;
     private int cx0, cxN, cz0, czN, discreteSize, tall, initComputeIterations, periodicComputeIterations;
     private int failureCount;
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
@@ -138,9 +138,9 @@ public class HydrazinePathFinder {
         if (this.destinationPosition == null)
             return this.currentPath;
 
+        updateSourcePosition();
         graphTimeout();
 
-        updateSourcePosition();
         if (reachedTarget() || triageTimeout() || destinationDeviatedFromTarget())
             resetTriage();
 
@@ -213,7 +213,7 @@ public class HydrazinePathFinder {
 
         applySubject();
 
-        final HydrazinePathPoint source = this.source = pointAtSource();
+        final HydrazinePathPoint source = this.current = this.source = pointAtSource();
         source.length(0);
         source.orphan();
 
@@ -422,9 +422,9 @@ public class HydrazinePathFinder {
     private HydrazinePathPoint pointAtSource() {
         final Vec3d sourcePosition = this.sourcePosition;
         final int
-            x = floor(sourcePosition.x),
-            y = floor(sourcePosition.y),
-            z = floor(sourcePosition.z);
+                x = floor(sourcePosition.x),
+                y = floor(sourcePosition.y),
+                z = floor(sourcePosition.z);
 
         HydrazinePathPoint candidate = cachedPassiblePointNear(x, y, z, null);
         if (candidate == null) {
@@ -452,7 +452,7 @@ public class HydrazinePathFinder {
     }
 
     private boolean reachedTarget() {
-        final boolean flag = this.target == null || this.source == this.target || pointAtSource() == this.target;
+        final boolean flag = this.target == null || this.source == this.target || this.current == this.target;
         if (flag) {
             this.failureCount = 0;
             this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -470,6 +470,14 @@ public class HydrazinePathFinder {
             sourcePosition.z = coordinates.z;
         } else
             this.sourcePosition = new Vec3d(coordinates.x, coordinates.y, coordinates.z);
+
+        final int
+            x = floor(coordinates.x),
+            z = floor(coordinates.z);
+
+        updateFieldWindow(x, z, x, z, false);
+
+        this.current = pointAtSource();
     }
 
     public void reset() {
@@ -480,6 +488,7 @@ public class HydrazinePathFinder {
         this.target =
         this.source =
         this.closest = null;
+        this.current = null;
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
@@ -522,24 +531,36 @@ public class HydrazinePathFinder {
                 resetTriage();
 
         PathObject nextPath = null;
+
+        final Vec3i currentPathPoint = this.current.key;
+
         while (!queue.isEmpty() && iterations-- > 0) {
             final HydrazinePathPoint current = queue.dequeue();
+            boolean resetTriage = false;
 
-            if (this.closest == null || HydrazinePathPoint.squareDelta(current, this.target) < HydrazinePathPoint.squareDelta(this.closest, this.target))
-                this.closest = current;
+            if (!current.contains(currentPathPoint)) {
+                resetTriage = true;
+                iterations += 2;
+            }
 
-            if (current == this.target) {
-                nextPath = PathObject.fromHead(this.capabilities.speed(), this.target);
-                if (PathObject.active(nextPath)) {
-                    nextPath.setRandomNumberGenerator(this.random);
-                    this.queue.clear();
+            if (!resetTriage) {
+                if (this.closest == null || HydrazinePathPoint.squareDelta(current, this.target) < HydrazinePathPoint.squareDelta(this.closest, this.target))
+                    this.closest = current;
 
-                    if (PathObject.active(currentPath) && !nextPath.reachableFrom(currentPath))
-                        nextPath = currentPath;
-                    else
+                if (current == this.target) {
+                    nextPath = PathObject.fromHead(this.capabilities.speed(), this.target);
+                    if (PathObject.active(nextPath)) {
+                        nextPath.setRandomNumberGenerator(this.random);
+                        this.queue.clear();
                         break;
-                }
+                    }
 
+                    resetTriage = true;
+                }
+            }
+
+            if (resetTriage)
+            {
                 resetTriage();
                 continue;
             }
@@ -627,6 +648,10 @@ public class HydrazinePathFinder {
     private HydrazinePathPoint cachedPointAt(int x, int y, int z)
     {
         final Vec3i coords = new Vec3i(x, y, z);
+        return cachedPointAt(coords);
+    }
+
+    private HydrazinePathPoint cachedPointAt(Vec3i coords) {
         HydrazinePathPoint point = this.nodeMap.get(coords);
 
         if (point == null)
@@ -635,17 +660,21 @@ public class HydrazinePathFinder {
         return point;
     }
 
-    protected final HydrazinePathPoint cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
+    private HydrazinePathPoint cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
         final Vec3i coords0 = new Vec3i(x0, y0, z0);
-        HydrazinePathPoint point = this.nodeMap.get(coords0);
+        return cachedPassiblePointNear(coords0, origin);
+    }
+
+    private HydrazinePathPoint cachedPassiblePointNear(Vec3i coords, Vec3i origin) {
+        HydrazinePathPoint point = this.nodeMap.get(coords);
 
         if (point == null) {
-            point = passiblePointNear(coords0, origin);
+            point = passiblePointNear(coords, origin);
             if (point != null)
-                this.nodeMap.put(coords0, point);
+                this.nodeMap.put(coords, point);
         }
 
-        if (point != null && origin != null && unreachableFromSource(origin, coords0))
+        if (point != null && origin != null && unreachableFromSource(origin, coords))
             return null;
 
         return point;

@@ -104,6 +104,17 @@ public class HydrazinePathPoint {
         return true;
     }
 
+    public boolean contains(Vec3i currentPathPoint) {
+        if (this.key.equals(currentPathPoint))
+            return true;
+        else {
+            final HydrazinePathPoint previous = this.previous;
+            if (previous != null)
+                return previous.contains(currentPathPoint);
+        }
+
+        return false;
+    }
     public void orphan() {
         this.previous = null;
     }
@@ -111,6 +122,7 @@ public class HydrazinePathPoint {
         index(-1);
         first(false);
     }
+
     final boolean appendTo(final HydrazinePathPoint parent, final int delta, final HydrazinePathPoint target) {
         this.previous = parent;
         passibility(passibility());
