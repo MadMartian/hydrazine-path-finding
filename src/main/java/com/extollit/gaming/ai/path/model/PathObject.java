@@ -44,17 +44,17 @@ public final class PathObject implements Iterable<Vec3i> {
         this.random = random;
     }
 
-    public static PathObject fromHead(float speed, HydrazinePathPoint head) {
+    public static PathObject fromHead(float speed, Node head) {
         int i = 1;
 
-        for (HydrazinePathPoint p = head; p.up() != null; p = p.up())
+        for (Node p = head; p.up() != null; p = p.up())
             ++i;
 
         final Vec3i[] result = new Vec3i[i];
         final Vec3i key = head.key;
         result[--i] = key;
 
-        for (HydrazinePathPoint p = head; p.up() != null; result[--i] = p.key)
+        for (Node p = head; p.up() != null; result[--i] = p.key)
             p = p.up();
 
         if (result.length <= 1)

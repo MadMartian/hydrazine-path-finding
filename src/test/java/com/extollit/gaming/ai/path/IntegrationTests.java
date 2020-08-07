@@ -160,6 +160,15 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         when(super.capabilities.swimmer()).thenReturn(true);
         when(super.pathingEntity.width()).thenReturn(1.4f);
 
+        water(1, 0, -1);
+        water(0, 0, -1);
+        water(-1, 0, -1);
+        water(1, 0, 0);
+        water(0, 0, 0);
+        water(-1, 0, 0);
+        water(-2, 0, 1);
+        water(-1, 0, 1);
+
         solid(1, 1, 0);
         solid(1, 1, +1);
         solid(1, 1, -1);
@@ -176,13 +185,6 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(-1, -1, 0);
         solid(0, -1, 0);
         solid(-2, -1, 1);
-        water(1, 0, -1);
-        water(0, 0, -1);
-        water(-1, 0, -1);
-        water(1, 0, 0);
-        water(0, 0, 0);
-        water(-1, 0, 0);
-        water(-2, 0, 1);
         solid(1, 0, 1);
         solid(1, 1, 1);
         solid(0, 0, 1);
@@ -193,6 +195,8 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(1, 1, 2);
         solid(0, 1, 3);
         solid(1, 1, 3);
+        solid(-1, -1, 1);
+        solid(-1, 0, 2);
 
         pos(super.pathingEntity, 0, 0.5, 0);
 
@@ -204,7 +208,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
             new Vec3i(-1, 1, 0),
             new Vec3i(-1, 1, 1),
             new Vec3i(-1, 1, 2),
-            new Vec3i(0, 2, 2),
+            new Vec3i(-1, 1, 3),
             new Vec3i(0, 2, 3)
         );
 
@@ -223,7 +227,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         path.update(pathingEntity);
         assertEquals(4, path.i);
 
-        pos(super.pathingEntity, 0.05, 2, 3.1);
+        pos(super.pathingEntity, -0.05, 1, 3.1);
         path.update(pathingEntity);
         assertTrue(path.done());
     }

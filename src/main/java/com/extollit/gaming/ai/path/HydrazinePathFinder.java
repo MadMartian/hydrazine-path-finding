@@ -1,9 +1,7 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.collect.SparseSpatialMap;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
-import com.extollit.linalg.immutable.IntAxisAlignedBox;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FastMath;
@@ -19,7 +17,7 @@ import static com.extollit.num.FastMath.ceil;
 import static com.extollit.num.FastMath.floor;
 import static java.lang.Math.round;
 
-public class HydrazinePathFinder {
+public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator {
     private static final AxisAlignedBBox FULL_BOUNDS = new AxisAlignedBBox(0, 0, 0, 1, 1, 1);
 
     private static double DOT_THRESHOLD = 0.6;
@@ -34,7 +32,7 @@ public class HydrazinePathFinder {
     private static byte FAILURE_COUNT_THRESHOLD = 3;
 
     private final SortedPointQueue queue = new SortedPointQueue();
-    private final SparseSpatialMap<HydrazinePathPoint> nodeMap = new SparseSpatialMap<>(3);
+    private final NodeMap nodeMap = new NodeMap(this);
     private final Set<Vec3i> unreachableFromSource = new HashSet<>(3);
     private final IPathingEntity subject;
     private final IInstanceSpace instanceSpace;
@@ -45,7 +43,7 @@ public class HydrazinePathFinder {
     private IOcclusionProvider occlusionProvider;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private HydrazinePathPoint current, source, target, closest;
+    private Node current, source, target, closest;
     private int cx0, cxN, cz0, czN, discreteSize, tall, initComputeIterations, periodicComputeIterations;
     private int failureCount;
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
@@ -82,7 +80,7 @@ public class HydrazinePathFinder {
 
     public final Vec3i trackingDestination() {
         if (this.destinationEntity != null && this.destinationPosition != null) {
-            final HydrazinePathPoint pointAtDestination = pointAtDestination();
+            final Node pointAtDestination = pointAtDestination();
             if (impassible(pointAtDestination))
                 return null;
             else
@@ -213,7 +211,7 @@ public class HydrazinePathFinder {
 
         applySubject();
 
-        final HydrazinePathPoint source = this.current = this.source = pointAtSource();
+        final Node source = this.current = this.source = pointAtSource();
         source.length(0);
         source.orphan();
 
@@ -221,10 +219,7 @@ public class HydrazinePathFinder {
 
         setTargetFor(source);
 
-        for (HydrazinePathPoint p : this.nodeMap.values())
-            p.first(false);
-
-        this.queue.clear();
+        this.nodeMap.reset(this.queue);
         this.queue.add(source);
         this.closest = null;
         this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -284,11 +279,11 @@ public class HydrazinePathFinder {
         this.capabilities = this.subject.capabilities();
     }
 
-    private void setTargetFor(HydrazinePathPoint source) {
+    private void setTargetFor(Node source) {
         final Vec3d
                 destinationPosition = this.destinationPosition;
 
-        int distance = 0x40;
+        int distance = Node.MAX_PATH_DISTANCE;
         this.target = pointAtDestination();
         while (distance > 0 && !source.target(this.target)) {
             final Vec3d
@@ -301,7 +296,7 @@ public class HydrazinePathFinder {
             v.normalize();
             v.mul(distance);
             v.add(init);
-            this.target = cachedPointAt(
+            this.target = this.nodeMap.cachedPointAt(
                 floor(v.x),
                 ceil(v.y),
                 floor(v.z)
@@ -403,32 +398,32 @@ public class HydrazinePathFinder {
             this.czN = czN;
 
             if (cull)
-                this.nodeMap.cullOutside(new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN));
+                this.nodeMap.cullOutside(x0, z0, xN, zN);
         }
     }
 
-    private HydrazinePathPoint pointAtDestination() {
+    private Node pointAtDestination() {
         final Vec3d destinationPosition = this.destinationPosition;
         if (destinationPosition == null)
             return null;
 
-        return cachedPointAt(
+        return this.nodeMap.cachedPointAt(
                 floor(destinationPosition.x),
                 ceil(destinationPosition.y),
                 floor(destinationPosition.z)
         );
     }
 
-    private HydrazinePathPoint pointAtSource() {
+    private Node pointAtSource() {
         final Vec3d sourcePosition = this.sourcePosition;
         final int
                 x = floor(sourcePosition.x),
                 y = floor(sourcePosition.y),
                 z = floor(sourcePosition.z);
 
-        HydrazinePathPoint candidate = cachedPassiblePointNear(x, y, z, null);
+        Node candidate = cachedPassiblePointNear(x, y, z);
         if (candidate == null) {
-            candidate = cachedPointAt(x, y, z);
+            candidate = this.nodeMap.cachedPointAt(x, y, z);
             candidate.passibility(Passibility.impassible);
         }
         return candidate;
@@ -554,37 +549,28 @@ public class HydrazinePathFinder {
         final Vec3i currentPathPoint = this.current.key;
 
         while (!queue.isEmpty() && iterations-- > 0) {
-            final HydrazinePathPoint current = queue.dequeue();
-            boolean resetTriage = false;
-
-            if (!current.contains(currentPathPoint)) {
-                resetTriage = true;
-                iterations += 2;
-            }
-
-            if (!resetTriage) {
-                if (this.closest == null || this.closest.orphaned() || HydrazinePathPoint.squareDelta(current, this.target) < HydrazinePathPoint.squareDelta(this.closest, this.target))
-                    this.closest = current;
-
-                if (current == this.target) {
-                    nextPath = PathObject.fromHead(this.capabilities.speed(), this.target);
-                    if (PathObject.active(nextPath)) {
-                        nextPath.setRandomNumberGenerator(this.random);
-                        this.queue.clear();
-                        break;
-                    }
-
-                    resetTriage = true;
-                }
-            }
-
-            if (resetTriage)
-            {
-                resetTriage();
+            if (!queue.nextContains(currentPathPoint)) {
+                final Node source = this.nodeMap.cachedPassiblePointNear(currentPathPoint);
+                this.queue.trimFrom(source, this.nodeMap);
                 continue;
             }
 
-            processNode(current);
+            final Node current = queue.dequeue();
+
+            if (Node.deleted(this.closest) || this.closest.orphaned() || Node.squareDelta(current, this.target) < Node.squareDelta(this.closest, this.target))
+                this.closest = current;
+
+            if (current == this.target) {
+                nextPath = PathObject.fromHead(this.capabilities.speed(), this.target);
+                if (PathObject.active(nextPath)) {
+                    nextPath.setRandomNumberGenerator(this.random);
+                    this.queue.clear();
+                    break;
+                }
+
+                resetTriage();
+            } else
+                processNode(current);
         }
 
         if (nextPath == null && this.closest != null && !queue.isEmpty())
@@ -593,11 +579,11 @@ public class HydrazinePathFinder {
         return updatePath(nextPath);
     }
 
-    private void processNode(HydrazinePathPoint current) {
-        current.first(true);
+    private void processNode(Node current) {
+        current.visited(true);
 
         final Vec3i coords = current.key;
-        final HydrazinePathPoint
+        final Node
                 west = cachedPassiblePointNear(coords.x - 1, coords.y, coords.z, coords),
                 east = cachedPassiblePointNear(coords.x + 1, coords.y, coords.z, coords),
                 north = cachedPassiblePointNear(coords.x, coords.y, coords.z - 1, coords),
@@ -613,7 +599,7 @@ public class HydrazinePathFinder {
                 westBounds = blockBounds(coords, -1, 0, 0);
 
             final float actualSizeSquared = this.actualSize * this.actualSize;
-            final HydrazinePathPoint[] pointOptions = {
+            final Node[] pointOptions = {
                     westBounds == null || northBounds == null || westBounds.mg2(northBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y, coords.z - 1, coords) : null,
                     eastBounds == null || southBounds == null || eastBounds.mg2(southBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y, coords.z + 1, coords) : null,
                     eastBounds == null || northBounds == null || eastBounds.mg2(northBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y, coords.z - 1, coords) : null,
@@ -648,10 +634,10 @@ public class HydrazinePathFinder {
         return result;
     }
 
-    private boolean applyPointOptions(HydrazinePathPoint current, HydrazinePathPoint... pointOptions) {
+    private boolean applyPointOptions(Node current, Node... pointOptions) {
         boolean found = false;
-        for (HydrazinePathPoint alternative : pointOptions) {
-            if (impassible(alternative) || alternative.first() || HydrazinePathPoint.squareDelta(alternative, this.target) >= this.searchRangeSquared)
+        for (Node alternative : pointOptions) {
+            if (impassible(alternative) || alternative.visited() || Node.squareDelta(alternative, this.target) >= this.searchRangeSquared)
                 continue;
 
             found = true;
@@ -660,47 +646,26 @@ public class HydrazinePathFinder {
         return found;
     }
 
-    private boolean impassible(HydrazinePathPoint alternative) {
+    private boolean impassible(Node alternative) {
         return alternative == null || impassible(alternative.passibility());
     }
 
-    private HydrazinePathPoint cachedPointAt(int x, int y, int z)
-    {
-        final Vec3i coords = new Vec3i(x, y, z);
-        return cachedPointAt(coords);
+    private Node cachedPassiblePointNear(final int x0, final int y0, final int z0) {
+        return cachedPassiblePointNear(x0, y0, z0, null);
     }
 
-    private HydrazinePathPoint cachedPointAt(Vec3i coords) {
-        HydrazinePathPoint point = this.nodeMap.get(coords);
-
-        if (point == null)
-            this.nodeMap.put(coords, point = new HydrazinePathPoint(coords));
-
-        return point;
-    }
-
-    private HydrazinePathPoint cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
+    private Node cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
         final Vec3i coords0 = new Vec3i(x0, y0, z0);
-        return cachedPassiblePointNear(coords0, origin);
-    }
-
-    private HydrazinePathPoint cachedPassiblePointNear(Vec3i coords, Vec3i origin) {
-        HydrazinePathPoint point = this.nodeMap.get(coords);
-
-        if (point == null) {
-            point = passiblePointNear(coords, origin);
-            if (point != null)
-                this.nodeMap.put(coords, point);
-        }
-
-        if (point != null && origin != null && unreachableFromSource(origin, coords))
+        final Node result = this.nodeMap.cachedPassiblePointNear(coords0, origin);
+        if (result != null && origin != null && unreachableFromSource(origin, coords0))
             return null;
 
-        return point;
+        return result;
     }
 
-    protected HydrazinePathPoint passiblePointNear(Vec3i coords0, Vec3i origin) {
-        final HydrazinePathPoint point;
+    @Override
+    public Node passiblePointNear(Vec3i coords0, Vec3i origin) {
+        final Node point;
         final IOcclusionProvider op = this.occlusionProvider;
         final int
             x0 = coords0.x,
@@ -815,14 +780,14 @@ public class HydrazinePathFinder {
         if (impassible(passibility))
             return null;
 
-        point = new HydrazinePathPoint(new Vec3i(x0, minY + round(minPartY), z0));
+        point = new Node(new Vec3i(x0, minY + round(minPartY), z0));
         point.passibility(passibility);
 
         return point;
     }
 
     protected final boolean unreachableFromSource(Vec3i current, Vec3i target) {
-        final HydrazinePathPoint source = this.source;
+        final Node source = this.source;
         return source != null && current.equals(source.key) && this.unreachableFromSource.contains(target);
     }
 
@@ -1042,7 +1007,7 @@ public class HydrazinePathFinder {
         applySubject();
         updateFieldWindow(x, z, tx, tz, false);
 
-        final HydrazinePathPoint point = cachedPassiblePointNear(tx, ty, tz, null);
+        final Node point = this.nodeMap.cachedPassiblePointNear(tx, ty, tz);
         if (point == null)
             return Pair.Sealed.of(Passibility.impassible, null);
 

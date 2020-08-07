@@ -19,7 +19,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(1, 0, 0);
         solid(1, 3, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNotNull(actual);
         assertEquals(Passibility.passible, actual.passibility());
         assertEquals(1, actual.key.y);
@@ -32,7 +32,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(1, 0, 0);
         solid(1, 1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNull(actual);
     }
 
@@ -41,7 +41,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(1, 0, 0);
         solid(1, 2, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNull(actual);
     }
 
@@ -51,7 +51,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         slabUp(1, 1, 0);
         solid(1, -1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNull(actual);
     }
 
@@ -63,7 +63,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         clear(1, -1, 0);
         solid(1, -2, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNull(actual);
     }
 
@@ -76,7 +76,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         clear(0, 1, 1);
         slabUp(0, 2, 1);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(0, 0, 1), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(0, 0, 1), ORIGIN);
         assertEquals(1, actual.key.y);
     }
 
@@ -93,7 +93,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, -1, 0);
         solid(1, -1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
 
         assertNotNull(actual);
         assertEquals(4, actual.key.y);
@@ -113,7 +113,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, -1, 0);
         solid(1, -1, 1);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 1), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 1), ORIGIN);
 
         assertNull(actual);
     }
@@ -128,7 +128,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         longFence(1, 1, 1);
         pos(0, 1, 1);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 1, 0), new Vec3i(0, 1, 1));
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 1, 0), new Vec3i(0, 1, 1));
 
         assertNotNull(actual);
         assertEquals(new Vec3i(1, 1, 0), actual.key);
@@ -146,7 +146,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, -1, 0);
         solid(1, -1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
 
         assertNotNull(actual);
         assertEquals(4, actual.key.y);
@@ -159,7 +159,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, 0, 1);
         solid(0, 1, 1);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(0, 1, 1), new Vec3i(0, 1, 0));
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(0, 1, 1), new Vec3i(0, 1, 0));
 
         assertNull(actual);
     }
@@ -170,7 +170,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, 0, 1);
         slabDown(0, 1, 1);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(0, 1, 1), new Vec3i(0, 1, 0));
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(0, 1, 1), new Vec3i(0, 1, 0));
 
         assertNotNull(actual);
         assertEquals(2, actual.key.y);
@@ -189,7 +189,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, -1, 0);
         solid(1, -1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
 
         assertNull(actual);
     }
@@ -206,7 +206,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, -1, 0);
         solid(1, -1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
 
         assertNotNull(actual);
         assertEquals(4, actual.key.y);
@@ -221,7 +221,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         solid(0, -1, 0);
         solid(1, -2, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 1, 0), new Vec3i(0, 1, 0));
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 1, 0), new Vec3i(0, 1, 0));
 
         assertNotNull(actual);
         assertEquals(Passibility.risky, actual.passibility());
@@ -232,7 +232,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     public void safeFall() {
         solid(1, -1, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNotNull(actual);
         assertEquals(Passibility.passible, actual.passibility());
     }
@@ -243,7 +243,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         cautious(false);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNotNull(actual);
         assertEquals(Passibility.risky, actual.passibility());
     }
@@ -254,7 +254,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         cautious(false);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNotNull(actual);
         assertEquals(Passibility.risky, actual.passibility());
     }
@@ -265,7 +265,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         cautious(false);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNotNull(actual);
         assertEquals(Passibility.dangerous, actual.passibility());
     }
@@ -281,7 +281,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         diver();
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertNotNull(actual);
         assertEquals(0, actual.key.y);
     }
@@ -295,7 +295,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         diver();
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertEquals(Passibility.risky, actual.passibility());
         assertEquals(0, actual.key.y);
     }
@@ -309,7 +309,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         diver();
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertEquals(Passibility.risky, actual.passibility());
         assertEquals(13, actual.key.y);
     }
@@ -323,7 +323,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         diver();
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
         assertEquals(Passibility.risky, actual.passibility());
         assertEquals(-4, actual.key.y);
     }
@@ -340,7 +340,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         clear(1, 1, 0);
         clear(1, 2, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
 
         assertNull(actual);
     }
@@ -357,7 +357,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         clear(1, 1, 0);
         clear(1, 2, 0);
 
-        final HydrazinePathPoint actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
+        final Node actual = pathFinder.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN);
 
         assertEquals(Passibility.passible, actual.passibility());
         assertEquals(new Vec3i(1, 1, 0), actual.key);
@@ -480,17 +480,19 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertPath(path,
                 new Vec3i(0, 0, 0),
                 new Vec3i(0, 0, 1),
-                new Vec3i(0, 0, 2)
+                new Vec3i(0, 0, 2),
+                new Vec3i(0, 0, 3),
+                new Vec3i(0, 0, 4),
+                new Vec3i(0, 0, 5)
         );
 
         pos(0, 0, 2);
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
-            new Vec3i(0, 0, 0),
-            new Vec3i(0, 0, 1),
             new Vec3i(0, 0, 2),
             new Vec3i(0, 0, 3),
-            new Vec3i(0, 0, 4)
+            new Vec3i(0, 0, 4),
+            new Vec3i(0, 0, 5)
         );
         pos(0, 0, 4);
         this.pathFinder.schedulingPriority(SchedulingPriority.high);
