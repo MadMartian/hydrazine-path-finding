@@ -110,9 +110,9 @@ public class HydrazinePathFinder {
         if (sourcePos.subOf(x, y, z).mg2() > rangeSquared)
             return null;
 
-        updateDestination(x, y, z);
+        final boolean initiate = updateDestination(x, y, z) && this.queue.isEmpty();
 
-        if (!graphTimeout() && (reachedTarget() || triageTimeout() || destinationDeviatedFromTarget()))
+        if (!graphTimeout() && (initiate || reachedTarget() || triageTimeout() || destinationDeviatedFromTarget()))
             resetTriage();
 
         return triage(this.initComputeIterations);
@@ -434,21 +434,40 @@ public class HydrazinePathFinder {
         return candidate;
     }
 
-    private void updateDestination(double x, double y, double z) {
+    private boolean updateDestination(double x, double y, double z) {
         if (this.destinationPosition != null) {
             final Vec3d destinationPosition = this.destinationPosition;
+            final boolean modified = differs(x, y, z, destinationPosition);
             destinationPosition.x = x;
             destinationPosition.y = y;
             destinationPosition.z = z;
-        } else
+            return modified;
+        } else {
             this.destinationPosition = new Vec3d(x, y, z);
+            return true;
+        }
     }
 
-    private void updateDestination(com.extollit.linalg.immutable.Vec3d coordinates) {
-        if (this.destinationPosition != null)
+    private boolean updateDestination(com.extollit.linalg.immutable.Vec3d coordinates) {
+        if (this.destinationPosition != null) {
+            final boolean modified = differs(coordinates, this.destinationPosition);
             this.destinationPosition.set(coordinates);
-        else
+            return modified;
+        } else {
             this.destinationPosition = new Vec3d(coordinates);
+            return true;
+        }
+    }
+
+    private static boolean differs(com.extollit.linalg.immutable.Vec3d a, Vec3d b) {
+        return differs(a.x, a.y, a.z, b);
+    }
+
+    private static boolean differs(final double x, final double y, final double z, Vec3d other) {
+        return
+            floor(other.x) != floor(x) ||
+            floor(other.y) != floor(y) ||
+            floor(other.z) != floor(z);
     }
 
     private boolean reachedTarget() {
