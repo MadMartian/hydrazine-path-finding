@@ -14,7 +14,7 @@ import java.util.Random;
 import static com.extollit.num.FastMath.*;
 
 public final class PathObject implements Iterable<Vec3i> {
-    private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(2, 4);
+    private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(1, 2);
 
     final Vec3i[] points;
     private final float speed;
@@ -143,10 +143,10 @@ public final class PathObject implements Iterable<Vec3i> {
                     targetIndex = advanceTargetIndex;
                 else
                     targetIndex = adjacentIndex + 1;
-            } else if (minDistanceSquared > 0.5)
+            } else if (minDistanceSquared > 0.5 || targetIndex < this.taxiUntil)
                 targetIndex = adjacentIndex;
 
-            mutated = this.adjacentIndex != adjacentIndex;
+            mutated = adjacentIndex > this.adjacentIndex;
             this.adjacentIndex = adjacentIndex;
             this.i = Math.max(adjacentIndex, targetIndex);
 
@@ -156,15 +156,18 @@ public final class PathObject implements Iterable<Vec3i> {
                 else
                     this.taxiUntil++;
 
-                this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
+                this.nextDirectLineTimeout += DIRECT_LINE_TIME_LIMIT.next(this.random);
             }
 
             final Vec3i point = done() ? last() : current();
             if (point != null)
                 subject.moveTo(positionFor(subject, point));
         } finally {
-            if (mutated || this.lastMutationTime < 0)
+            if (mutated || this.lastMutationTime < 0) {
                 this.lastMutationTime = subject.age() * this.speed;
+                if (this.nextDirectLineTimeout > DIRECT_LINE_TIME_LIMIT.max)
+                    this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
+            }
         }
     }
 

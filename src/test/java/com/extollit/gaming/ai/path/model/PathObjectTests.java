@@ -11,8 +11,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,12 +63,23 @@ public class PathObjectTests {
 
     @Mock private IPathingEntity pathingEntity;
 
+    private int time;
+
     @Before
     public void setup() {
         when(pathingEntity.width()).thenReturn(0.6f);
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(0.5, 0, 0.5));
 
         pathAlpha.i = pathBeta.i = 0;
+        this.time = 0;
+    }
+
+    private void pos(double x, double y, double z) {
+        when(pathingEntity.coordinates()).thenReturn(new Vec3d(x, y, z));
+    }
+    private void tick(int delta) {
+        this.time += delta;
+        when(pathingEntity.age()).thenReturn(this.time);
     }
 
     @Test
@@ -81,14 +91,14 @@ public class PathObjectTests {
                 new Vec3i(2, 0, 0),
                 new Vec3i(2, 0, 1)
         );
-        when(pathingEntity.age()).thenReturn(42);
+        tick(42);
         assertEquals(0, pathObject.stagnantFor(pathingEntity), 0.01);
 
         pathObject.update(pathingEntity);
-        when(pathingEntity.age()).thenReturn(94);
+        tick(52);
         assertEquals(94 - 42, pathObject.stagnantFor(pathingEntity), 0.01);
 
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(2.5, 0.2, 1.5));
+        pos(2.5, 0.2, 1.5);
 
         pathObject.update(pathingEntity);
 
@@ -130,7 +140,7 @@ public class PathObjectTests {
                 new Vec3i(6, 0, 2),
                 new Vec3i(6, 0, 3)
         );
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(4.5, 0, 1.5));
+        pos(4.5, 0, 1.5);
 
         pathObject.update(pathingEntity);
 
@@ -147,7 +157,7 @@ public class PathObjectTests {
                 new Vec3i(9, 4, 7)
         );
         when(pathingEntity.width()).thenReturn(0.3f);
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(6.5, 4.1, 7.5));
+        pos(6.5, 4.1, 7.5);
 
         pathObject.update(pathingEntity);
 
@@ -254,14 +264,14 @@ public class PathObjectTests {
                 new Vec3i(4, 0, 0),
                 new Vec3i(5, 0, 0)
         );
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(3.5, 0 ,0.5));
+        pos(3.5, 0, 0.5);
         pathObject.update(pathingEntity);
 
         assertEquals(4, pathObject.i);
         verify(pathingEntity).moveTo(new Vec3d(5.5, 0, 0.5));
 
-        when(pathingEntity.age()).thenReturn(100);
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(3.5, 0 ,1.5));
+        tick(100);
+        pos(3.5, 0, 1.5);
 
         pathObject.update(pathingEntity);
 
@@ -286,7 +296,7 @@ public class PathObjectTests {
                 new Vec3i(0, 4, 10)
         );
 
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(-1.5, 4, 11.5));
+        pos(-1.5, 4, 11.5);
         path.update(pathingEntity);
         final int first = path.i;
 
@@ -317,10 +327,10 @@ public class PathObjectTests {
                 new Vec3i(11, 4, 7),
                 new Vec3i(10, 4, 7)
         );
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(13.5, 4, 6.5));
+        pos(13.5, 4, 6.5);
         path.update(pathingEntity);
 
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(11.4, 5, 7.3));
+        pos(11.4, 5, 7.3);
         path.update(pathingEntity);
 
         assertEquals(4, path.i);
@@ -330,7 +340,7 @@ public class PathObjectTests {
     public void disparatePathAdjustment() {
         pathAlpha.i = 11;
 
-        when(pathingEntity.coordinates()).thenReturn(new Vec3d(-9.5, 38.0, 1.5));
+        pos(-9.5, 38.0, 1.5);
         pathBeta.adjustPathPosition(pathAlpha, pathingEntity);
 
         assertEquals(10, pathBeta.i);
@@ -340,5 +350,58 @@ public class PathObjectTests {
     public void unreachablePath() {
         pathAlpha.i = 11;
         assertFalse(pathBeta.reachableFrom(pathAlpha));
+    }
+
+    @Test
+    public void fatOscillatingTaxi() {
+        PathObject path = new PathObject(
+                1,
+                new Vec3i(2, 4, 0),
+                new Vec3i(2, 4, 1),
+                new Vec3i(3, 4, 1),
+                new Vec3i(4, 4, 1),
+                new Vec3i(4, 4, 0),
+                new Vec3i(4, 4, -1),
+                new Vec3i(5, 4, -1),
+                new Vec3i(6, 4, -1)
+        );
+
+        pos(2.1, 4, 0.5);
+        path.update(pathingEntity);
+        assertEquals(1, path.i);
+
+        tick(1);
+
+        pos(2.1, 4, 1.3);
+        path.update(pathingEntity);
+
+        assertEquals(3, path.i);
+
+        tick(1);
+
+        pos(2.1, 4, 0.9);
+        path.update(pathingEntity);
+        assertEquals(1, path.i);
+
+        tick(1);
+
+        pos(2.1, 4, 1.3);
+        path.update(pathingEntity);
+
+        assertEquals(3, path.i);
+
+        tick(1);
+
+        pos(2.1, 4, 0.9);
+        path.update(pathingEntity);
+        assertEquals(1, path.i);
+
+        tick(1);
+
+        pos(2.1, 4, 1.3);
+        path.update(pathingEntity);
+
+        assertTrue(path.taxiing());
+        assertEquals(2, path.i);
     }
 }

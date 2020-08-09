@@ -102,15 +102,20 @@ public interface IConfigModel {
     /**
      * Hydrazine tries to optimize pathing by telling entities to move to the furthest path point in a path from its
      * current position that is a straight and continuous direct line.  Sometimes entities will still get stuck because
-     * Hydrazine only checks for taxi-cab clearance between path points, it's reasonable to assume (for most casess)
+     * Hydrazine only checks for taxi-cab clearance between path points, it's reasonable to assume (for most cases)
      * that if the taxi-cab path is clear then the associated direct line covering them is also clear.  Furthermore,
-     * this assumption is made in real-life scenarios as well and suffers the same erroneous (and acceptable) judgement.
+     * this assumption is made in real-life scenarios as well and suffers the same erroneous (and acceptable) judgement,
+     * which would be even more pronounced for dumb creatures such as monsters or animals.
      *
      * This property is the minimum and maximum path time that an entity may remain stuck at some path-point until
      * the engine removes the direct path shortcut and tells the entity to move to the path point immediately adjacent
      * to its current position instead.
      *
-     * @return the pre-configured minimum and maximum time-limit in path time units to cope with direct-line optimization errors
+     * The time an entity has been stuck is relative, it is taken from the age of the entity and scaled by its path
+     * movement speed.
+     *
+     * @return the pre-configured minimum and maximum time-limit in path time units to cope with direct-line
+     *          optimization errors
      */
     FloatRange directLineTimeLimit();
 
