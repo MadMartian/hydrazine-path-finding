@@ -33,7 +33,9 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
     private final SortedPointQueue queue = new SortedPointQueue();
     private final NodeMap nodeMap = new NodeMap(this);
-    private final Set<Vec3i> unreachableFromSource = new HashSet<>(3);
+    private final Set<Vec3i>
+            unreachableFromSource = new HashSet<>(3),
+            closests = new HashSet<>();
     private final IPathingEntity subject;
     private final IInstanceSpace instanceSpace;
 
@@ -219,6 +221,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
         setTargetFor(source);
 
+        this.closests.clear();
         this.nodeMap.reset(this.queue);
         this.queue.add(source);
         this.closest = null;
@@ -496,6 +499,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
     public void reset() {
         this.currentPath = null;
+        this.closests.clear();
         this.queue.clear();
         this.nodeMap.clear();
         this.unreachableFromSource.clear();
@@ -550,18 +554,27 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
         while (!queue.isEmpty() && iterations-- > 0) {
             if (!queue.nextContains(currentPathPoint)) {
-                final Node source = this.nodeMap.cachedPassiblePointNear(currentPathPoint);
+                final Node source = this.current = this.nodeMap.freshened(this.current);
                 this.queue.trimFrom(source, this.nodeMap);
                 continue;
             }
 
-            final Node current = queue.dequeue();
+            final Node
+                current = queue.dequeue(),
+                closest = this.closest = this.nodeMap.freshened(this.closest),
+                target = this.target = this.nodeMap.freshened(this.target);
 
-            if (Node.deleted(this.closest) || this.closest.orphaned() || Node.squareDelta(current, this.target) < Node.squareDelta(this.closest, this.target))
+            if ((
+                    Node.deleted(closest)
+                    || closest.orphaned()
+                    || Node.squareDelta(current, target) < Node.squareDelta(this.closest, target)
+                ) && !this.closests.contains(current.key)) {
                 this.closest = current;
+                this.closests.add(current.key);
+            }
 
-            if (current == this.target) {
-                nextPath = PathObject.fromHead(this.capabilities.speed(), this.target);
+            if (current == target) {
+                nextPath = PathObject.fromHead(this.capabilities.speed(), target);
                 if (PathObject.active(nextPath)) {
                     nextPath.setRandomNumberGenerator(this.random);
                     this.queue.clear();
@@ -573,8 +586,15 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 processNode(current);
         }
 
-        if (nextPath == null && this.closest != null && !queue.isEmpty())
-            nextPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
+        this.current = this.nodeMap.freshened(this.current);
+        this.source = this.nodeMap.freshened(this.source);
+        this.target = this.nodeMap.freshened(this.target);
+
+        final Node
+            closest = this.closest = this.nodeMap.freshened(this.closest);
+
+        if (nextPath == null && closest != null && !queue.isEmpty())
+            nextPath = PathObject.fromHead(this.capabilities.speed(), closest);
 
         return updatePath(nextPath);
     }

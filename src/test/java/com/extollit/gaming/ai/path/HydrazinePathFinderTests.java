@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
+import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPathNot;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
@@ -592,6 +593,47 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
                 new Vec3i(2, 0, 7),
                 new Vec3i(1, 0, 7),
                 new Vec3i(0, 0, 7)
+        );
+    }
+
+    @Test
+    public void closestsOscillator() {
+        defaultGround();
+        pos(1, 0, 3);
+        PathObject path = pathFinder.initiatePathTo(2, 1, 3);
+        assertNotNull(path);
+
+        assertPath(path,
+            new Vec3i(1, 0, 3),
+            new Vec3i(2, 0, 3)
+        );
+
+        pos(2, 0, 3);
+        path = pathFinder.updatePathFor(this.pathingEntity);
+
+        assertPathNot(path,
+            new Vec3i(2, 0, 3),
+            new Vec3i(1, 0, 3)
+        );
+    }
+
+    @Test
+    public void closestsDeterminism() {
+        defaultGround();
+        pos(1, 0, 3);
+        PathObject path = pathFinder.initiatePathTo(2, 1, 3);
+        assertNotNull(path);
+
+        assertPath(path,
+                new Vec3i(1, 0, 3),
+                new Vec3i(2, 0, 3)
+        );
+
+        path = pathFinder.updatePathFor(this.pathingEntity);
+
+        assertPath(path,
+                new Vec3i(1, 0, 3),
+                new Vec3i(2, 0, 3)
         );
     }
 }

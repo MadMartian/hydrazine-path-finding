@@ -47,6 +47,16 @@ public final class NodeMap {
         return point;
     }
 
+    public Node freshened(Node node) {
+        if (node == null)
+            return null;
+
+        if (node.deleted())
+            return this.it.get(node.key);
+        else
+            return node;
+    }
+
     public Node cachedPassiblePointNear(int x, int y, int z) {
         return cachedPassiblePointNear(x, y, z, null);
     }
