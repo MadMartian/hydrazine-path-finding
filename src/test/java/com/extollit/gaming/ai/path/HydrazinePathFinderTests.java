@@ -636,4 +636,36 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
                 new Vec3i(2, 0, 3)
         );
     }
+
+    @Test
+    public void fenceDownToHighUp() {
+        solid(3, 3, 0);
+        solid(3, 2, 0);
+        solid(3, 1, 0);
+        solid(3, 0, 0);
+
+        latFence(2, 1, 0);
+
+        pos(2, 3, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(3, 4, 0);
+        assertNull(path);
+    }
+
+    @Test
+    public void fenceDownButGood() {
+        solid(3, 2, 0);
+        solid(3, 1, 0);
+        solid(3, 0, 0);
+
+        latFence(2, 1, 0);
+
+        pos(2, 3, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(3, 3, 0);
+        assertPath(path,
+                new Vec3i(2, 3, 0),
+                new Vec3i(3, 3, 0)
+        );
+    }
 }

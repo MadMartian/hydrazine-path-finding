@@ -885,8 +885,19 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             return -0.5f;
 
         final IBlockObject block = this.instanceSpace.blockObjectAt(x, y, z);
-        if (!block.isImpeding())
+        if (!block.isImpeding()) {
+            if (Element.earth.in(flags)) {
+                final IBlockObject blockBelow = this.instanceSpace.blockObjectAt(x, y - 1, z);
+                if (!blockBelow.isFullyBounded()) {
+                    float offset = (float) blockBelow.bounds().max.y - 2;
+                    if (offset < -1)
+                        offset = 0;
+
+                    return offset;
+                }
+            }
             return 0;
+        }
 
         return (float)block.bounds().max.y - 1;
     }

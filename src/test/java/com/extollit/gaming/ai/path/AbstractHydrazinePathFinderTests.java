@@ -141,17 +141,18 @@ abstract class AbstractHydrazinePathFinderTests {
     }
 
     protected void fence(AxisAlignedBBox bounds, final int x, final int y, final int z) {
-        IBlockObject block = mock(IBlockObject.class);
+        IBlockObject
+            blockBelow = mock(IBlockObject.class),
+            blockAbove = mock(IBlockObject.class);
 
         fuzzy(x, y, z);
-        when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(block);
-        when(block.bounds()).thenReturn(bounds);
-        when(block.isImpeding()).thenReturn(true);
+        when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(blockBelow);
+        when(blockBelow.bounds()).thenReturn(bounds);
+        when(blockBelow.isImpeding()).thenReturn(true);
 
         fuzzy(x, y + 1, z);
-        when(instanceSpace.blockObjectAt(x, y + 1, z)).thenReturn(block);
-        when(block.bounds()).thenReturn(bounds);
-        when(block.isImpeding()).thenReturn(true);
+        when(instanceSpace.blockObjectAt(x, y + 1, z)).thenReturn(blockAbove);
+        when(blockAbove.isImpeding()).thenReturn(false);
     }
 
     protected void defaultGround() {
