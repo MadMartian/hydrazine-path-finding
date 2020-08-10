@@ -677,7 +677,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private Node cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
         final Vec3i coords0 = new Vec3i(x0, y0, z0);
         final Node result = this.nodeMap.cachedPassiblePointNear(coords0, origin);
-        if (result != null && origin != null && unreachableFromSource(origin, coords0))
+        if (Node.passible(result) && origin != null && unreachableFromSource(origin, coords0))
             return null;
 
         return result;
@@ -1039,9 +1039,6 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         updateFieldWindow(x, z, tx, tz, false);
 
         final Node point = this.nodeMap.cachedPassiblePointNear(tx, ty, tz);
-        if (point == null)
-            return Pair.Sealed.of(Passibility.impassible, null);
-
         return Pair.Sealed.of(point.passibility(), point.key);
     }
 }

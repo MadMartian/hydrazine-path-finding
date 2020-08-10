@@ -75,23 +75,23 @@ public final class NodeMap {
         final Node point0 = nodeMap.get(coords);
         Node point = point0;
 
-        if (point == null)
+        if (point == null) {
             point = this.calculator.passiblePointNear(coords, origin);
-        else if (point.deleted())
+            if (point == null)
+                point = new Node(coords, Passibility.impassible);
+        } else if (point.deleted())
             point = point.pointCopy();
 
-        if (point != null) {
-            if (!coords.equals(point.key)) {
-                final Node existing = nodeMap.get(point.key);
-                if (Node.deleted(existing))
-                    nodeMap.put(point.key, point);
-                else
-                    point = existing;
-            }
-
-            if (point != point0)
-                nodeMap.put(coords, point);
+        if (!coords.equals(point.key)) {
+            final Node existing = nodeMap.get(point.key);
+            if (Node.deleted(existing))
+                nodeMap.put(point.key, point);
+            else
+                point = existing;
         }
+
+        if (point != point0)
+            nodeMap.put(coords, point);
 
         return point;
     }

@@ -33,7 +33,7 @@ public class Node {
         unassign();
     }
 
-    private Node(Vec3i key, Passibility passibility) {
+    public Node(Vec3i key, Passibility passibility) {
         this.key = key;
         reset(passibility);
     }
@@ -191,6 +191,9 @@ public class Node {
 
     public static boolean deleted(Node node) {
         return node == null || node.deleted();
+    }
+    public static boolean passible(Node node) {
+        return node != null && node.passibility().betterThan(Passibility.impassible);
     }
 
     @Override
