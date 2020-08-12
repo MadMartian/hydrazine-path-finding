@@ -668,4 +668,28 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
                 new Vec3i(3, 3, 0)
         );
     }
+
+    @Test
+    public void clearanceForFireMonster() {
+        when(capabilities.fireResistant()).thenReturn(true);
+
+        final Passibility
+                firePassibility = pathFinder.clearance(Element.fire.mask),
+                waterPassibility = pathFinder.clearance(Element.water.mask);
+
+        assertEquals(Passibility.risky, firePassibility);
+        assertEquals(Passibility.dangerous, waterPassibility);
+    }
+
+    @Test
+    public void clearanceForRegularMonster() {
+        when(capabilities.fireResistant()).thenReturn(false);
+
+        final Passibility
+            firePassibility = pathFinder.clearance(Element.fire.mask),
+            waterPassibility = pathFinder.clearance(Element.water.mask);
+
+        assertEquals(Passibility.dangerous, firePassibility);
+        assertEquals(Passibility.risky, waterPassibility);
+    }
 }

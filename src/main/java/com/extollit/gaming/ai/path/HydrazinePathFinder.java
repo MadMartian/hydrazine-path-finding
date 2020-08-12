@@ -947,7 +947,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return impassible(flags) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
     }
 
-    private Passibility clearance(byte flags) {
+    Passibility clearance(byte flags) {
         if (Element.earth.in(flags))
             if (Logic.ladder.in(flags))
                 return Passibility.passible;
@@ -956,9 +956,9 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             else
                 return Passibility.impassible;
         else if (Element.water.in(flags))
-            return Passibility.risky;
+            return this.capabilities.fireResistant() ? Passibility.dangerous : Passibility.risky;
         else if (Element.fire.in(flags))
-            return Passibility.dangerous;
+            return this.capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
         else
             return Passibility.passible;
     }
