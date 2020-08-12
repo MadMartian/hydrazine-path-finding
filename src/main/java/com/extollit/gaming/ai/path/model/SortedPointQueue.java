@@ -64,7 +64,6 @@ public final class SortedPointQueue {
                     point.length(length);
                     point.journey(length + point.delta());
                 }
-                assert !head.deleted();
                 head.index(i.previousIndex());
             } else {
                 i.remove();
@@ -198,8 +197,8 @@ public final class SortedPointQueue {
         originalPoint.index(index);
     }
 
-    public boolean appendTo(Node point, Node parent, Node target) {
-        return appendTo(point, parent, (int)Math.sqrt(squareDelta(point, target)));
+    public boolean appendTo(Node point, Node parent, Vec3i targetPoint) {
+        return appendTo(point, parent, (int)Math.sqrt(squareDelta(point, targetPoint)));
     }
 
     public boolean appendTo(Node point, Node parent, final int remaining) {

@@ -11,7 +11,8 @@ public class Node {
         BitWidth_128 = 7,
         Mask_Passibility = (byte)(3),
         Index_BitOffs = 2,
-        Length_BitOffs = (byte)(Index_BitOffs + BitWidth_4K),
+        Volatile_BitOffs = (byte)(Index_BitOffs + BitWidth_4K),
+        Length_BitOffs = (byte)(Volatile_BitOffs + 1),
         Delta_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
         Journey_BitOffs = (byte)(Delta_BitOffs + BitWidth_128),
         Visited_BitOffs = (byte)(Journey_BitOffs + BitWidth_128),
@@ -34,12 +35,25 @@ public class Node {
     }
 
     public Node(Vec3i key, Passibility passibility) {
+        this(key, passibility, false);
+    }
+
+    public Node(Vec3i key, Passibility passibility, boolean volatility) {
         this.key = key;
-        reset(passibility);
+        reset(passibility, volatility);
+    }
+
+    private Node(Node copy) {
+        this.key = copy.key;
+        this.word = wordReset(copy);
+    }
+
+    private static long wordReset(Node copy) {
+        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs))) | (Mask_4K << Index_BitOffs);
     }
 
     final Node pointCopy() {
-        return new Node(this.key, passibility());
+        return new Node(this);
     }
 
     public final byte length() {
@@ -91,11 +105,11 @@ public class Node {
     }
 
     final void reset() {
-        reset(passibility());
+        this.word = wordReset(this);
         orphan();
     }
-    private void reset(Passibility passibility) {
-        this.word = (Mask_4K << Index_BitOffs) | ((long)passibility.ordinal() & Mask_Passibility);
+    private void reset(Passibility passibility, boolean volatility) {
+        this.word = (Mask_4K << Index_BitOffs) | ((long)passibility.ordinal() & Mask_Passibility) | ((volatility ? 1L : 0L) << Volatile_BitOffs);
     }
 
     final boolean deleted() {
@@ -121,13 +135,19 @@ public class Node {
     public final void visited(boolean flag) {
         this.word = (this.word & ~(1L << Visited_BitOffs)) | ((flag ? 1L : 0L) << Visited_BitOffs);
     }
+    public final boolean volatile_() {
+        return ((this.word >> Volatile_BitOffs) & 1L) == 1L;
+    }
+    public final void volatile_(boolean flag) {
+        this.word = (this.word & ~(1L << Volatile_BitOffs)) | ((flag ? 1L : 0L) << Volatile_BitOffs);
+    }
 
     public final boolean assigned() {
         return index() != -1;
     }
 
-    public boolean target(Node target) {
-        final long distance = (long)Math.sqrt(squareDelta(this, target));
+    public boolean target(Vec3i targetPoint) {
+        final long distance = (long)Math.sqrt(squareDelta(this, targetPoint));
         if (distance > Mask_128)
             return false;
 
@@ -166,9 +186,12 @@ public class Node {
     }
 
     public static int squareDelta(Node left, Node right) {
+        return squareDelta(left, right.key);
+    }
+
+    public static int squareDelta(Node left, Vec3i rightCoords) {
         final Vec3i
-                leftCoords = left.key,
-                rightCoords = right.key;
+                leftCoords = left.key;
 
         final int
                 dx = leftCoords.x - rightCoords.x,
@@ -202,8 +225,10 @@ public class Node {
         final short index = index();
         if (deleted())
             sb.append('*');
+        if (volatile_())
+            sb.append('!');
         if (visited())
-            sb.append('V');
+            sb.insert(0, '|');
 
         if (index == -1)
             sb.append(" (unassigned)");

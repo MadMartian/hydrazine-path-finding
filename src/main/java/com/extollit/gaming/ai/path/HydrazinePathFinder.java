@@ -45,7 +45,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private IOcclusionProvider occlusionProvider;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private Node current, source, target, closest;
+    private Node current, closest;
+    private Vec3i sourcePoint, targetPoint;
     private int cx0, cxN, cz0, czN, discreteSize, tall, initComputeIterations, periodicComputeIterations;
     private int failureCount;
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
@@ -82,7 +83,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
     public final Vec3i trackingDestination() {
         if (this.destinationEntity != null && this.destinationPosition != null) {
-            final Node pointAtDestination = pointAtDestination();
+            final Node pointAtDestination = pathAtDestination();
             if (impassible(pointAtDestination))
                 return null;
             else
@@ -90,7 +91,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         } else
             return null;
     }
-    public final Vec3i currentTarget() { return this.target == null ? null : this.target.key; }
+    public final Vec3i currentTarget() { return this.targetPoint == null ? null : this.targetPoint; }
 
     public PathObject trackPathTo(IDynamicMovableObject target) {
         this.destinationEntity = target;
@@ -149,14 +150,14 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
     private boolean destinationDeviatedFromTarget() {
         final com.extollit.linalg.mutable.Vec3d
-                dt = new com.extollit.linalg.mutable.Vec3d(this.target.key),
+                dt = new com.extollit.linalg.mutable.Vec3d(this.targetPoint),
                 dd = new com.extollit.linalg.mutable.Vec3d(destinationPosition);
 
         dd.x = floor(dd.x);
         dd.y = ceil(dd.y);
         dd.z = floor(dd.z);
 
-        final Vec3i source = this.source.key;
+        final Vec3i source = this.sourcePoint;
         dt.sub(source);
         dd.sub(source);
 
@@ -213,11 +214,12 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
         applySubject();
 
-        final Node source = this.current = this.source = pointAtSource();
+        final Node source = this.current = pointAtSource();
+        final Vec3i sourcePoint = this.sourcePoint = source.key;
         source.length(0);
         source.orphan();
 
-        refinePassibility(source.key);
+        refinePassibility(sourcePoint);
 
         setTargetFor(source);
 
@@ -287,8 +289,12 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 destinationPosition = this.destinationPosition;
 
         int distance = Node.MAX_PATH_DISTANCE;
-        this.target = pointAtDestination();
-        while (distance > 0 && !source.target(this.target)) {
+        Node targetPath = pathAtDestination();
+        if (targetPath == null)
+            return;
+
+        this.targetPoint = targetPath.key;
+        while (distance > 0 && !source.target(targetPath.key)) {
             final Vec3d
                 v = new Vec3d(destinationPosition),
                 init = new Vec3d(source.key);
@@ -299,7 +305,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             v.normalize();
             v.mul(distance);
             v.add(init);
-            this.target = this.nodeMap.cachedPointAt(
+            targetPath = this.nodeMap.cachedPointAt(
                 floor(v.x),
                 ceil(v.y),
                 floor(v.z)
@@ -307,7 +313,9 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         }
 
         if (distance == 0)
-            source.target(this.target = this.source);
+            source.target((targetPath = source).key);
+
+        this.targetPoint = targetPath.key;
     }
 
     private void resetGraph() {
@@ -405,7 +413,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         }
     }
 
-    private Node pointAtDestination() {
+    private Node pathAtDestination() {
         final Vec3d destinationPosition = this.destinationPosition;
         if (destinationPosition == null)
             return null;
@@ -425,10 +433,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 z = floor(sourcePosition.z);
 
         Node candidate = cachedPassiblePointNear(x, y, z);
-        if (candidate == null) {
-            candidate = this.nodeMap.cachedPointAt(x, y, z);
-            candidate.passibility(Passibility.impassible);
-        }
+        if (impassible(candidate))
+            candidate.passibility(Passibility.passible);
         return candidate;
     }
 
@@ -469,7 +475,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     }
 
     private boolean reachedTarget() {
-        final boolean flag = this.target == null || this.source == this.target || this.current == this.target;
+        final Node current = this.current;
+        final boolean flag = this.targetPoint == null || current != null && current.key.equals(this.targetPoint);
         if (flag) {
             this.failureCount = 0;
             this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -503,10 +510,10 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         this.queue.clear();
         this.nodeMap.clear();
         this.unreachableFromSource.clear();
-        this.target =
-        this.source =
         this.closest = null;
         this.current = null;
+        this.targetPoint =
+        this.sourcePoint = null;
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
@@ -555,26 +562,26 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         while (!queue.isEmpty() && iterations-- > 0) {
             if (!queue.nextContains(currentPathPoint)) {
                 final Node source = this.current = this.nodeMap.freshened(this.current);
-                this.queue.trimFrom(source);
+                if (source != null)
+                    this.queue.trimFrom(source);
                 continue;
             }
 
             final Node
                 current = queue.dequeue(),
-                closest = this.closest = this.nodeMap.freshened(this.closest),
-                target = this.target = this.nodeMap.freshened(this.target);
+                closest = this.closest = this.nodeMap.freshened(this.closest);
 
             if ((
                     Node.deleted(closest)
                     || closest.orphaned()
-                    || Node.squareDelta(current, target) < Node.squareDelta(this.closest, target)
+                    || Node.squareDelta(current, this.targetPoint) < Node.squareDelta(this.closest, this.targetPoint)
                 ) && !this.closests.contains(current.key)) {
                 this.closest = current;
                 this.closests.add(current.key);
             }
 
-            if (current == target) {
-                nextPath = PathObject.fromHead(this.capabilities.speed(), target);
+            if (current.key.equals(this.targetPoint)) {
+                nextPath = PathObject.fromHead(this.capabilities.speed(), current);
                 if (PathObject.active(nextPath)) {
                     nextPath.setRandomNumberGenerator(this.random);
                     this.queue.clear();
@@ -587,8 +594,6 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         }
 
         this.current = this.nodeMap.freshened(this.current);
-        this.source = this.nodeMap.freshened(this.source);
-        this.target = this.nodeMap.freshened(this.target);
 
         final Node
             closest = this.closest = this.nodeMap.freshened(this.closest);
@@ -657,11 +662,11 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private boolean applyPointOptions(Node current, Node... pointOptions) {
         boolean found = false;
         for (Node alternative : pointOptions) {
-            if (impassible(alternative) || alternative.visited() || Node.squareDelta(alternative, this.target) >= this.searchRangeSquared)
+            if (impassible(alternative) || alternative.visited() || Node.squareDelta(alternative, this.targetPoint) >= this.searchRangeSquared)
                 continue;
 
             found = true;
-            this.queue.appendTo(alternative, current, target);
+            this.queue.appendTo(alternative, current, this.targetPoint);
         }
         return found;
     }
@@ -686,11 +691,11 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     @Override
     public Node passiblePointNear(Vec3i coords0, Vec3i origin) {
         final Node point;
-        final IOcclusionProvider op = this.occlusionProvider;
         final int
             x0 = coords0.x,
             y0 = coords0.y,
             z0 = coords0.z;
+        final FlagSampler sampler = new FlagSampler(this.occlusionProvider);
 
         final Vec3i d;
 
@@ -727,39 +732,40 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 int y = y0;
 
                 float partY = topOffsetAt(
+                    sampler,
                     x - d.x,
                     y - d.y - 1,
                     z - d.z
                 );
 
-                byte flags = op.elementAt(x, y, z);
+                byte flags = sampler.flagsAt(x, y, z);
                 if (impassible(flags)) {
                     final float partialDisparity = partY - topOffsetAt(flags, x, y++, z);
-                    flags = op.elementAt(x, y, z);
+                    flags = sampler.flagsAt(x, y, z);
 
                     if (partialDisparity < 0 || impassible(flags)) {
                         if (!hasOrigin)
-                            return null;
+                            return new Node(coords0, Passibility.impassible, sampler.volatility() > 0);
 
                         if (d.x * d.x + d.z * d.z <= 1) {
                             y -= d.y + 1;
 
                             do
-                                flags = op.elementAt(x - d.x, y++, z - d.z);
+                                flags = sampler.flagsAt(x - d.x, y++, z - d.z);
                             while (climbsLadders && Logic.climbable(flags));
                         }
 
-                        if (impassible(flags = op.elementAt(x, --y, z)) && (impassible(flags = op.elementAt(x, ++y, z)) || partY < 0))
-                            return null;
+                        if (impassible(flags = sampler.flagsAt(x, --y, z)) && (impassible(flags = sampler.flagsAt(x, ++y, z)) || partY < 0))
+                            return new Node(coords0, Passibility.impassible, sampler.volatility() > 0);
                     }
                 }
-                partY = topOffsetAt(x, y - 1, z);
+                partY = topOffsetAt(sampler, x, y - 1, z);
                 final int ys;
-                passibility = verticalClearanceAt(this.tall, flags, passibility, d, x, ys = y, z, partY);
+                passibility = verticalClearanceAt(sampler, this.tall, flags, passibility, d, x, ys = y, z, partY);
 
                 boolean swimable = false;
                 for (int j = 0; unstable(flags) && !(swimable = swimable(flags)) && j <= MAX_SURVIVE_FALL_DISTANCE; j++)
-                    flags = op.elementAt(x, --y, z);
+                    flags = sampler.flagsAt(x, --y, z);
 
                 if (swimable) {
                     final int cesaLimit = y + CESA_LIMIT;
@@ -767,7 +773,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                     byte flags0;
                     do {
                         flags0 = flags;
-                        flags = op.elementAt(x, ++y, z);
+                        flags = sampler.flagsAt(x, ++y, z);
                     } while (swimable(flags) && unstable(flags) && y < cesaLimit);
                     if (y >= cesaLimit) {
                         y -= CESA_LIMIT + 1;
@@ -779,7 +785,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 }
 
                 partY = topOffsetAt(flags, x, y++, z);
-                passibility = verticalClearanceAt(ys - y, op.elementAt(x, y, z), passibility, d, x, y, z, partY);
+                passibility = verticalClearanceAt(sampler, ys - y, sampler.flagsAt(x, y, z), passibility, d, x, y, z, partY);
 
                 if (y > minY) {
                     minY = y;
@@ -787,28 +793,29 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 } else if (y == minY && partY > minPartY)
                     minPartY = partY;
 
-                passibility = passibility.between(passibility(op.elementAt(x, y, z)));
+                passibility = passibility.between(passibility(sampler.flagsAt(x, y, z)));
                 if (impassible(passibility))
-                    return null;
+                    return new Node(coords0, Passibility.impassible, sampler.volatility() > 0);
             }
 
         if (hasOrigin && !impassible(passibility))
-            passibility = originHeadClearance(passibility, origin, minY, minPartY);
+            passibility = originHeadClearance(sampler, passibility, origin, minY, minPartY);
 
         passibility = fallingSafety(passibility, y0, minY);
 
         if (impassible(passibility))
-            return null;
+            passibility = Passibility.impassible;
 
         point = new Node(new Vec3i(x0, minY + round(minPartY), z0));
         point.passibility(passibility);
+        point.volatile_(sampler.volatility() > 0);
 
         return point;
     }
 
     protected final boolean unreachableFromSource(Vec3i current, Vec3i target) {
-        final Node source = this.source;
-        return source != null && current.equals(source.key) && this.unreachableFromSource.contains(target);
+        final Vec3i sourcePoint = this.sourcePoint;
+        return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(target);
     }
 
     private Passibility fallingSafety(Passibility passibility, int y0, int minY) {
@@ -822,8 +829,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return passibility;
     }
 
-    private Passibility verticalClearanceAt(int max, byte flags, Passibility passibility, Vec3i d, int x, int y, int z, float partY) {
-        final IOcclusionProvider op = this.occlusionProvider;
+    private Passibility verticalClearanceAt(FlagSampler sampler, int max, byte flags, Passibility passibility, Vec3i d, int x, int y, int z, float partY) {
         byte clearanceFlags = flags;
         final int
             yMax = y + max,
@@ -834,7 +840,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
              yt < yNa && yt < yMax;
 
-             clearanceFlags = op.elementAt(x, ++yt, z)
+             clearanceFlags = sampler.flagsAt(x, ++yt, z)
         )
             passibility = passibility.between(clearance(clearanceFlags));
 
@@ -844,8 +850,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return passibility;
     }
 
-    private Passibility originHeadClearance(Passibility passibility, Vec3i origin, int minY, float minPartY) {
-        final IOcclusionProvider op = this.occlusionProvider;
+    private Passibility originHeadClearance(FlagSampler sampler, Passibility passibility, Vec3i origin, int minY, float minPartY) {
         final int
             yN = minY + this.tall,
             yNa = yN + floor(minPartY);
@@ -853,12 +858,12 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         for (int x = origin.x, xN = origin.x + this.discreteSize; x < xN; ++x)
             for (int z = origin.z, zN = origin.z + this.discreteSize; z < zN; ++z)
                 for (int y = origin.y + this.tall; y < yNa; ++y)
-                    passibility = passibility.between(clearance(op.elementAt(x, y, z)));
+                    passibility = passibility.between(clearance(sampler.flagsAt(x, y, z)));
 
         if (yNa < yN)
             for (int x = origin.x, xN = origin.x + this.discreteSize; x < xN; ++x)
                 for (int z = origin.z, zN = origin.z + this.discreteSize; z < zN; ++z) {
-                    final byte flags = op.elementAt(x, yNa, z);
+                    final byte flags = sampler.flagsAt(x, yNa, z);
                     if (insufficientHeadClearance(flags, minPartY, x, yNa, z))
                         passibility = passibility.between(clearance(flags));
                 }
@@ -870,8 +875,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return bottomOffsetAt(flags, x, yN, z) + partialY0 > 0;
     }
 
-    private float topOffsetAt(int x, int y, int z) {
-        return topOffsetAt(occlusionProvider.elementAt(x, y, z), x, y, z);
+    private float topOffsetAt(FlagSampler sampler, int x, int y, int z) {
+        return topOffsetAt(sampler.flagsAt(x, y, z), x, y, z);
     }
 
     private float topOffsetAt(byte flags, int x, int y, int z) {
@@ -926,11 +931,11 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return this.capabilities.swimmer() && swimmingRequiredFor(flags) && (Element.water.in(flags) || this.capabilities.fireResistant());
     }
 
-    private boolean swimmingRequiredFor(byte flags) {
+    private static boolean swimmingRequiredFor(byte flags) {
         return Element.water.in(flags) || (Element.fire.in(flags) && !Logic.fuzzy.in(flags));
     }
 
-    private boolean unstable(byte flags) {
+    private static boolean unstable(byte flags) {
         return (!Element.earth.in(flags) || Logic.ladder.in(flags));
     }
 

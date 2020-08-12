@@ -26,13 +26,13 @@ public class SortedPointQueueTests {
         this.q = new SortedPointQueue();
         this.graph = new NodeMap(calculator);
         this.target = this.graph.cachedPointAt(0, 0, 7);
-        (this.source = visited(0, 0, 0)).target(this.target);
+        (this.source = visited(0, 0, 0)).target(this.target.key);
     }
 
     @Test
     public void trimFrom_Control() {
         this.q.clear();
-        (this.source = add(0, 0, 3)).target(this.target);
+        (this.source = add(0, 0, 3)).target(this.target.key);
 
         final Node middle = source;
 
@@ -133,7 +133,7 @@ public class SortedPointQueueTests {
     protected Node add(Node parent, int x, int y, int z) {
         Node p = visited(x, y, z);
         p.visited(false);
-        q.appendTo(p, parent, target);
+        q.appendTo(p, parent, target.key);
         return p;
     }
 

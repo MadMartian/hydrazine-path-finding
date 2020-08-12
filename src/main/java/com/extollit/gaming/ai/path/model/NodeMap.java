@@ -51,10 +51,16 @@ public final class NodeMap {
         if (node == null)
             return null;
 
-        if (node.deleted())
-            return this.it.get(node.key);
-        else
-            return node;
+        if (node.deleted()) {
+            final Vec3i key = node.key;
+            node = this.it.get(key);
+            if (node != null && node.deleted()) {
+                this.it.remove(key);
+                node = null;
+            }
+        }
+
+        return node;
     }
 
     public Node cachedPassiblePointNear(int x, int y, int z) {
@@ -75,12 +81,19 @@ public final class NodeMap {
         final Node point0 = nodeMap.get(coords);
         Node point = point0;
 
-        if (point == null) {
+        if (point == null)
             point = this.calculator.passiblePointNear(coords, origin);
-            if (point == null)
-                point = new Node(coords, Passibility.impassible);
-        } else if (point.deleted())
+        else if (point.deleted())
             point = point.pointCopy();
+        else if (point.volatile_()) {
+            point = this.calculator.passiblePointNear(coords, origin);
+            if (point.key.equals(point0.key)) {
+                point0.passibility(point.passibility());
+                point0.volatile_(point.volatile_());
+                point = point0;
+            } else
+                point0.delete();
+        }
 
         if (!coords.equals(point.key)) {
             final Node existing = nodeMap.get(point.key);
@@ -94,14 +107,6 @@ public final class NodeMap {
             nodeMap.put(coords, point);
 
         return point;
-    }
-
-    public Node reset(Node point) {
-        remove(point.key);
-        point.delete();
-        final Node copy = point.pointCopy();
-        this.it.put(point.key, copy);
-        return copy;
     }
 
     public boolean remove(Vec3i coords) {
