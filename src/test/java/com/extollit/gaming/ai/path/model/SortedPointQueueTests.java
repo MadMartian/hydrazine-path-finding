@@ -59,7 +59,7 @@ public class SortedPointQueueTests {
         add(add(middle, 1, 0, 3), 2, 0, 3);
         add(add(lower, 1, 0, 1), 2, 0, 1);
 
-        q.trimFrom(middle, graph);
+        q.trimFrom(middle);
 
         assertTrue(up.deleted());
 
@@ -68,8 +68,31 @@ public class SortedPointQueueTests {
             new Vec3i(0, 0, 4),
             new Vec3i(0, 0, 5),
             new Vec3i(1, 0, 3),
-            new Vec3i(2, 0, 3),
-            new Vec3i(0, 0, 2)
+            new Vec3i(2, 0, 3)
+        );
+    }
+
+    @Test
+    public void trimFromEnsureAssigned() {
+        final Node
+                lower = add(source, 0, 0, 1),
+                up = add(lower, 0, 0, 2),
+                middle = visited(up, 0, 0, 3);
+
+        add(add(middle, 0, 0, 4), 0, 0, 5);
+        add(add(middle, 1, 0, 3), 2, 0, 3);
+        add(add(lower, 1, 0, 1), 2, 0, 1);
+
+        q.trimFrom(middle);
+
+        assertTrue(middle.assigned());
+
+        assertQueuePoints(
+                new Vec3i(0, 0, 4),
+                new Vec3i(0, 0, 5),
+                new Vec3i(1, 0, 3),
+                new Vec3i(2, 0, 3),
+                new Vec3i(0, 0, 3)
         );
     }
 
@@ -83,7 +106,7 @@ public class SortedPointQueueTests {
         add(visited(middle, 0, 0, 3), 0, 0, 4);
 
         assertSame(trunk, q.dequeue());
-        q.trimFrom(middle, graph);
+        q.trimFrom(middle);
 
         assertTrue(adjacent.visited());
     }

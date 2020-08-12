@@ -33,9 +33,9 @@ public final class SortedPointQueue {
         return this.list.isEmpty();
     }
 
-    public boolean trimFrom(Node source, NodeMap graph) {
+    public void trimFrom(Node source) {
         if (source.orphaned())
-            return false;
+            return;
 
         assert !source.deleted();
 
@@ -44,8 +44,6 @@ public final class SortedPointQueue {
         final List<Node> list = this.list;
         final Stack<Node> stack = new Stack<>();
         final Node up = source.up();
-        final int delta0 = up.delta();
-        boolean modified = false;
 
         source.orphan();
         source.length(0);
@@ -69,7 +67,6 @@ public final class SortedPointQueue {
                 assert !head.deleted();
                 head.index(i.previousIndex());
             } else {
-                modified = true;
                 i.remove();
                 head.delete();
                 while (!stack.isEmpty())
@@ -78,10 +75,14 @@ public final class SortedPointQueue {
         }
 
         Node p = up;
-        while ((p = p.up()) != null)
+        do {
             p.delete();
+        } while ((p = p.up()) != null);
 
-        return appendTo(graph.reset(up), source, delta0) || modified;
+        if (!source.assigned()) {
+            source.index(list.size());
+            list.add(source);
+        }
     }
 
     public List<Node> view() { return Collections.unmodifiableList(this.list); }

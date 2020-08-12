@@ -555,7 +555,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         while (!queue.isEmpty() && iterations-- > 0) {
             if (!queue.nextContains(currentPathPoint)) {
                 final Node source = this.current = this.nodeMap.freshened(this.current);
-                this.queue.trimFrom(source, this.nodeMap);
+                this.queue.trimFrom(source);
                 continue;
             }
 
