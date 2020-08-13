@@ -19,8 +19,7 @@ public class NodeTests {
         final Node node = this.root;
 
         node.length(7);
-        node.delta(11);
-        node.journey(47);
+        node.remaining(11);
         node.passibility(Passibility.risky);
         node.index(42);
         node.volatile_(true);
@@ -29,7 +28,7 @@ public class NodeTests {
         node.reset();
 
         assertEquals(0, node.length());
-        assertEquals(0, node.delta());
+        assertEquals(0, node.remaining());
         assertEquals(0, node.journey());
         assertEquals(Passibility.risky, node.passibility());
         assertFalse(node.assigned());

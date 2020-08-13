@@ -142,6 +142,29 @@ public class SortedPointQueueTests {
         assertTrue(adjacent.visited());
     }
 
+    @Test
+    public void addLimit() {
+        int c;
+        for (c = 0; c < Node.MAX_INDICES; ++c) {
+            final Node node = new Node(new Vec3i(0, 0, c));
+            node.remaining((c % (Node.MAX_PATH_DISTANCE - 1)) + 1);
+            q.add(node);
+        }
+
+        final Node pivot = new Node(new Vec3i(1, 0, c));
+        pivot.remaining(Node.MAX_PATH_DISTANCE);
+        q.add(pivot);
+
+        assertEquals(Node.MAX_INDICES - (int)(Node.MAX_INDICES * 0.1f), q.size());
+
+        while (q.size() > 2)
+            q.dequeue();
+
+        assertSame(pivot, q.dequeue());
+        q.dequeue();
+        assertTrue(q.isEmpty());
+    }
+
     protected Node visited(int x, int y, int z) {
         Node node = graph.cachedPointAt(x, y, z);
         node.visited(true);

@@ -7,25 +7,26 @@ import java.util.Objects;
 
 public class Node {
     private static final byte
-        BitWidth_4K = 12,
+        BitWidth_512 = 9,
         BitWidth_128 = 7,
         Mask_Passibility = (byte)(3),
         Index_BitOffs = 2,
-        Volatile_BitOffs = (byte)(Index_BitOffs + BitWidth_4K),
+        Volatile_BitOffs = (byte)(Index_BitOffs + BitWidth_512),
         Length_BitOffs = (byte)(Volatile_BitOffs + 1),
-        Delta_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
-        Journey_BitOffs = (byte)(Delta_BitOffs + BitWidth_128),
-        Visited_BitOffs = (byte)(Journey_BitOffs + BitWidth_128);
+        Remain_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
+        Visited_BitOffs = (byte)(Remain_BitOffs + BitWidth_128);
 
-    public static final short MAX_PATH_DISTANCE = (1 << BitWidth_128);
+    public static final short MAX_PATH_DISTANCE = (1 << BitWidth_128) - 1;
 
-    private static final long
-        Mask_128 = (long)MAX_PATH_DISTANCE - 1,
-        Mask_4K = (1 << BitWidth_4K) - 1;
+    private static final int
+        Mask_128 = (int)MAX_PATH_DISTANCE,
+        Mask_512 = (1 << BitWidth_512) - 1;
+
+    static final int MAX_INDICES = (1 << BitWidth_512) - 1;
 
     public final Vec3i key;
 
-    private long word;
+    private int word;
     private Node previous;
     private NodeLinkedList children;
 
@@ -40,28 +41,28 @@ public class Node {
 
     public Node(Vec3i key, Passibility passibility, boolean volatility) {
         this.key = key;
-        this.word = (Mask_4K << Index_BitOffs) | ((long)passibility.ordinal() & Mask_Passibility) | ((volatility ? 1L : 0L) << Volatile_BitOffs);
+        this.word = (Mask_512 << Index_BitOffs) | (passibility.ordinal() & Mask_Passibility) | ((volatility ? 1 : 0) << Volatile_BitOffs);
     }
 
-    private static long wordReset(Node copy) {
-        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs))) | (Mask_4K << Index_BitOffs);
+    private static int wordReset(Node copy) {
+        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs))) | (Mask_512 << Index_BitOffs);
     }
 
     public final byte length() {
         return (byte)((this.word >> Length_BitOffs) & Mask_128);
     }
-    public final byte delta() {
-        return (byte)((this.word >> Delta_BitOffs) & Mask_128);
+    public final byte remaining() {
+        return (byte)((this.word >> Remain_BitOffs) & Mask_128);
     }
     public final byte journey() {
-        return (byte)((this.word >> Journey_BitOffs) & Mask_128);
+        return (byte)(length() + remaining());
     }
     public final Node up() {
         return this.previous;
     }
 
     public final Passibility passibility() {
-        return Passibility.values()[(int)(this.word & Mask_Passibility)];
+        return Passibility.values()[this.word & Mask_Passibility];
     }
     public final void passibility(Passibility passibility) {
         final Node previous = up();
@@ -73,21 +74,14 @@ public class Node {
         if (length > Mask_128 || length < 0)
             return false;
 
-        this.word = (this.word & ~(Mask_128 << Length_BitOffs)) | ((long)length << Length_BitOffs);
+        this.word = (this.word & ~(Mask_128 << Length_BitOffs)) | (length << Length_BitOffs);
         return true;
     }
-    final boolean delta(int delta) {
+    final boolean remaining(int delta) {
         if (delta > Mask_128 || delta < 0)
             return false;
 
-        this.word = (this.word & ~(Mask_128 << Delta_BitOffs)) | ((long)delta << Delta_BitOffs);
-        return true;
-    }
-    final boolean journey(int journey) {
-        if (journey > Mask_128 || journey < 0)
-            return false;
-
-        this.word = (this.word & ~(Mask_128 << Journey_BitOffs)) | ((long)journey << Journey_BitOffs);
+        this.word = (this.word & ~(Mask_128 << Remain_BitOffs)) | (delta << Remain_BitOffs);
         return true;
     }
 
@@ -97,27 +91,27 @@ public class Node {
     }
 
     final short index() {
-        short index = (short) ((this.word >> Index_BitOffs) & Mask_4K);
-        return index == Mask_4K ? -1 : index;
+        short index = (short) ((this.word >> Index_BitOffs) & Mask_512);
+        return index == Mask_512 ? -1 : index;
     }
     final boolean index(int index) {
-        if (index >= Mask_4K || index < -1)
+        if (index >= Mask_512 || index < -1)
             return false;
 
-        this.word = (this.word & ~(Mask_4K << Index_BitOffs)) | (((long)index & Mask_4K) << Index_BitOffs);
+        this.word = (this.word & ~(Mask_512 << Index_BitOffs)) | ((index & Mask_512) << Index_BitOffs);
         return true;
     }
     public final boolean visited() {
-        return ((this.word >> Visited_BitOffs) & 1L) == 1L;
+        return ((this.word >> Visited_BitOffs) & 1) == 1;
     }
     public final void visited(boolean flag) {
-        this.word = (this.word & ~(1L << Visited_BitOffs)) | ((flag ? 1L : 0L) << Visited_BitOffs);
+        this.word = (this.word & ~(1 << Visited_BitOffs)) | ((flag ? 1 << Visited_BitOffs : 0));
     }
     public final boolean volatile_() {
-        return ((this.word >> Volatile_BitOffs) & 1L) == 1L;
+        return ((this.word >> Volatile_BitOffs) & 1) == 1;
     }
     public final void volatile_(boolean flag) {
-        this.word = (this.word & ~(1L << Volatile_BitOffs)) | ((flag ? 1L : 0L) << Volatile_BitOffs);
+        this.word = (this.word & ~(1 << Volatile_BitOffs)) | ((flag ? 1 << Volatile_BitOffs : 0));
     }
 
     public final boolean assigned() {
@@ -125,11 +119,11 @@ public class Node {
     }
 
     public boolean target(Vec3i targetPoint) {
-        final long distance = (long)Math.sqrt(squareDelta(this, targetPoint));
+        final int distance = (int)Math.sqrt(squareDelta(this, targetPoint));
         if (distance > Mask_128)
             return false;
 
-        this.word = (this.word & ~((Mask_128 << Journey_BitOffs) | (Mask_128 << Delta_BitOffs))) | ((distance << Journey_BitOffs) | (distance << Delta_BitOffs));
+        this.word = (this.word & ~(Mask_128 << Remain_BitOffs)) | (distance << Remain_BitOffs);
         return true;
     }
 
@@ -184,7 +178,7 @@ public class Node {
         parent.addChild(this);
         passibility(passibility());
         return length(parent.length() + delta)
-                && delta(remaining);
+                && remaining(remaining);
     }
 
     private void addChild(Node child) {
@@ -241,7 +235,7 @@ public class Node {
             sb.append(index);
         }
 
-        return sb.toString() + MessageFormat.format(" ({0}) : length={1}, delta={2}, journey={3}", passibility(), length(), delta(), journey());
+        return sb.toString() + MessageFormat.format(" ({0}) : length={1}, remaining={2}, journey={3}", passibility(), length(), remaining(), journey());
     }
 
     @Override

@@ -7,7 +7,7 @@ import java.util.*;
 import static com.extollit.gaming.ai.path.model.Node.squareDelta;
 
 public final class SortedPointQueue {
-    private static final float CULL_THRESHOLD = 0.25f;
+    private static final float CULL_THRESHOLD = 0.1f;
 
     private final ArrayList<Node> list = new ArrayList<>(8);
 
@@ -45,7 +45,6 @@ public final class SortedPointQueue {
 
         source.orphan();
         source.length(0);
-        source.journey(source.delta());
 
         ListIterator<Node> i = list.listIterator();
         while (i.hasNext()) {
@@ -60,11 +59,9 @@ public final class SortedPointQueue {
                     point = stack.pop();
                     final int length = point.length() - length0;
                     point.length(length);
-                    point.journey(length + point.delta());
                 }
                 final int length = head.length() - length0;
                 head.length(length);
-                head.journey(length + head.delta());
                 head.index(i.previousIndex());
             } else {
                 i.remove();
@@ -109,20 +106,6 @@ public final class SortedPointQueue {
     }
     public boolean nextContains(Node ancestor) {
         return this.list.get(0).contains(ancestor);
-    }
-
-    public boolean modifyDistance(Node point, int distance) {
-        final int distance0 = point.journey();
-
-        if (point.journey(distance)) {
-            if (distance < distance0)
-                sortBack(point.index());
-            else
-                sortForward(point.index());
-
-            return true;
-        } else
-            return false;
     }
 
     private void sortBack(int index) {
@@ -211,11 +194,17 @@ public final class SortedPointQueue {
 
         final byte length = point.length();
         if (!point.assigned() || (parent.length() + squareDelta < length*length && !point.passibility().betterThan(parent.passibility()))) {
+            final byte distance0 = point.journey();
             if (point.appendTo(parent, (int)Math.sqrt(squareDelta), remaining)) {
-                final int distance = point.length() + point.delta();
-                if (point.assigned())
-                    return modifyDistance(point, distance);
-                else if (point.journey(distance))
+                final int distance = point.journey();
+                if (point.assigned()) {
+                    if (distance < distance0)
+                        sortBack(point.index());
+                    else
+                        sortForward(point.index());
+
+                    return true;
+                } else
                     add(point);
             } else
                 point.orphan();
@@ -229,7 +218,7 @@ public final class SortedPointQueue {
             return;
 
         final ArrayList<Node> list = this.list;
-        final int size = list.size();
+        final int size = size();
 
         final ListIterator<Node> i = list.listIterator(size);
         for (int amount = (int)Math.ceil((float)size * CULL_THRESHOLD); amount > 0 && i.hasPrevious(); --amount) {
@@ -238,6 +227,10 @@ public final class SortedPointQueue {
         }
 
         fastAdd(point);
+    }
+
+    public int size() {
+        return this.list.size();
     }
 
     @Override

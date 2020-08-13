@@ -45,8 +45,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private IOcclusionProvider occlusionProvider;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private Node current, closest;
-    private Vec3i sourcePoint, targetPoint;
+    private Node current, source, target, closest;
     private int cx0, cxN, cz0, czN, discreteSize, tall, initComputeIterations, periodicComputeIterations;
     private int failureCount;
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
@@ -83,7 +82,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
     public final Vec3i trackingDestination() {
         if (this.destinationEntity != null && this.destinationPosition != null) {
-            final Node pointAtDestination = pathAtDestination();
+            final Node pointAtDestination = edgeAtDestination();
             if (impassible(pointAtDestination))
                 return null;
             else
@@ -91,7 +90,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         } else
             return null;
     }
-    public final Vec3i currentTarget() { return this.targetPoint == null ? null : this.targetPoint; }
+    public final Vec3i currentTarget() { return this.target == null ? null : this.target.key; }
 
     public PathObject trackPathTo(IDynamicMovableObject target) {
         this.destinationEntity = target;
@@ -150,14 +149,14 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
     private boolean destinationDeviatedFromTarget() {
         final com.extollit.linalg.mutable.Vec3d
-                dt = new com.extollit.linalg.mutable.Vec3d(this.targetPoint),
+                dt = new com.extollit.linalg.mutable.Vec3d(this.target.key),
                 dd = new com.extollit.linalg.mutable.Vec3d(destinationPosition);
 
         dd.x = floor(dd.x);
         dd.y = ceil(dd.y);
         dd.z = floor(dd.z);
 
-        final Vec3i source = this.sourcePoint;
+        final Vec3i source = this.source.key;
         dt.sub(source);
         dd.sub(source);
 
@@ -214,12 +213,11 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
         applySubject();
 
-        final Node source = this.current = pointAtSource();
-        final Vec3i sourcePoint = this.sourcePoint = source.key;
+        final Node source = this.current = this.source = pointAtSource();
         source.length(0);
         source.orphan();
 
-        refinePassibility(sourcePoint);
+        refinePassibility(source.key);
 
         setTargetFor(source);
 
@@ -289,12 +287,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 destinationPosition = this.destinationPosition;
 
         int distance = Node.MAX_PATH_DISTANCE;
-        Node targetPath = pathAtDestination();
-        if (targetPath == null)
-            return;
-
-        this.targetPoint = targetPath.key;
-        while (distance > 0 && !source.target(targetPath.key)) {
+        this.target = edgeAtDestination();
+        while (distance > 0 && !source.target(this.target.key)) {
             final Vec3d
                 v = new Vec3d(destinationPosition),
                 init = new Vec3d(source.key);
@@ -305,7 +299,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             v.normalize();
             v.mul(distance);
             v.add(init);
-            targetPath = this.nodeMap.cachedPointAt(
+            this.target = this.nodeMap.cachedPointAt(
                 floor(v.x),
                 ceil(v.y),
                 floor(v.z)
@@ -313,9 +307,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         }
 
         if (distance == 0)
-            source.target((targetPath = source).key);
-
-        this.targetPoint = targetPath.key;
+            source.target((this.target = this.source).key);
     }
 
     private void resetGraph() {
@@ -413,7 +405,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         }
     }
 
-    private Node pathAtDestination() {
+    private Node edgeAtDestination() {
         final Vec3d destinationPosition = this.destinationPosition;
         if (destinationPosition == null)
             return null;
@@ -475,8 +467,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     }
 
     private boolean reachedTarget() {
-        final Node current = this.current;
-        final boolean flag = this.targetPoint == null || current != null && current.key.equals(this.targetPoint);
+        final boolean flag = this.target == null || this.source == this.target || this.current == this.target;
         if (flag) {
             this.failureCount = 0;
             this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -510,10 +501,10 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         this.queue.clear();
         this.nodeMap.clear();
         this.unreachableFromSource.clear();
+        this.target =
+        this.source =
         this.closest = null;
         this.current = null;
-        this.targetPoint =
-        this.sourcePoint = null;
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
@@ -572,13 +563,13 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             if ((
                     closest == null
                     || closest.orphaned()
-                    || Node.squareDelta(current, this.targetPoint) < Node.squareDelta(closest, this.targetPoint)
+                    || Node.squareDelta(current, this.target) < Node.squareDelta(closest, this.target)
                 ) && !this.closests.contains(current.key)) {
                 this.closest = current;
                 this.closests.add(current.key);
             }
 
-            if (current.key.equals(this.targetPoint)) {
+            if (current == target) {
                 nextPath = PathObject.fromHead(this.capabilities.speed(), current);
                 if (PathObject.active(nextPath)) {
                     nextPath.setRandomNumberGenerator(this.random);
@@ -655,11 +646,11 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private boolean applyPointOptions(Node current, Node... pointOptions) {
         boolean found = false;
         for (Node alternative : pointOptions) {
-            if (impassible(alternative) || alternative.visited() || Node.squareDelta(alternative, this.targetPoint) >= this.searchRangeSquared)
+            if (impassible(alternative) || alternative.visited() || Node.squareDelta(alternative, this.target) >= this.searchRangeSquared)
                 continue;
 
             found = true;
-            this.queue.appendTo(alternative, current, this.targetPoint);
+            this.queue.appendTo(alternative, current, this.target.key);
         }
         return found;
     }
@@ -807,7 +798,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     }
 
     protected final boolean unreachableFromSource(Vec3i current, Vec3i target) {
-        final Vec3i sourcePoint = this.sourcePoint;
+        final Vec3i sourcePoint = this.source.key;
         return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(target);
     }
 
