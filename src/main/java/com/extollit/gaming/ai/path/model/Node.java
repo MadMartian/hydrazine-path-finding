@@ -15,8 +15,7 @@ public class Node {
         Length_BitOffs = (byte)(Volatile_BitOffs + 1),
         Delta_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
         Journey_BitOffs = (byte)(Delta_BitOffs + BitWidth_128),
-        Visited_BitOffs = (byte)(Journey_BitOffs + BitWidth_128),
-        GarbageCollected_BitOffs = (byte)(Visited_BitOffs + 1);
+        Visited_BitOffs = (byte)(Journey_BitOffs + BitWidth_128);
 
     public static final short MAX_PATH_DISTANCE = (1 << BitWidth_128);
 
@@ -28,6 +27,7 @@ public class Node {
 
     private long word;
     private Node previous;
+    private NodeLinkedList children;
 
     public Node(Vec3i key) {
         this.key = key;
@@ -40,20 +40,11 @@ public class Node {
 
     public Node(Vec3i key, Passibility passibility, boolean volatility) {
         this.key = key;
-        reset(passibility, volatility);
-    }
-
-    private Node(Node copy) {
-        this.key = copy.key;
-        this.word = wordReset(copy);
+        this.word = (Mask_4K << Index_BitOffs) | ((long)passibility.ordinal() & Mask_Passibility) | ((volatility ? 1L : 0L) << Volatile_BitOffs);
     }
 
     private static long wordReset(Node copy) {
         return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs))) | (Mask_4K << Index_BitOffs);
-    }
-
-    final Node pointCopy() {
-        return new Node(this);
     }
 
     public final byte length() {
@@ -66,11 +57,7 @@ public class Node {
         return (byte)((this.word >> Journey_BitOffs) & Mask_128);
     }
     public final Node up() {
-        final Node previous = this.previous;
-        if (previous != null && previous.deleted())
-            return this.previous = null;
-
-        return previous;
+        return this.previous;
     }
 
     public final Passibility passibility() {
@@ -106,18 +93,9 @@ public class Node {
 
     final void reset() {
         this.word = wordReset(this);
-        orphan();
-    }
-    private void reset(Passibility passibility, boolean volatility) {
-        this.word = (Mask_4K << Index_BitOffs) | ((long)passibility.ordinal() & Mask_Passibility) | ((volatility ? 1L : 0L) << Volatile_BitOffs);
+        isolate();
     }
 
-    final boolean deleted() {
-        return ((this.word >> GarbageCollected_BitOffs) & 1L) == 1L;
-    }
-    final void delete() {
-        this.word |= (1L << GarbageCollected_BitOffs);
-    }
     final short index() {
         short index = (short) ((this.word >> Index_BitOffs) & Mask_4K);
         return index == Mask_4K ? -1 : index;
@@ -155,13 +133,13 @@ public class Node {
         return true;
     }
 
-    public boolean contains(Vec3i currentPathPoint) {
-        if (this.key.equals(currentPathPoint))
+    public boolean contains(Node node) {
+        if (this == node)
             return true;
         else {
             final Node previous = up();
             if (previous != null)
-                return previous.contains(currentPathPoint);
+                return previous.contains(node);
         }
 
         return false;
@@ -170,8 +148,31 @@ public class Node {
         return up() == null;
     }
     public void orphan() {
+        if (this.previous != null)
+            this.previous.removeChild(this);
+
         this.previous = null;
     }
+    public void isolate() {
+        orphan();
+        sterilize();
+    }
+
+    void sterilize() {
+        if (this.children != null) {
+            for (Node child : this.children)
+                child.previous = null;
+            this.children = null;
+        }
+    }
+
+    boolean infecund() { return this.children == null; }
+
+    private void removeChild(Node child) {
+        if (this.children != null)
+            this.children = this.children.remove(child);
+    }
+
     final void unassign() {
         index(-1);
     }
@@ -180,9 +181,17 @@ public class Node {
         assert !cyclic(parent);
 
         this.previous = parent;
+        parent.addChild(this);
         passibility(passibility());
         return length(parent.length() + delta)
                 && delta(remaining);
+    }
+
+    private void addChild(Node child) {
+        if (this.children == null)
+            this.children = new NodeLinkedList(child);
+        else
+            this.children.add(child);
     }
 
     public static int squareDelta(Node left, Node right) {
@@ -212,9 +221,6 @@ public class Node {
         return false;
     }
 
-    public static boolean deleted(Node node) {
-        return node == null || node.deleted();
-    }
     public static boolean passible(Node node) {
         return node != null && node.passibility().betterThan(Passibility.impassible);
     }
@@ -223,8 +229,6 @@ public class Node {
     public String toString() {
         final StringBuilder sb = new StringBuilder(this.key.toString());
         final short index = index();
-        if (deleted())
-            sb.append('*');
         if (volatile_())
             sb.append('!');
         if (visited())

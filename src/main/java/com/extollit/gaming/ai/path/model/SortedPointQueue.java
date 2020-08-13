@@ -37,8 +37,6 @@ public final class SortedPointQueue {
         if (source.orphaned())
             return;
 
-        assert !source.deleted();
-
         final byte length0 = source.length();
 
         final List<Node> list = this.list;
@@ -54,8 +52,8 @@ public final class SortedPointQueue {
             final Node head = i.next();
             Node point = head;
             while (!point.orphaned() && point != source) {
-                stack.push(point);
                 point = point.up();
+                stack.push(point);
             }
             if (point == source) {
                 while (!stack.isEmpty()) {
@@ -64,18 +62,25 @@ public final class SortedPointQueue {
                     point.length(length);
                     point.journey(length + point.delta());
                 }
+                final int length = head.length() - length0;
+                head.length(length);
+                head.journey(length + head.delta());
                 head.index(i.previousIndex());
             } else {
                 i.remove();
-                head.delete();
-                while (!stack.isEmpty())
-                    stack.pop().delete();
+                head.reset();
+                while (!stack.isEmpty()) {
+                    Node node = stack.pop();
+                    node.reset();
+                    assert node.orphaned();
+                }
             }
         }
 
         Node p = up;
         do {
-            p.delete();
+            p.reset();
+            assert p.orphaned();
         } while ((p = p.up()) != null);
 
         if (!source.assigned()) {
@@ -102,8 +107,8 @@ public final class SortedPointQueue {
         point.unassign();
         return point;
     }
-    public boolean nextContains(Vec3i point) {
-        return this.list.get(0).contains(point);
+    public boolean nextContains(Node ancestor) {
+        return this.list.get(0).contains(ancestor);
     }
 
     public boolean modifyDistance(Node point, int distance) {

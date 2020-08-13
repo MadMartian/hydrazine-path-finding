@@ -557,11 +557,9 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
         PathObject nextPath = null;
 
-        final Vec3i currentPathPoint = this.current.key;
-
         while (!queue.isEmpty() && iterations-- > 0) {
-            if (!queue.nextContains(currentPathPoint)) {
-                final Node source = this.current = this.nodeMap.freshened(this.current);
+            final Node source = this.current;
+            if (!queue.nextContains(source)) {
                 if (source != null)
                     this.queue.trimFrom(source);
                 continue;
@@ -569,12 +567,12 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
             final Node
                 current = queue.dequeue(),
-                closest = this.closest = this.nodeMap.freshened(this.closest);
+                closest = this.closest;
 
             if ((
-                    Node.deleted(closest)
+                    closest == null
                     || closest.orphaned()
-                    || Node.squareDelta(current, this.targetPoint) < Node.squareDelta(this.closest, this.targetPoint)
+                    || Node.squareDelta(current, this.targetPoint) < Node.squareDelta(closest, this.targetPoint)
                 ) && !this.closests.contains(current.key)) {
                 this.closest = current;
                 this.closests.add(current.key);
@@ -593,13 +591,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 processNode(current);
         }
 
-        this.current = this.nodeMap.freshened(this.current);
-
-        final Node
-            closest = this.closest = this.nodeMap.freshened(this.closest);
-
-        if (nextPath == null && closest != null && !queue.isEmpty())
-            nextPath = PathObject.fromHead(this.capabilities.speed(), closest);
+        if (nextPath == null && this.closest != null && !queue.isEmpty())
+            nextPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
 
         return updatePath(nextPath);
     }

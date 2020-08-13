@@ -34,23 +34,18 @@ public class NodeMapTests {
     }
 
     @Test
-    public void getFreshen() {
-        final Node
-            node = this.nodeMap.cachedPointAt(1, 2, 3),
-            fetched = this.nodeMap.freshened(node);
-
-        assertSame(node, fetched);
-    }
-
-    @Test
-    public void getDeleteFreshen() {
+    public void getRemoveGet() {
         final Node node = this.nodeMap.cachedPointAt(1, 2, 3);
 
-        node.delete();
+        node.index(42);
 
-        final Node fetched = this.nodeMap.freshened(node);
+        final boolean removed = this.nodeMap.remove(1, 2, 3);
 
-        assertNull(fetched);
+        final Node fetched = this.nodeMap.cachedPointAt(1, 2, 3);
+
+        assertFalse(node.assigned());
+        assertTrue(removed);
+        assertNotSame(node, fetched);
     }
 
     @Test
@@ -74,19 +69,6 @@ public class NodeMapTests {
     }
 
     @Test
-    public void passibleCachedDeleteGet() {
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
-
-        final Node node = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
-
-        node.delete();
-
-        final Node cached = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
-
-        assertNotSame(node, cached);
-    }
-
-    @Test
     public void redundancyExistency() {
         when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
@@ -98,12 +80,14 @@ public class NodeMapTests {
     }
 
     @Test
-    public void redundancyDeleteOriginal() {
+    public void redundancyRemoveOriginal() {
         when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
         Node node = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
-        node.delete();
+        final boolean removed = this.nodeMap.remove(1, 2, 3);
+
+        assertTrue(removed);
 
         when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 

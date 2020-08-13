@@ -30,7 +30,7 @@ public class SortedPointQueueTests {
     }
 
     @Test
-    public void trimFrom_Control() {
+    public void control() {
         this.q.clear();
         (this.source = add(0, 0, 3)).target(this.target.key);
 
@@ -61,7 +61,11 @@ public class SortedPointQueueTests {
 
         q.trimFrom(middle);
 
-        assertTrue(up.deleted());
+        assertFalse(up.assigned());
+        assertFalse(lower.assigned());
+        assertFalse(source.assigned());
+
+        assertTrue(up.infecund() && up.orphaned());
 
         assertQueuePoints(
             new Vec3i(0, 0, 3),
@@ -70,6 +74,33 @@ public class SortedPointQueueTests {
             new Vec3i(1, 0, 3),
             new Vec3i(2, 0, 3)
         );
+    }
+
+    @Test
+    public void trimVisited() {
+        final Node
+                lower = visited(source, 0, 0, 1),
+                up = add(lower, 0, 0, 2),
+                middle = visited(up, 0, 0, 3);
+
+        final Node
+            alphaChild = visited(middle, 0, 0, 4),
+            betaChild = visited(middle, 1, 0, 3);
+
+        add(alphaChild, 0, 0, 5);
+        add(betaChild, 2, 0, 3);
+
+        final Node branch = add(visited(lower, 1, 0, 1), 2, 0, 1);
+
+        q.trimFrom(middle);
+
+        assertFalse(up.visited());
+        assertFalse(lower.visited());
+        assertFalse(branch.visited());
+        assertFalse(source.visited());
+        assertTrue(alphaChild.visited());
+        assertTrue(betaChild.visited());
+        assertTrue(middle.visited());
     }
 
     @Test

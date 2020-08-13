@@ -29,7 +29,7 @@ public final class NodeMap {
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
         for (Node p : this.it.cullOutside(new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN)))
-            p.delete();
+            p.reset();
     }
 
     public final Node cachedPointAt(int x, int y, int z)
@@ -41,26 +41,10 @@ public final class NodeMap {
     public final Node cachedPointAt(Vec3i coords) {
         Node point = this.it.get(coords);
 
-        if (Node.deleted(point))
+        if (point == null)
             this.it.put(coords, point = new Node(coords));
 
         return point;
-    }
-
-    public Node freshened(Node node) {
-        if (node == null)
-            return null;
-
-        if (node.deleted()) {
-            final Vec3i key = node.key;
-            node = this.it.get(key);
-            if (node != null && node.deleted()) {
-                this.it.remove(key);
-                node = null;
-            }
-        }
-
-        return node;
     }
 
     public Node cachedPassiblePointNear(int x, int y, int z) {
@@ -83,8 +67,6 @@ public final class NodeMap {
 
         if (point == null)
             point = this.calculator.passiblePointNear(coords, origin);
-        else if (point.deleted())
-            point = point.pointCopy();
         else if (point.volatile_()) {
             point = this.calculator.passiblePointNear(coords, origin);
             if (point.key.equals(point0.key)) {
@@ -92,12 +74,12 @@ public final class NodeMap {
                 point0.volatile_(point.volatile_());
                 point = point0;
             } else
-                point0.delete();
+                point0.isolate();
         }
 
         if (!coords.equals(point.key)) {
             final Node existing = nodeMap.get(point.key);
-            if (Node.deleted(existing))
+            if (existing == null)
                 nodeMap.put(point.key, point);
             else
                 point = existing;
@@ -109,12 +91,17 @@ public final class NodeMap {
         return point;
     }
 
+    public boolean remove(int x, int y, int z) {
+        return remove(new Vec3i(x, y, z));
+    }
+
     public boolean remove(Vec3i coords) {
         final Node existing = this.it.remove(coords);
         if (existing != null) {
-            existing.delete();
+            existing.reset();
             return true;
         }
+
         return false;
     }
 
