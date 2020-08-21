@@ -5,14 +5,16 @@ import com.extollit.linalg.immutable.AxisAlignedBBox;
 import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-abstract class AbstractHydrazinePathFinderTests {
+@RunWith(MockitoJUnitRunner.class)
+public abstract class AbstractHydrazinePathFinderTests {
     protected static final Vec3i ORIGIN = new Vec3i(0, 0, 0);
 
     protected HydrazinePathFinder pathFinder;
@@ -24,16 +26,18 @@ abstract class AbstractHydrazinePathFinderTests {
 
     @Mock protected IPathingEntity.Capabilities capabilities;
 
+    @Mock private IOcclusionProviderFactory occlusionProviderFactory;
+
     @Before
     public void setup() {
         setup(pathingEntity);
 
         when(destinationEntity.width()).thenReturn(0.6f);
         when(destinationEntity.height()).thenReturn(1.8f);
+        when(occlusionProviderFactory.fromInstanceSpace(any(), anyInt(), anyInt(), anyInt(), anyInt())).thenReturn(occlusionProvider);
 
-        pathFinder = new TestableHydrazinePathFinder(pathingEntity, instanceSpace, occlusionProvider);
+        pathFinder = new HydrazinePathFinder(pathingEntity, instanceSpace, occlusionProviderFactory);
         pathFinder.schedulingPriority(SchedulingPriority.high);
-        pathFinder.occlusionProvider(occlusionProvider);
         when(capabilities.cautious()).thenReturn(true);
         when(capabilities.aquaphobic()).thenReturn(true);
         when(capabilities.climber()).thenReturn(true);

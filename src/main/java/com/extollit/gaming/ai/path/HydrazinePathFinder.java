@@ -4,27 +4,20 @@ import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
-import com.extollit.num.FastMath;
 import com.extollit.num.FloatRange;
 import com.extollit.tuple.Pair;
 
-import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
 import static com.extollit.num.FastMath.ceil;
 import static com.extollit.num.FastMath.floor;
-import static java.lang.Math.round;
 
-public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator {
+public class HydrazinePathFinder {
     private static final AxisAlignedBBox FULL_BOUNDS = new AxisAlignedBBox(0, 0, 0, 1, 1, 1);
 
     private static double DOT_THRESHOLD = 0.6;
-    private static int
-            MAX_SAFE_FALL_DISTANCE = 4,
-            MAX_SURVIVE_FALL_DISTANCE = 20,
-            CESA_LIMIT = 16;
     private static FloatRange
             PROBATIONARY_TIME_LIMIT = new FloatRange(16, 24),
             PASSIBLE_POINT_TIME_LIMIT = new FloatRange(12, 36);
@@ -32,7 +25,6 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private static byte FAILURE_COUNT_THRESHOLD = 3;
 
     private final SortedPointQueue queue = new SortedPointQueue();
-    private final NodeMap nodeMap = new NodeMap(this);
     private final Set<Vec3i>
             unreachableFromSource = new HashSet<>(3),
             closests = new HashSet<>();
@@ -42,11 +34,13 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     private com.extollit.linalg.mutable.Vec3d sourcePosition, destinationPosition;
     private IDynamicMovableObject destinationEntity;
 
-    private IOcclusionProvider occlusionProvider;
+    private IPointPassibilityCalculator pathPointCalculator;
+    private NodeMap nodeMap;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
+    private boolean flying;
     private Node current, source, target, closest;
-    private int cx0, cxN, cz0, czN, discreteSize, tall, initComputeIterations, periodicComputeIterations;
+    private int initComputeIterations, periodicComputeIterations;
     private int failureCount;
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
     private Random random = new Random();
@@ -56,14 +50,18 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         PROBATIONARY_TIME_LIMIT = configModel.probationaryTimeLimit();
         PASSIBLE_POINT_TIME_LIMIT = configModel.passiblePointTimeLimit();
         DOT_THRESHOLD = configModel.dotThreshold();
-        MAX_SAFE_FALL_DISTANCE = configModel.safeFallDistance();
-        MAX_SURVIVE_FALL_DISTANCE = configModel.surviveFallDistance();
-        CESA_LIMIT = configModel.cesaLimit();
+
+        GroundPassibilityCalculator.configureFrom(configModel);
     }
 
     public HydrazinePathFinder(IPathingEntity entity, IInstanceSpace instanceSpace) {
+        this(entity, instanceSpace, AreaOcclusionProviderFactory.INSTANCE);
+    }
+
+    HydrazinePathFinder(IPathingEntity entity, IInstanceSpace instanceSpace, IOcclusionProviderFactory occlusionProviderFactory) {
         this.subject = entity;
         this.instanceSpace = instanceSpace;
+        this.nodeMap = new NodeMap(instanceSpace, this.pathPointCalculator = createPassibilityCalculator(false), occlusionProviderFactory);
 
         applySubject();
         schedulingPriority(SchedulingPriority.low);
@@ -276,12 +274,26 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return mutated;
     }
 
+    private IPointPassibilityCalculator createPassibilityCalculator(boolean flying) {
+        final IPointPassibilityCalculator calculator;
+        calculator = new GroundPassibilityCalculator(this.instanceSpace);
+        return calculator;
+    }
+
     private void applySubject() {
-        this.discreteSize = FastMath.floor((this.actualSize = this.subject.width()) + 1);
-        this.tall = FastMath.floor(this.subject.height() + 1);
+        final IPathingEntity.Capabilities capabilities = this.capabilities = this.subject.capabilities();
+        final boolean flying = capabilities.flyer();
+        if (flying != this.flying || this.pathPointCalculator == null) {
+            this.nodeMap.calculator(this.pathPointCalculator = createPassibilityCalculator(flying));
+            if (!this.queue.isEmpty())
+                resetTriage();
+            this.flying = flying;
+        }
+
+        this.actualSize = subject.width();
+        this.pathPointCalculator.applySubject(this.subject);
         final float pathSearchRange = this.subject.searchRange();
         this.searchRangeSquared = pathSearchRange*pathSearchRange;
-        this.capabilities = this.subject.capabilities();
     }
 
     private void setTargetFor(Node source) {
@@ -381,30 +393,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         xN += searchAreaRange + entitySize;
         zN += searchAreaRange + entitySize;
 
-        final int
-                cx0 = x0 >> 4,
-                cz0 = z0 >> 4,
-                cxN = xN >> 4,
-                czN = zN >> 4;
-
-        final IOcclusionProvider aop = this.occlusionProvider;
-        final boolean windowTest;
-
-        if (cull)
-            windowTest = cx0 != this.cx0 || cz0 != this.cz0 || cxN != this.cxN || czN != this.czN;
-        else
-            windowTest = cx0 < this.cx0 || cz0 < this.cz0 || cxN > this.cxN || czN > this.czN;
-
-        if (aop == null || windowTest) {
-            this.occlusionProvider = occlusionProviderFor(cx0, cz0, cxN, czN);
-            this.cx0 = cx0;
-            this.cz0 = cz0;
-            this.cxN = cxN;
-            this.czN = czN;
-
-            if (cull)
-                this.nodeMap.cullOutside(x0, z0, xN, zN);
-        }
+        this.nodeMap.updateFieldWindow(x0, z0, xN, zN, cull);
     }
 
     private Node edgeAtDestination() {
@@ -501,7 +490,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         this.currentPath = null;
         this.closests.clear();
         this.queue.clear();
-        this.nodeMap.clear();
+        this.nodeMap.reset();
         this.unreachableFromSource.clear();
         this.target =
         this.source =
@@ -510,7 +499,6 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
-        this.occlusionProvider = null;
         this.failureCount = 0;
         this.nextGraphCacheReset = 0;
         this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -525,7 +513,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                     newPath.adjustPathPosition(this.currentPath, this.subject);
             }
 
-            if (this.occlusionProvider == null)
+            if (this.nodeMap.needsOcclusionProvider())
                 updateFieldWindow(newPath);
 
             if (newPath.done())
@@ -637,14 +625,14 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             z = coords.z + dz;
 
         final AxisAlignedBBox bounds;
-        final byte flags = this.occlusionProvider.elementAt(x, y, z);
+        final byte flags = this.nodeMap.flagsAt(x, y, z);
         if (fuzzyPassibility(flags)) {
             final IBlockObject block = instanceSpace.blockObjectAt(x, y, z);
             if (!block.isImpeding())
                 return null;
 
             bounds = block.bounds();
-        } else if (impassible(flags))
+        } else if (Element.impassible(flags, this.capabilities))
             bounds = FULL_BOUNDS;
         else
             return null;
@@ -667,7 +655,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
     }
 
     private boolean impassible(Node alternative) {
-        return alternative == null || impassible(alternative.passibility());
+        return alternative == null || alternative.passibility().impassible(this.capabilities);
     }
 
     private Node cachedPassiblePointNear(final int x0, final int y0, final int z0) {
@@ -683,129 +671,12 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return result;
     }
 
-    @Override
-    public Node passiblePointNear(Vec3i coords0, Vec3i origin) {
-        final Node point;
-        final int
-            x0 = coords0.x,
-            y0 = coords0.y,
-            z0 = coords0.z;
-        final FlagSampler sampler = new FlagSampler(this.occlusionProvider);
+    private boolean fuzzyPassibility(int x, int y, int z) {
+        return fuzzyPassibility(this.nodeMap.flagsAt(x, y, z));
+    }
 
-        final Vec3i d;
-
-        if (origin != null)
-            d = coords0.subOf(origin);
-        else
-            d = Vec3i.ZERO;
-
-        final boolean hasOrigin = d != Vec3i.ZERO && !d.equals(Vec3i.ZERO);
-
-        final boolean
-            climbsLadders = this.capabilities.climber();
-
-        Passibility passibility = Passibility.passible;
-
-        int minY = Integer.MIN_VALUE;
-        float minPartY = 0;
-
-        for (int r = this.discreteSize / 2,
-             x = x0 - r,
-             xN = x0 + this.discreteSize - r;
-
-             x < xN;
-
-             ++x
-            )
-            for (int z = z0 - r,
-                 zN = z0 + this.discreteSize - r;
-
-                 z < zN;
-
-                 ++z
-            ) {
-                int y = y0;
-
-                float partY = topOffsetAt(
-                    sampler,
-                    x - d.x,
-                    y - d.y - 1,
-                    z - d.z
-                );
-
-                byte flags = sampler.flagsAt(x, y, z);
-                if (impassible(flags)) {
-                    final float partialDisparity = partY - topOffsetAt(flags, x, y++, z);
-                    flags = sampler.flagsAt(x, y, z);
-
-                    if (partialDisparity < 0 || impassible(flags)) {
-                        if (!hasOrigin)
-                            return new Node(coords0, Passibility.impassible, sampler.volatility() > 0);
-
-                        if (d.x * d.x + d.z * d.z <= 1) {
-                            y -= d.y + 1;
-
-                            do
-                                flags = sampler.flagsAt(x - d.x, y++, z - d.z);
-                            while (climbsLadders && Logic.climbable(flags));
-                        }
-
-                        if (impassible(flags = sampler.flagsAt(x, --y, z)) && (impassible(flags = sampler.flagsAt(x, ++y, z)) || partY < 0))
-                            return new Node(coords0, Passibility.impassible, sampler.volatility() > 0);
-                    }
-                }
-                partY = topOffsetAt(sampler, x, y - 1, z);
-                final int ys;
-                passibility = verticalClearanceAt(sampler, this.tall, flags, passibility, d, x, ys = y, z, partY);
-
-                boolean swimable = false;
-                for (int j = 0; unstable(flags) && !(swimable = swimable(flags)) && j <= MAX_SURVIVE_FALL_DISTANCE; j++)
-                    flags = sampler.flagsAt(x, --y, z);
-
-                if (swimable) {
-                    final int cesaLimit = y + CESA_LIMIT;
-                    final byte flags00 = flags;
-                    byte flags0;
-                    do {
-                        flags0 = flags;
-                        flags = sampler.flagsAt(x, ++y, z);
-                    } while (swimable(flags) && unstable(flags) && y < cesaLimit);
-                    if (y >= cesaLimit) {
-                        y -= CESA_LIMIT + 1;
-                        flags = flags00;
-                    } else {
-                        y--;
-                        flags = flags0;
-                    }
-                }
-
-                partY = topOffsetAt(flags, x, y++, z);
-                passibility = verticalClearanceAt(sampler, ys - y, sampler.flagsAt(x, y, z), passibility, d, x, y, z, partY);
-
-                if (y > minY) {
-                    minY = y;
-                    minPartY = partY;
-                } else if (y == minY && partY > minPartY)
-                    minPartY = partY;
-
-                passibility = passibility.between(passibility(sampler.flagsAt(x, y, z)));
-                if (impassible(passibility))
-                    return new Node(coords0, Passibility.impassible, sampler.volatility() > 0);
-            }
-
-        if (hasOrigin && !impassible(passibility))
-            passibility = originHeadClearance(sampler, passibility, origin, minY, minPartY);
-
-        passibility = fallingSafety(passibility, y0, minY);
-
-        if (impassible(passibility))
-            passibility = Passibility.impassible;
-
-        point = new Node(new Vec3i(x0, minY + round(minPartY), z0));
-        point.passibility(passibility);
-        point.volatile_(sampler.volatility() > 0);
-
-        return point;
+    private boolean fuzzyPassibility(byte flags) {
+        return Element.impassible(flags, this.capabilities) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
     }
 
     protected final boolean unreachableFromSource(Vec3i current, Vec3i target) {
@@ -813,197 +684,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(target);
     }
 
-    private Passibility fallingSafety(Passibility passibility, int y0, int minY) {
-        final int dy = y0 - minY;
-        if (dy > 1)
-            passibility = passibility.between(
-                dy > MAX_SAFE_FALL_DISTANCE ?
-                    Passibility.dangerous :
-                    Passibility.risky
-            );
-        return passibility;
-    }
-
-    private Passibility verticalClearanceAt(FlagSampler sampler, int max, byte flags, Passibility passibility, Vec3i d, int x, int y, int z, float partY) {
-        byte clearanceFlags = flags;
-        final int
-            yMax = y + max,
-            yN = Math.max(y, y - d.y) + this.tall;
-        int yt = y;
-
-        for (int yNa = yN + floor(partY);
-
-             yt < yNa && yt < yMax;
-
-             clearanceFlags = sampler.flagsAt(x, ++yt, z)
-        )
-            passibility = passibility.between(clearance(clearanceFlags));
-
-        if (yt < yN && yt < yMax && (insufficientHeadClearance(clearanceFlags, partY, x, yt, z)))
-            passibility = passibility.between(clearance(clearanceFlags));
-
-        return passibility;
-    }
-
-    private Passibility originHeadClearance(FlagSampler sampler, Passibility passibility, Vec3i origin, int minY, float minPartY) {
-        final int
-            yN = minY + this.tall,
-            yNa = yN + floor(minPartY);
-
-        for (int x = origin.x, xN = origin.x + this.discreteSize; x < xN; ++x)
-            for (int z = origin.z, zN = origin.z + this.discreteSize; z < zN; ++z)
-                for (int y = origin.y + this.tall; y < yNa; ++y)
-                    passibility = passibility.between(clearance(sampler.flagsAt(x, y, z)));
-
-        if (yNa < yN)
-            for (int x = origin.x, xN = origin.x + this.discreteSize; x < xN; ++x)
-                for (int z = origin.z, zN = origin.z + this.discreteSize; z < zN; ++z) {
-                    final byte flags = sampler.flagsAt(x, yNa, z);
-                    if (insufficientHeadClearance(flags, minPartY, x, yNa, z))
-                        passibility = passibility.between(clearance(flags));
-                }
-
-        return passibility;
-    }
-
-    private boolean insufficientHeadClearance(byte flags, float partialY0, int x, int yN, int z) {
-        return bottomOffsetAt(flags, x, yN, z) + partialY0 > 0;
-    }
-
-    private float topOffsetAt(FlagSampler sampler, int x, int y, int z) {
-        return topOffsetAt(sampler.flagsAt(x, y, z), x, y, z);
-    }
-
-    private float topOffsetAt(byte flags, int x, int y, int z) {
-        if (Element.air.in(flags)
-            || Logic.climbable(flags)
-            || Element.earth.in(flags) && Logic.nothing.in(flags)
-        )
-            return 0;
-
-        if (swimmingRequiredFor(flags))
-            return -0.5f;
-
-        final IBlockObject block = this.instanceSpace.blockObjectAt(x, y, z);
-        if (!block.isImpeding()) {
-            if (Element.earth.in(flags)) {
-                final IBlockObject blockBelow = this.instanceSpace.blockObjectAt(x, y - 1, z);
-                if (!blockBelow.isFullyBounded()) {
-                    float offset = (float) blockBelow.bounds().max.y - 2;
-                    if (offset < -1)
-                        offset = 0;
-
-                    return offset;
-                }
-            }
-            return 0;
-        }
-
-        return (float)block.bounds().max.y - 1;
-    }
-
-    private float bottomOffsetAt(byte flags, int x, int y, int z) {
-        if (Element.air.in(flags)
-            || Logic.climbable(flags)
-            || Element.earth.in(flags) && Logic.nothing.in(flags)
-            || swimmingRequiredFor(flags)
-        )
-            return 0;
-
-        final IBlockObject block = this.instanceSpace.blockObjectAt(x, y, z);
-        if (!block.isImpeding())
-            return 0;
-
-        return (float) block.bounds().min.y;
-    }
-
-    private boolean impassible(Passibility passibility) {
-        return passibility == Passibility.impassible
-            || (this.capabilities.cautious() && passibility.worseThan(Passibility.passible));
-    }
-
-    private boolean swimable(byte flags) {
-        return this.capabilities.swimmer() && swimmingRequiredFor(flags) && (Element.water.in(flags) || this.capabilities.fireResistant());
-    }
-
-    private static boolean swimmingRequiredFor(byte flags) {
-        return Element.water.in(flags) || (Element.fire.in(flags) && !Logic.fuzzy.in(flags));
-    }
-
-    private static boolean unstable(byte flags) {
-        return (!Element.earth.in(flags) || Logic.ladder.in(flags));
-    }
-
-    private boolean impassible(byte flags) {
-        return (Element.earth.in(flags) && !(Logic.doorway.in(flags) && this.capabilities.opensDoors()) && !Logic.ladder.in(flags))
-                || (Element.air.in(flags) && Logic.doorway.in(flags) && this.capabilities.avoidsDoorways());
-    }
-
-    private boolean fuzzyPassibility(int x, int y, int z) {
-        return fuzzyPassibility(this.occlusionProvider.elementAt(x, y, z));
-    }
-
-    private boolean fuzzyPassibility(byte flags) {
-        return impassible(flags) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
-    }
-
-    Passibility clearance(byte flags) {
-        if (Element.earth.in(flags))
-            if (Logic.ladder.in(flags))
-                return Passibility.passible;
-            else if (Logic.fuzzy.in(flags))
-                return Passibility.risky;
-            else
-                return Passibility.impassible;
-        else if (Element.water.in(flags))
-            return this.capabilities.fireResistant() ? Passibility.dangerous : Passibility.risky;
-        else if (Element.fire.in(flags))
-            return this.capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
-        else
-            return Passibility.passible;
-    }
-
-    private Passibility passibility(byte flags) {
-        final Element kind = Element.of(flags);
-        switch (kind) {
-            case earth:
-                if (Logic.ladder.in(flags) || (Logic.doorway.in(flags) && this.capabilities.opensDoors()))
-                    return Passibility.passible;
-                else
-                    return Passibility.impassible;
-
-            case air:
-                if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
-                    return Passibility.impassible;
-                else
-                    return Passibility.passible;
-
-            case water:
-                if (this.capabilities.aquaphobic() || !this.capabilities.swimmer())
-                    return Passibility.dangerous;
-                else
-                    return Passibility.risky;
-
-            case fire:
-                if (!this.capabilities.fireResistant())
-                    return Passibility.dangerous;
-                else
-                    return Passibility.risky;
-        }
-
-        throw new IllegalArgumentException(MessageFormat.format("Unhandled element type ''{0}''", kind));
-    }
-
     public IPathingEntity subject() {
         return this.subject;
-    }
-
-    void occlusionProvider(IOcclusionProvider occlusionProvider) {
-        this.occlusionProvider = occlusionProvider;
-    }
-
-    protected IOcclusionProvider occlusionProviderFor(int cx0, int cz0, int cxN, int czN) {
-        return AreaOcclusionProvider.fromInstanceSpace(this.instanceSpace, cx0, cz0, cxN, czN);
     }
 
     public boolean sameDestination(PathObject delegate, com.extollit.linalg.immutable.Vec3d target) {

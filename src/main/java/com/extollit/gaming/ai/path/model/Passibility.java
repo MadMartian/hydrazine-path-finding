@@ -37,4 +37,9 @@ public enum Passibility {
     public boolean worseThan(Passibility other) {
         return ordinal() > other.ordinal();
     }
+
+    public boolean impassible(IPathingEntity.Capabilities capabilities) {
+        return this == Passibility.impassible
+                || (capabilities.cautious() && worseThan(Passibility.passible));
+    }
 }

@@ -96,4 +96,9 @@ public enum Element {
     public byte to(byte flags) {
         return (byte)((flags & ~MASK) | this.mask);
     }
+
+    public static boolean impassible(byte flags, IPathingEntity.Capabilities capabilities) {
+        return (Element.earth.in(flags) && !(Logic.doorway.in(flags) && capabilities.opensDoors()) && !Logic.ladder.in(flags))
+                || (Element.air.in(flags) && Logic.doorway.in(flags) && capabilities.avoidsDoorways());
+    }
 }

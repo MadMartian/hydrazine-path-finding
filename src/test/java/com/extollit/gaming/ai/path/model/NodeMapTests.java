@@ -16,12 +16,13 @@ import static org.mockito.Mockito.when;
 public class NodeMapTests {
     private NodeMap nodeMap;
 
-    @Mock
-    private NodeMap.IPointPassibilityCalculator calculator;
+    @Mock private IInstanceSpace instanceSpace;
+    @Mock private IOcclusionProviderFactory occlusionProviderFactory;
+    @Mock private IPointPassibilityCalculator calculator;
 
     @Before
     public void setup() {
-        this.nodeMap = new NodeMap(this.calculator);
+        this.nodeMap = new NodeMap(this.instanceSpace, this.calculator, this.occlusionProviderFactory);
     }
 
     @Test
@@ -50,16 +51,16 @@ public class NodeMapTests {
 
     @Test
     public void passibleControl() {
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
         this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
-        verify(this.calculator).passiblePointNear(eq(new Vec3i(1, 2, 3)), isNull(Vec3i.class));
+        verify(this.calculator).passiblePointNear(eq(new Vec3i(1, 2, 3)), isNull(Vec3i.class), any());
     }
 
     @Test
     public void passibleCached() {
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
         final Node
             node = this.nodeMap.cachedPassiblePointNear(1, 2, 3),
@@ -70,7 +71,7 @@ public class NodeMapTests {
 
     @Test
     public void redundancyExistency() {
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
         final Node
             node = this.nodeMap.cachedPassiblePointNear(1, 2, 3),
@@ -81,7 +82,7 @@ public class NodeMapTests {
 
     @Test
     public void redundancyRemoveOriginal() {
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
         Node node = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
@@ -89,7 +90,7 @@ public class NodeMapTests {
 
         assertTrue(removed);
 
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(new Node(new Vec3i(1, 2, 3)));
 
         final Node existing = this.nodeMap.cachedPassiblePointNear(3, 4, 5);
 
@@ -107,7 +108,7 @@ public class NodeMapTests {
         initial.passibility(Passibility.risky);
         initial.volatile_(true);
 
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(initial);
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(initial);
 
         final Node result0 = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
@@ -116,7 +117,7 @@ public class NodeMapTests {
         second.passibility(Passibility.dangerous);
         second.volatile_(true);
 
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(second);
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(second);
 
         final Node result1 = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
@@ -133,7 +134,7 @@ public class NodeMapTests {
         initial.passibility(Passibility.risky);
         initial.volatile_(true);
 
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(initial);
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(initial);
 
         final Node result0 = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
@@ -142,7 +143,7 @@ public class NodeMapTests {
         second.passibility(Passibility.dangerous);
         second.volatile_(false);
 
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(second);
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(second);
 
         final Node result1 = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
@@ -155,7 +156,7 @@ public class NodeMapTests {
 
         third.passibility(Passibility.risky);
         third.volatile_(true);
-        when(this.calculator.passiblePointNear(any(), any())).thenReturn(third);
+        when(this.calculator.passiblePointNear(any(), any(), any())).thenReturn(third);
 
         final Node result2 = this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 

@@ -5,15 +5,23 @@ import com.extollit.linalg.immutable.IntAxisAlignedBox;
 import com.extollit.linalg.immutable.Vec3i;
 
 public final class NodeMap {
-    public interface IPointPassibilityCalculator {
-        Node passiblePointNear(Vec3i coords0, Vec3i origin);
+    private final SparseSpatialMap<Node> it = new SparseSpatialMap<>(3);
+    private final IInstanceSpace instanceSpace;
+    private final IOcclusionProviderFactory occlusionProviderFactory;
+
+    private IPointPassibilityCalculator calculator;
+    private IOcclusionProvider occlusionProvider;
+    private int cx0, cxN, cz0, czN;
+
+    public NodeMap(IInstanceSpace instanceSpace, IPointPassibilityCalculator calculator, IOcclusionProviderFactory occlusionProviderFactory) {
+        this.calculator = calculator;
+        this.instanceSpace = instanceSpace;
+        this.occlusionProviderFactory = occlusionProviderFactory;
     }
 
-    private final SparseSpatialMap<Node> it = new SparseSpatialMap<>(3);
-    private final IPointPassibilityCalculator calculator;
-
-    public NodeMap(IPointPassibilityCalculator calculator) {
+    public void calculator(IPointPassibilityCalculator calculator) {
         this.calculator = calculator;
+        clear();
     }
 
     public final void reset(SortedPointQueue queue) {
@@ -23,8 +31,48 @@ public final class NodeMap {
         queue.clear();
     }
 
+    public final void reset() {
+        clear();
+        this.occlusionProvider = null;
+    }
+
     public final void clear() {
         this.it.clear();
+    }
+
+    public boolean needsOcclusionProvider() {
+        return this.occlusionProvider == null;
+    }
+
+    public byte flagsAt(int x, int y, int z) {
+        return this.occlusionProvider.elementAt(x, y, z);
+    }
+
+    public void updateFieldWindow(int x0, int z0, int xN, int zN, boolean cull) {
+        final int
+                cx0 = x0 >> 4,
+                cz0 = z0 >> 4,
+                cxN = xN >> 4,
+                czN = zN >> 4;
+
+        final IOcclusionProvider aop = this.occlusionProvider;
+        final boolean windowTest;
+
+        if (cull)
+            windowTest = cx0 != this.cx0 || cz0 != this.cz0 || cxN != this.cxN || czN != this.czN;
+        else
+            windowTest = cx0 < this.cx0 || cz0 < this.cz0 || cxN > this.cxN || czN > this.czN;
+
+        if (aop == null || windowTest) {
+            this.occlusionProvider = this.occlusionProviderFactory.fromInstanceSpace(this.instanceSpace, cx0, cz0, cxN, czN);
+            this.cx0 = cx0;
+            this.cz0 = cz0;
+            this.cxN = cxN;
+            this.czN = czN;
+
+            if (cull)
+                cullOutside(x0, z0, xN, zN);
+        }
     }
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
@@ -66,9 +114,9 @@ public final class NodeMap {
         Node point = point0;
 
         if (point == null)
-            point = this.calculator.passiblePointNear(coords, origin);
+            point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
         else if (point.volatile_()) {
-            point = this.calculator.passiblePointNear(coords, origin);
+            point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
             if (point.key.equals(point0.key)) {
                 point0.passibility(point.passibility());
                 point0.volatile_(point.volatile_());

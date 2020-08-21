@@ -10,10 +10,16 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SortedPointQueueTests {
-    @Mock private NodeMap.IPointPassibilityCalculator calculator;
+    @Mock private IInstanceSpace instanceSpace;
+    @Mock private IOcclusionProviderFactory occlusionProviderFactory;
+    @Mock private IPointPassibilityCalculator calculator;
+    @Mock private IOcclusionProvider occlusionProvider;
 
     private SortedPointQueue q;
     private NodeMap graph;
@@ -23,8 +29,9 @@ public class SortedPointQueueTests {
 
     @Before
     public void setup() {
+        when(occlusionProviderFactory.fromInstanceSpace(any(), anyInt(), anyInt(), anyInt(), anyInt())).thenReturn(occlusionProvider);
         this.q = new SortedPointQueue();
-        this.graph = new NodeMap(calculator);
+        this.graph = new NodeMap(instanceSpace, calculator, occlusionProviderFactory);
         this.target = this.graph.cachedPointAt(0, 0, 7);
         (this.source = visited(0, 0, 0)).target(this.target.key);
     }
