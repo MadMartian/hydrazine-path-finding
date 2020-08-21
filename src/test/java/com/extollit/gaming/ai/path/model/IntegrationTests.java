@@ -27,6 +27,7 @@ public class IntegrationTests {
     public void jackknife() {
         PathObject path = new PathObject(
                 1,
+                false,
                 new Vec3i(-1, 4, 10),
                 new Vec3i(-2, 4, 11),
                 new Vec3i(-3, 4, 11),
@@ -43,6 +44,7 @@ public class IntegrationTests {
 
         path = new PathObject(
                 1,
+                false,
                 new Vec3i(-1, 4, 10),
                 new Vec3i(-2, 4, 11),
                 new Vec3i(-3, 4, 11),
@@ -76,6 +78,7 @@ public class IntegrationTests {
     public void taxi() {
         PathObject path = new PathObject(
                 1,
+                false,
                 new Vec3i(0, 4, 2),
                 new Vec3i(0, 4, 3),
                 new Vec3i(1, 4, 3),

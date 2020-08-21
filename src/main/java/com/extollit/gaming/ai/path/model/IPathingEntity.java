@@ -95,7 +95,7 @@ public interface IPathingEntity extends IDynamicMovableObject {
          * for the entity.  It also influences the rating of path points discovered in fluid.  Fluid path-points for swimmers
          * are not considered dangerous (unless it's lava and the entity is not fire resistant, then it's impassible).
          *
-         * Type type of entities that are not swimmers are typically the following:
+         * Type of entities that are not swimmers are typically the following:
          * - Puppies
          * - Kittens
          * - Villager golems
@@ -103,6 +103,16 @@ public interface IPathingEntity extends IDynamicMovableObject {
          * @return true if the entity can swim and typically survive in fluid, false if the entity always drowns in fluid.
          */
         boolean swimmer();
+
+        /**
+         * Is this entity capable of flying?  This flag alters engine behavior to select points anywhere in the air and
+         * not necessarily immediately above ground.
+         *
+         * Type of entities that are flyers are birds and bats whereas fish and sharks are NOT considered flying entities
+         *
+         * @return true if the entity can fly, false if the entity cannot move freely through the air defying gravity
+         */
+        boolean flyer();
 
         /**
          * Does this entity avoid water and other fluids?  This also influences the rating of path points discovered in fluid.

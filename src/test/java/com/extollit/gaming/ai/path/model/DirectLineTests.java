@@ -116,6 +116,7 @@ public class DirectLineTests {
         final PathObject pathObject = new PathObject(
                 1,
                 new Vec3i(0, 0, 0),
+                new Vec3i(0, 0, -1),
                 new Vec3i(1, 0, -1),
                 new Vec3i(2, 0, -1),
                 new Vec3i(2, 0, 0),
@@ -218,7 +219,7 @@ public class DirectLineTests {
 
         final int i = pathObject.directLine(0, pathObject.length());
 
-        assertEquals(4, i);
+        assertEquals(1, i);
     }
 
     @Test
@@ -235,7 +236,7 @@ public class DirectLineTests {
 
         final int i = pathObject.directLine(0, pathObject.length());
 
-        assertEquals(2, i);
+        assertEquals(0, i);
     }
 
     @Test

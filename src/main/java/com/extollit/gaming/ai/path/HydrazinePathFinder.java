@@ -576,7 +576,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             }
 
             if (current == target) {
-                nextPath = PathObject.fromHead(this.capabilities.speed(), current);
+                nextPath = createPath(current);
                 if (PathObject.active(nextPath)) {
                     nextPath.setRandomNumberGenerator(this.random);
                     this.queue.clear();
@@ -589,9 +589,14 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
         }
 
         if (nextPath == null && this.closest != null && !queue.isEmpty())
-            nextPath = PathObject.fromHead(this.capabilities.speed(), this.closest);
+            nextPath = createPath(this.closest);
 
         return updatePath(nextPath);
+    }
+
+    private PathObject createPath(Node head) {
+        final IPathingEntity.Capabilities capabilities = this.capabilities;
+        return PathObject.fromHead(capabilities.speed(), capabilities.flyer(), head);
     }
 
     private void processNode(Node current) {

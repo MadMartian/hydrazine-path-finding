@@ -18,6 +18,7 @@ public final class PathObject implements Iterable<Vec3i> {
 
     final Vec3i[] points;
     private final float speed;
+    private final boolean flying;
 
     public int i;
 
@@ -34,9 +35,13 @@ public final class PathObject implements Iterable<Vec3i> {
     }
 
     protected PathObject(float speed, Vec3i... points) {
+        this(speed, false, points);
+    }
+    protected PathObject(float speed, boolean flying, Vec3i... points) {
         this.points = points;
         this.length = points.length;
         this.speed = speed;
+        this.flying = flying;
         this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
     }
 
@@ -44,7 +49,7 @@ public final class PathObject implements Iterable<Vec3i> {
         this.random = random;
     }
 
-    public static PathObject fromHead(float speed, Node head) {
+    public static PathObject fromHead(float speed, boolean flying, Node head) {
         int i = 1;
 
         for (Node p = head; p.up() != null; p = p.up())
@@ -60,7 +65,7 @@ public final class PathObject implements Iterable<Vec3i> {
         if (result.length <= 1)
             return null;
         else
-            return new PathObject(speed, result);
+            return new PathObject(speed, flying, result);
     }
 
     public void truncateTo(int length) {
@@ -196,19 +201,18 @@ public final class PathObject implements Iterable<Vec3i> {
     public float stagnantFor(IPathingEntity pathingEntity) { return this.lastMutationTime < 0 ? 0 : pathingEntity.age() * this.speed - this.lastMutationTime; }
 
     protected int directLine(final int from, final int until) {
-        final int levelDistance = until - from + 1;
-        if (levelDistance < 2)
-            return from;
-
-        int [] xis = new int[3],
-               zis = new int[3];
+        int [] xis = new int[4],
+               yis = new int[4],
+               zis = new int[4];
         int ii = 0,
             i = from,
             i0 = i,
             xi00 = 0,
+            yi00 = 0,
             zi00 = 0,
             sq;
 
+        boolean bdx = false, bdy = false, bdz = false;
         final int n = until - 1;
 
         final Vec3i[] points = this.points;
@@ -218,41 +222,60 @@ public final class PathObject implements Iterable<Vec3i> {
             final Vec3i p = points[i];
             final int
                 dx = p.x - p0.x,
+                dy = p.y - p0.y,
                 dz = p.z - p0.z;
+
+            if (!flying && dy != 0)
+                return i - 1;
 
             int
                 xi = xis[ii],
+                yi = yis[ii],
                 zi = zis[ii];
 
             xi += dx;
+            yi += dy;
             zi += dz;
 
-            if (xi * zi != 0) {
+            if (((xi * zi) | (zi * yi) | (yi * xi)) != 0) {
                 final int
                     xi0 = xis[ii],
+                    yi0 = yis[ii],
                     zi0 = zis[ii];
 
                 xi00 = xi0;
+                yi00 = yi0;
                 zi00 = zi0;
 
                 xi -= xi0;
+                yi -= yi0;
                 zi -= zi0;
 
-                if (++ii >= 3) {
-                    --ii;
+                final boolean
+                    bdx0 = bdx,
+                    bdy0 = bdy,
+                    bdz0 = bdz;
+
+                if ((!(bdx ^= (dx != 0)) && bdx0) ||
+                    (!(bdy ^= (dy != 0)) && bdy0) ||
+                    (!(bdz ^= (dz != 0)) && bdz0))
                     break;
-                }
+                else
+                    ++ii;
 
                 i0 = i - 1;
             }
 
             xis[ii] = xi;
+            yis[ii] = yi;
             zis[ii] = zi;
 
-            sq = xi * zi00 + zi * xi00;
+            sq =  (xi * zi00 + xi * yi00)
+                + (zi * xi00 + zi * yi00)
+                + (yi * xi00 + yi * zi00);
             sq *= sq;
 
-            if (sq > (zi00 + xi00) * (zi00 + xi00))
+            if (sq > (zi00 + yi00 + xi00) * (zi00 + yi00 + xi00))
                 break;
 
             p0 = p;
@@ -260,13 +283,16 @@ public final class PathObject implements Iterable<Vec3i> {
         i = i0;
 
         xi00 = xis[0];
+        yi00 = yis[0];
         zi00 = zis[0];
 
         final int iiN = ii;
         int xi = 0,
+            yi = 0,
             zi = 0,
 
             axi00 = abs(xi00),
+            ayi00 = abs(yi00),
             azi00 = abs(zi00);
 
         ii = 0;
@@ -275,36 +301,42 @@ public final class PathObject implements Iterable<Vec3i> {
             final Vec3i p = points[i];
             final int
                     dx = p.x - p0.x,
+                    dy = p.y - p0.y,
                     dz = p.z - p0.z,
 
                     xi0 = xi,
+                    yi0 = yi,
                     zi0 = zi;
 
             xi += dx;
+            yi += dy;
             zi += dz;
 
-            if (abs(xi0) > axi00 || (abs(zi0) > azi00)) {
+            if (abs(xi0) > axi00 || abs(yi0) > ayi00 || abs(zi0) > azi00) {
                 --i;
                 break;
             }
 
-            if (xi * zi != 0) {
-                if (xi0 != xi00 || zi0 != zi00)
+            if (((xi * zi) | (zi * yi) | (yi * xi)) != 0) {
+                if (xi0 != xi00 || yi0 != yi00 || zi0 != zi00)
                     break;
 
                 xi -= xi00;
+                yi -= yi00;
                 zi -= zi00;
 
                 ii = (ii + 1) % iiN;
 
                 xi00 = xis[ii];
+                yi00 = yis[ii];
                 zi00 = zis[ii];
 
                 axi00 = abs(xi00);
+                ayi00 = abs(yi00);
                 azi00 = abs(zi00);
             }
 
-            if (dx * xi00 < 0 || dz * zi00 < 0)
+            if (dx * xi00 < 0 || dy * yi00 < 0 || dz * zi00 < 0)
                 break;
 
             p0 = p;
@@ -314,6 +346,9 @@ public final class PathObject implements Iterable<Vec3i> {
     }
 
     private int unlevelIndex(int from, com.extollit.linalg.immutable.Vec3d position) {
+        if (this.flying)
+            return this.points.length - 1;
+
         final int y0 = floor(position.y);
         int levelIndex = length();
 
