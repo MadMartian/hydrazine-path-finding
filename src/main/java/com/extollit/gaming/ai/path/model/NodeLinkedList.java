@@ -100,6 +100,17 @@ public final class NodeLinkedList implements Iterable<Node> {
         return true;
     }
 
+    public static boolean contains(NodeLinkedList list, Node other) {
+        while (list != null) {
+            if (list.self == other)
+                return true;
+
+            list = list.next;
+        }
+
+        return false;
+    }
+
     @Override
     public int hashCode() {
         return self.hashCode();

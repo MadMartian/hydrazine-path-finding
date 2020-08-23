@@ -3,6 +3,7 @@ package com.extollit.gaming.ai.path.model;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.Objects;
 
 public class Node {
@@ -154,8 +155,10 @@ public class Node {
 
     void sterilize() {
         if (this.children != null) {
-            for (Node child : this.children)
+            for (Node child : this.children) {
+                assert child.previous == this;
                 child.previous = null;
+            }
             this.children = null;
         }
     }
@@ -165,6 +168,8 @@ public class Node {
     private void removeChild(Node child) {
         if (this.children != null)
             this.children = this.children.remove(child);
+
+        assert !NodeLinkedList.contains(this.children, child);
     }
 
     final void unassign() {
@@ -174,8 +179,10 @@ public class Node {
     final boolean appendTo(final Node parent, final int delta, final int remaining) {
         assert !cyclic(parent);
 
+        orphan();
         this.previous = parent;
         parent.addChild(this);
+
         passibility(passibility());
         return length(parent.length() + delta)
                 && remaining(remaining);
@@ -186,7 +193,11 @@ public class Node {
             this.children = new NodeLinkedList(child);
         else
             this.children.add(child);
+
+        assert NodeLinkedList.contains(this.children, child);
     }
+
+    Iterable<Node> children() { return this.children == null ? Collections.<Node>emptyList() : this.children; }
 
     public static int squareDelta(Node left, Node right) {
         return squareDelta(left, right.key);

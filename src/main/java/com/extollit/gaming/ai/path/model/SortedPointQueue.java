@@ -76,6 +76,7 @@ public final class SortedPointQueue {
 
         Node p = up;
         do {
+            assert !p.assigned();
             p.reset();
             assert p.orphaned();
         } while ((p = p.up()) != null);
