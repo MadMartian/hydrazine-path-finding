@@ -6,16 +6,18 @@ import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.Objects;
 
-public class Node {
+public class Node implements INode {
     private static final byte
         BitWidth_512 = 9,
         BitWidth_128 = 7,
         Mask_Passibility = (byte)(3),
+        Mask_Gravitation = (byte)(3),
         Index_BitOffs = 2,
         Volatile_BitOffs = (byte)(Index_BitOffs + BitWidth_512),
         Length_BitOffs = (byte)(Volatile_BitOffs + 1),
         Remain_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
-        Visited_BitOffs = (byte)(Remain_BitOffs + BitWidth_128);
+        Visited_BitOffs = (byte)(Remain_BitOffs + BitWidth_128),
+        Gravitation_BitOffs = (byte)(Visited_BitOffs + 1);
 
     public static final short MAX_PATH_DISTANCE = (1 << BitWidth_128) - 1;
 
@@ -41,12 +43,18 @@ public class Node {
     }
 
     public Node(Vec3i key, Passibility passibility, boolean volatility) {
+        this(key, passibility, volatility, Gravitation.grounded);
+    }
+    public Node(Vec3i key, Passibility passibility, boolean volatility, Gravitation gravitation) {
         this.key = key;
-        this.word = (Mask_512 << Index_BitOffs) | (passibility.ordinal() & Mask_Passibility) | ((volatility ? 1 : 0) << Volatile_BitOffs);
+        this.word = (Mask_512 << Index_BitOffs) | ((gravitation.ordinal() & Mask_Gravitation) << Gravitation_BitOffs) | (passibility.ordinal() & Mask_Passibility) | ((volatility ? 1 : 0) << Volatile_BitOffs);
     }
 
+    @Override
+    public Vec3i coordinates() { return this.key; }
+
     private static int wordReset(Node copy) {
-        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs))) | (Mask_512 << Index_BitOffs);
+        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs) | (Mask_Gravitation << Gravitation_BitOffs))) | (Mask_512 << Index_BitOffs);
     }
 
     public final byte length() {
@@ -62,6 +70,7 @@ public class Node {
         return this.previous;
     }
 
+    @Override
     public final Passibility passibility() {
         return Passibility.values()[this.word & Mask_Passibility];
     }
@@ -70,6 +79,13 @@ public class Node {
         if (previous != null)
             passibility = passibility.between(previous.passibility());
         this.word = (this.word & ~Mask_Passibility) | passibility.ordinal();
+    }
+    @Override
+    public final Gravitation gravitation() {
+        return Gravitation.values()[(this.word >> Gravitation_BitOffs) & Mask_Gravitation];
+    }
+    public final void gravitation(Gravitation gravitation) {
+        this.word = (this.word & ~(Mask_Gravitation << Gravitation_BitOffs)) | (gravitation.ordinal() << Gravitation_BitOffs);
     }
     public final boolean length(int length) {
         if (length > Mask_128 || length < 0)
@@ -238,6 +254,14 @@ public class Node {
             sb.append('!');
         if (visited())
             sb.insert(0, '|');
+        switch (gravitation()) {
+            case airborne:
+                sb.append('^');
+                break;
+            case buoyant:
+                sb.append('~');
+                break;
+        }
 
         if (index == -1)
             sb.append(" (unassigned)");

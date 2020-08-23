@@ -8,6 +8,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static com.extollit.gaming.ai.path.model.PathObjectUtil.pathObject;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,17 +18,19 @@ public class IntegrationTests {
     @Mock
     private IPathingEntity pathingEntity;
 
+    @Mock
+    private IPathingEntity.Capabilities capabilities;
+
     @Before
     public void setup() {
         when(pathingEntity.width()).thenReturn(0.6f);
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(0.5, 0, 0.5));
+        when(pathingEntity.capabilities()).thenReturn(capabilities);
     }
 
     @Test
     public void jackknife() {
-        PathObject path = new PathObject(
-                1,
-                false,
+        PathObject path = pathObject(
                 new Vec3i(-1, 4, 10),
                 new Vec3i(-2, 4, 11),
                 new Vec3i(-3, 4, 11),
@@ -38,13 +41,11 @@ public class IntegrationTests {
         path.update(pathingEntity);
         assertEquals(1, path.i);
 
-        verify(pathingEntity).moveTo(new Vec3d(-1.5, 4, 11.5));
+        verify(pathingEntity).moveTo(new Vec3d(-1.5, 4, 11.5), Passibility.passible, Gravitation.grounded);
 
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(-1.5, 4, 11.5));
 
-        path = new PathObject(
-                1,
-                false,
+        path = pathObject(
                 new Vec3i(-1, 4, 10),
                 new Vec3i(-2, 4, 11),
                 new Vec3i(-3, 4, 11),
@@ -61,13 +62,13 @@ public class IntegrationTests {
         path.update(pathingEntity);
         assertEquals(3, path.i);
 
-        verify(pathingEntity).moveTo(new Vec3d(-3.5, 4, 11.5));
+        verify(pathingEntity).moveTo(new Vec3d(-3.5, 4, 11.5), Passibility.passible, Gravitation.grounded);
 
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(-3.5, 4, 11.5));
         path.update(pathingEntity);
         assertEquals(5, path.i);
 
-        verify(pathingEntity).moveTo(new Vec3d(-3.5, 4, 9.5));
+        verify(pathingEntity).moveTo(new Vec3d(-3.5, 4, 9.5), Passibility.passible, Gravitation.grounded);
 
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(-3.5, 4, 9.5));
         path.update(pathingEntity);
@@ -76,9 +77,7 @@ public class IntegrationTests {
 
     @Test
     public void taxi() {
-        PathObject path = new PathObject(
-                1,
-                false,
+        PathObject path = pathObject(
                 new Vec3i(0, 4, 2),
                 new Vec3i(0, 4, 3),
                 new Vec3i(1, 4, 3),

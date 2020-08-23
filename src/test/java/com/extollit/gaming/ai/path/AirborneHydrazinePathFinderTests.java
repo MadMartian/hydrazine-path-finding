@@ -1,0 +1,55 @@
+package com.extollit.gaming.ai.path;
+
+import com.extollit.gaming.ai.path.model.PathObject;
+import com.extollit.linalg.immutable.Vec3i;
+import org.junit.Before;
+import org.junit.Test;
+
+import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
+
+public class AirborneHydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
+    @Before
+    public void setup() {
+        when(super.capabilities.cautious()).thenReturn(false);
+        when(super.capabilities.flyer()).thenReturn(true);
+
+        super.setup();
+
+        pathFinder.schedulingPriority(50, 50);
+    }
+
+    @Test
+    public void takeOffEh() {
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        solid(0, -1, 2);
+        solid(0, -1, 3);
+        solid(0, -1, 4);
+
+        final PathObject path = pathFinder.initiatePathTo(0, 5, 4);
+
+        assertNotNull(path);
+        assertEquals(new Vec3i(0, 5, 4), path.last().coordinates());
+    }
+
+    @Test
+    public void headSpace() {
+        solid(0, 1, 2);
+
+        final PathObject path = pathFinder.initiatePathTo(0, 0, 4);
+
+        assertPath(
+                path,
+                new Vec3i(0, 0, 0),
+                new Vec3i(-1, 0, 0),
+                new Vec3i(-1, 0, 1),
+                new Vec3i(-1, 0, 2),
+                new Vec3i(-1, 0, 3),
+                new Vec3i(0, 0, 3),
+                new Vec3i(0, 0, 4)
+        );
+    }
+}

@@ -1,6 +1,8 @@
 package com.extollit.gaming.ai.path;
 
+import com.extollit.gaming.ai.path.model.Gravitation;
 import com.extollit.gaming.ai.path.model.IPathingEntity;
+import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.linalg.immutable.Vec3d;
 
 public class Monster implements IPathingEntity, IPathingEntity.Capabilities {
@@ -26,7 +28,7 @@ public class Monster implements IPathingEntity, IPathingEntity.Capabilities {
     }
 
     @Override
-    public void moveTo(Vec3d position) {
+    public void moveTo(Vec3d position, Passibility passibility, Gravitation gravitation) {
         this.position.set(position);
     }
 

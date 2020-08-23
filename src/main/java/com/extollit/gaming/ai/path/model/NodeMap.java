@@ -142,7 +142,9 @@ public final class NodeMap {
     public boolean remove(int x, int y, int z) {
         return remove(new Vec3i(x, y, z));
     }
-
+    public boolean remove(INode node) {
+        return remove(node.coordinates());
+    }
     public boolean remove(Vec3i coords) {
         final Node existing = this.it.remove(coords);
         if (existing != null) {

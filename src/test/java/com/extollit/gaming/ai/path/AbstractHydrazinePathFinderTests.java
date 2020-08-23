@@ -43,6 +43,8 @@ public abstract class AbstractHydrazinePathFinderTests {
         when(capabilities.climber()).thenReturn(true);
         when(capabilities.opensDoors()).thenReturn(false);
         when(capabilities.avoidsDoorways()).thenReturn(true);
+
+        pos(0, 0, 0);
     }
 
     protected void setup(final IPathingEntity pathingEntity) {

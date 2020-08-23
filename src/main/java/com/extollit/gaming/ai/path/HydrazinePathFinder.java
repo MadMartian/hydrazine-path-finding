@@ -74,8 +74,12 @@ public class HydrazinePathFinder {
     }
 
     public void schedulingPriority(SchedulingPriority schedulingPriority) {
-        this.initComputeIterations = schedulingPriority.initComputeIterations;
-        this.periodicComputeIterations = schedulingPriority.periodicComputeIterations;
+        schedulingPriority(schedulingPriority.initComputeIterations, schedulingPriority.periodicComputeIterations);
+    }
+
+    void schedulingPriority(final int initComputeIterations, final int periodicComputeIterations) {
+        this.initComputeIterations = initComputeIterations;
+        this.periodicComputeIterations = periodicComputeIterations;
     }
 
     public final Vec3i trackingDestination() {
@@ -178,7 +182,7 @@ public class HydrazinePathFinder {
             if (++this.failureCount == 1)
                 this.nextGraphCacheReset = pathTimeAge() + PROBATIONARY_TIME_LIMIT.next(this.random);
 
-            final Vec3i culprit = currentPath.at(currentPath.i);
+            final INode culprit = currentPath.at(currentPath.i);
             this.nodeMap.remove(culprit);
 
             this.passiblePointPathTimeLimit += PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -276,7 +280,10 @@ public class HydrazinePathFinder {
 
     private IPointPassibilityCalculator createPassibilityCalculator(boolean flying) {
         final IPointPassibilityCalculator calculator;
-        calculator = new GroundPassibilityCalculator(this.instanceSpace);
+        if (flying)
+            calculator = new AirbornePassibilityCalculator(this.instanceSpace);
+        else
+            calculator = new GroundPassibilityCalculator(this.instanceSpace);
         return calculator;
     }
 
@@ -332,9 +339,11 @@ public class HydrazinePathFinder {
     }
 
     private void updateFieldWindow(PathObject path) {
-        Vec3i pp = path.last();
-        if (pp == null)
+        INode node = path.last();
+        if (node == null)
             return;
+
+        Vec3i pp = node.coordinates();
 
         final com.extollit.linalg.mutable.Vec3i
                 min = new com.extollit.linalg.mutable.Vec3i(pp.x, pp.y, pp.z),
@@ -342,7 +351,8 @@ public class HydrazinePathFinder {
 
         if (!path.done())
             for (int c = path.i; c < path.length(); ++c) {
-                pp = path.at(c);
+                node = path.at(c);
+                pp = node.coordinates();
                 if (pp.x < min.x)
                     min.x = pp.x;
                 if (pp.y < min.y)
@@ -584,35 +594,66 @@ public class HydrazinePathFinder {
 
     private PathObject createPath(Node head) {
         final IPathingEntity.Capabilities capabilities = this.capabilities;
-        return PathObject.fromHead(capabilities.speed(), capabilities.flyer(), head);
+        return PathObject.fromHead(capabilities.speed(), head);
     }
 
     private void processNode(Node current) {
         current.visited(true);
 
+        final boolean flying = this.flying;
         final Vec3i coords = current.key;
         final Node
                 west = cachedPassiblePointNear(coords.x - 1, coords.y, coords.z, coords),
                 east = cachedPassiblePointNear(coords.x + 1, coords.y, coords.z, coords),
                 north = cachedPassiblePointNear(coords.x, coords.y, coords.z - 1, coords),
                 south = cachedPassiblePointNear(coords.x, coords.y, coords.z + 1, coords);
+        final Node
+                up, down;
 
-        final boolean found = applyPointOptions(current, west, east, north, south);
+        if (flying) {
+            up = cachedPassiblePointNear(coords.x, coords.y + 1, coords.z, coords);
+            down = cachedPassiblePointNear(coords.x, coords.y - 1, coords.z, coords);
+        } else
+            up = down = null;
+
+        final boolean found = applyPointOptions(current, up, down, west, east, north, south);
 
         if (!found) {
-            com.extollit.linalg.mutable.AxisAlignedBBox
-                southBounds = blockBounds(coords, 0, 0, +1),
-                northBounds = blockBounds(coords, 0, 0, -1),
-                eastBounds = blockBounds(coords, +1, 0, 0),
-                westBounds = blockBounds(coords, -1, 0, 0);
+            final com.extollit.linalg.mutable.AxisAlignedBBox
+                    southBounds = blockBounds(coords, 0, 0, +1),
+                    northBounds = blockBounds(coords, 0, 0, -1),
+                    eastBounds = blockBounds(coords, +1, 0, 0),
+                    westBounds = blockBounds(coords, -1, 0, 0);
 
             final float actualSizeSquared = this.actualSize * this.actualSize;
-            final Node[] pointOptions = {
-                    westBounds == null || northBounds == null || westBounds.mg2(northBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y, coords.z - 1, coords) : null,
-                    eastBounds == null || southBounds == null || eastBounds.mg2(southBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y, coords.z + 1, coords) : null,
-                    eastBounds == null || northBounds == null || eastBounds.mg2(northBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y, coords.z - 1, coords) : null,
-                    westBounds == null || southBounds == null || westBounds.mg2(southBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y, coords.z + 1, coords) : null
-            };
+
+            final Node[] pointOptions;
+
+            if (flying) {
+                final com.extollit.linalg.mutable.AxisAlignedBBox
+                        upBounds = blockBounds(coords, 0, +1, 0),
+                        downBounds = blockBounds(coords, 0, -1, 0);
+
+                pointOptions = new Node[] {
+                        northBounds == null || upBounds == null || northBounds.mg2(upBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x, coords.y + 1, coords.z - 1, coords) : null,
+                        eastBounds == null  || upBounds == null || eastBounds.mg2(upBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y + 1, coords.z, coords) : null,
+                        southBounds == null || upBounds == null || southBounds.mg2(upBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x, coords.y + 1, coords.z + 1, coords) : null,
+                        westBounds == null  || upBounds == null || westBounds.mg2(upBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y + 1, coords.z, coords) : null,
+
+                        northBounds == null || downBounds == null || northBounds.mg2(downBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x, coords.y - 1, coords.z - 1, coords) : null,
+                        eastBounds == null  || downBounds == null || eastBounds.mg2(downBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y - 1, coords.z, coords) : null,
+                        southBounds == null || downBounds == null || southBounds.mg2(downBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x, coords.y - 1, coords.z + 1, coords) : null,
+                        westBounds == null  || downBounds == null || westBounds.mg2(downBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y - 1, coords.z, coords) : null
+                };
+
+                applyPointOptions(current, pointOptions);
+            } else
+                pointOptions = new Node[4];
+
+            pointOptions[0] = westBounds == null || northBounds == null || westBounds.mg2(northBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y, coords.z - 1, coords) : null;
+            pointOptions[1] = eastBounds == null || southBounds == null || eastBounds.mg2(southBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y, coords.z + 1, coords) : null;
+            pointOptions[2] = eastBounds == null || northBounds == null || eastBounds.mg2(northBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x + 1, coords.y, coords.z - 1, coords) : null;
+            pointOptions[3] = westBounds == null || southBounds == null || westBounds.mg2(southBounds) >= actualSizeSquared ? cachedPassiblePointNear(coords.x - 1, coords.y, coords.z + 1, coords) : null;
 
             applyPointOptions(current, pointOptions);
         }

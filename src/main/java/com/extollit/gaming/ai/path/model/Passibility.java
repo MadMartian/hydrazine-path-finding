@@ -1,5 +1,7 @@
 package com.extollit.gaming.ai.path.model;
 
+import java.text.MessageFormat;
+
 /**
  * Expresses ratings for traversal into a particular path-point according to increasing risk.
  *
@@ -41,5 +43,36 @@ public enum Passibility {
     public boolean impassible(IPathingEntity.Capabilities capabilities) {
         return this == Passibility.impassible
                 || (capabilities.cautious() && worseThan(Passibility.passible));
+    }
+
+    public static Passibility from(byte flags, IPathingEntity.Capabilities capabilities) {
+        final Element kind = Element.of(flags);
+        switch (kind) {
+            case earth:
+                if (Logic.ladder.in(flags) || (Logic.doorway.in(flags) && capabilities.opensDoors()))
+                    return passible;
+                else
+                    return impassible;
+
+            case air:
+                if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
+                    return impassible;
+                else
+                    return passible;
+
+            case water:
+                if (capabilities.aquaphobic() || !capabilities.swimmer())
+                    return dangerous;
+                else
+                    return risky;
+
+            case fire:
+                if (!capabilities.fireResistant())
+                    return dangerous;
+                else
+                    return risky;
+        }
+
+        throw new IllegalArgumentException(MessageFormat.format("Unhandled element type ''{0}''", kind));
     }
 }

@@ -1,5 +1,8 @@
 package com.extollit.gaming.ai.path;
 
+import com.extollit.gaming.ai.path.model.Gravitation;
+import com.extollit.gaming.ai.path.model.INode;
+import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.gaming.ai.path.model.PathObject;
 import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
@@ -245,7 +248,9 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         PathObject pathObject = pathFinder.trackPathTo(destinationEntity);
 
         assertNotNull(pathObject);
-        assertEquals(new Vec3i(3, 10, 1), pathObject.last());
+        INode last = pathObject.last();
+        assertNotNull(last);
+        assertEquals(new Vec3i(3, 10, 1), last.coordinates());
 
         solid(1, 9, 0);
         solid(1, 9, -1);
@@ -254,7 +259,9 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         pathObject = pathFinder.update();
 
         assertNotNull(pathObject);
-        assertEquals(new Vec3i(1, 10, -1), pathObject.last());
+        last = pathObject.last();
+        assertNotNull(last);
+        assertEquals(new Vec3i(1, 10, -1), last.coordinates());
     }
 
     @Test
@@ -370,7 +377,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         path.update(pathingEntity);
 
-        verify(pathingEntity).moveTo(new Vec3d(0.5, 0, 3.5));
+        verify(pathingEntity).moveTo(new Vec3d(0.5, 0, 3.5), Passibility.passible, Gravitation.grounded);
         pos(0.5, 0, 1.5);
 
         PathObject path2 = pathFinder.update();

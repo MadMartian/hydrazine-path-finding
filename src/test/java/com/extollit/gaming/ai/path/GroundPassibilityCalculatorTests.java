@@ -4,7 +4,6 @@ import com.extollit.gaming.ai.path.model.Element;
 import com.extollit.gaming.ai.path.model.Node;
 import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.linalg.immutable.Vec3i;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -19,7 +18,7 @@ public class GroundPassibilityCalculatorTests extends AbstractGroundPassibilityC
 
         final Node actual = calculator.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN, super.flagSampler);
         assertNotNull(actual);
-        Assert.assertEquals(Passibility.passible, actual.passibility());
+        assertEquals(Passibility.passible, actual.passibility());
         assertEquals(1, actual.key.y);
     }
 

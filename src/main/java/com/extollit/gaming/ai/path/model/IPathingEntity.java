@@ -44,8 +44,10 @@ public interface IPathingEntity extends IDynamicMovableObject {
      * is clear and safe to traverse.
      *
      * @param position absolute (relative to the instance) target position to move toward
+     * @param passibility the passibility of getting to this location (other than {@link Passibility#impassible})
+     * @param gravitation whether the entity must walk, fly or swim to this location
      */
-    void moveTo(Vec3d position);
+    void moveTo(Vec3d position, Passibility passibility, Gravitation gravitation);
 
     /**
      * Expresses the movement capabilities of an entity, the engine loads these flags once per path-finding session and

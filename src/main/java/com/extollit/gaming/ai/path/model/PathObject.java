@@ -7,18 +7,16 @@ import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
 
 import java.text.MessageFormat;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 
 import static com.extollit.num.FastMath.*;
 
-public final class PathObject implements Iterable<Vec3i> {
+public final class PathObject implements Iterable<INode> {
     private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(1, 2);
 
-    final Vec3i[] points;
+    final Node[] nodes;
     private final float speed;
-    private final boolean flying;
 
     public int i;
 
@@ -34,14 +32,10 @@ public final class PathObject implements Iterable<Vec3i> {
         DIRECT_LINE_TIME_LIMIT = configModel.directLineTimeLimit();
     }
 
-    protected PathObject(float speed, Vec3i... points) {
-        this(speed, false, points);
-    }
-    protected PathObject(float speed, boolean flying, Vec3i... points) {
-        this.points = points;
-        this.length = points.length;
+    protected PathObject(float speed, Node... nodes) {
+        this.nodes = nodes;
+        this.length = nodes.length;
         this.speed = speed;
-        this.flying = flying;
         this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
     }
 
@@ -49,52 +43,51 @@ public final class PathObject implements Iterable<Vec3i> {
         this.random = random;
     }
 
-    public static PathObject fromHead(float speed, boolean flying, Node head) {
+    public static PathObject fromHead(float speed, Node head) {
         int i = 1;
 
         for (Node p = head; p.up() != null; p = p.up())
             ++i;
 
-        final Vec3i[] result = new Vec3i[i];
-        final Vec3i key = head.key;
-        result[--i] = key;
+        final Node[] result = new Node[i];
+        result[--i] = head;
 
-        for (Node p = head; p.up() != null; result[--i] = p.key)
+        for (Node p = head; p.up() != null; result[--i] = p)
             p = p.up();
 
         if (result.length <= 1)
             return null;
         else
-            return new PathObject(speed, flying, result);
+            return new PathObject(speed, result);
     }
 
     public void truncateTo(int length) {
-        if (length < 0 || length >= this.points.length)
+        if (length < 0 || length >= this.nodes.length)
             throw new ArrayIndexOutOfBoundsException(
-                MessageFormat.format("Length is out of bounds 0 <= length < {0} but length = {1}", this.points.length, length)
+                MessageFormat.format("Length is out of bounds 0 <= length < {0} but length = {1}", this.nodes.length, length)
             );
 
         this.length = length;
     }
 
     public void untruncate() {
-        this.length = this.points.length;
+        this.length = this.nodes.length;
     }
 
     @Override
-    public Iterator<Vec3i> iterator() {
-        return new ArrayIterable.Iter<Vec3i>(this.points, this.length);
+    public Iterator<INode> iterator() {
+        return new ArrayIterable.Iter<INode>(this.nodes, this.length);
     }
     public final int length() { return this.length; }
-    public final Vec3i at(int i) { return this.points[i]; }
-    public final Vec3i current() {
-        return this.points[this.i];
+    public final INode at(int i) { return this.nodes[i]; }
+    public final INode current() {
+        return this.nodes[this.i];
     }
-    public final Vec3i last() {
-        final Vec3i[] points = this.points;
+    public final INode last() {
+        final Node[] nodes = this.nodes;
         final int length = this.length;
         if (length > 0)
-            return points[length - 1];
+            return nodes[length - 1];
         else
             return null;
     }
@@ -110,7 +103,19 @@ public final class PathObject implements Iterable<Vec3i> {
             if (done())
                 return;
 
-            final int unlevelIndex = unlevelIndex(this.i, subject.coordinates());
+            final int unlevelIndex;
+
+            final IPathingEntity.Capabilities capabilities = subject.capabilities();
+            final boolean grounded = !capabilities.flyer();
+            final float fy;
+
+            if (grounded) {
+                unlevelIndex = unlevelIndex(this.i, subject.coordinates());
+                fy = 0;
+            } else {
+                unlevelIndex = this.length;
+                fy = 1;
+            }
 
             int adjacentIndex;
             double minDistanceSquared = Double.MAX_VALUE;
@@ -123,10 +128,11 @@ public final class PathObject implements Iterable<Vec3i> {
                 final int end = unlevelIndex + 1;
 
                 for (int i = adjacentIndex = this.adjacentIndex; i < this.length && i < end; ++i) {
-                    final Vec3i pp = at(i);
+                    final Node node = this.nodes[i];
+                    final Vec3i pp = node.key;
                     d.sub(pp);
                     d.sub(offset, 0, offset);
-                    d.y = 0;
+                    d.y *= fy;
 
                     final double distanceSquared = d.mg2();
 
@@ -144,7 +150,7 @@ public final class PathObject implements Iterable<Vec3i> {
                 int advanceTargetIndex;
 
                 targetIndex = adjacentIndex;
-                if (targetIndex >= this.taxiUntil && (advanceTargetIndex = directLine(targetIndex, unlevelIndex)) > targetIndex)
+                if (targetIndex >= this.taxiUntil && (advanceTargetIndex = directLine(targetIndex, unlevelIndex, grounded)) > targetIndex)
                     targetIndex = advanceTargetIndex;
                 else
                     targetIndex = adjacentIndex + 1;
@@ -164,9 +170,9 @@ public final class PathObject implements Iterable<Vec3i> {
                 this.nextDirectLineTimeout += DIRECT_LINE_TIME_LIMIT.next(this.random);
             }
 
-            final Vec3i point = done() ? last() : current();
-            if (point != null)
-                subject.moveTo(positionFor(subject, point));
+            final INode node = done() ? last() : current();
+            if (node != null)
+                subject.moveTo(positionFor(subject, node.coordinates()), node.passibility(), node.gravitation());
         } finally {
             if (mutated || this.lastMutationTime < 0) {
                 this.lastMutationTime = subject.age() * this.speed;
@@ -200,7 +206,7 @@ public final class PathObject implements Iterable<Vec3i> {
 
     public float stagnantFor(IPathingEntity pathingEntity) { return this.lastMutationTime < 0 ? 0 : pathingEntity.age() * this.speed - this.lastMutationTime; }
 
-    protected int directLine(final int from, final int until) {
+    protected int directLine(final int from, final int until, boolean grounded) {
         int [] xis = new int[4],
                yis = new int[4],
                zis = new int[4];
@@ -215,17 +221,19 @@ public final class PathObject implements Iterable<Vec3i> {
         boolean bdx = false, bdy = false, bdz = false;
         final int n = until - 1;
 
-        final Vec3i[] points = this.points;
-        Vec3i p0 = points[i];
+        final Node[] nodes = this.nodes;
+        final Node node0 = nodes[i];
+        Vec3i p0 = node0.key;
 
         while (i++ < n) {
-            final Vec3i p = points[i];
+            final Node node = nodes[i];
+            final Vec3i p = node.key;
             final int
                 dx = p.x - p0.x,
                 dy = p.y - p0.y,
                 dz = p.z - p0.z;
 
-            if (!flying && dy != 0)
+            if (grounded && dy != 0)
                 return i - 1;
 
             int
@@ -296,9 +304,10 @@ public final class PathObject implements Iterable<Vec3i> {
             azi00 = abs(zi00);
 
         ii = 0;
-        p0 = points[i];
+        p0 = nodes[i].key;
         while (i++ < n) {
-            final Vec3i p = points[i];
+            final Node node = nodes[i];
+            final Vec3i p = node.key;
             final int
                     dx = p.x - p0.x,
                     dy = p.y - p0.y,
@@ -346,16 +355,14 @@ public final class PathObject implements Iterable<Vec3i> {
     }
 
     private int unlevelIndex(int from, com.extollit.linalg.immutable.Vec3d position) {
-        if (this.flying)
-            return this.points.length - 1;
-
         final int y0 = floor(position.y);
+        final Node [] nodes = this.nodes;
         int levelIndex = length();
 
         for (int i = from; i < length(); ++i)
         {
-            final Vec3i pp = at(i);
-            if (pp.y != y0)
+            final Node node = nodes[i];
+            if (node.key.y - y0 != 0)
             {
                 levelIndex = i;
                 break;
@@ -365,7 +372,22 @@ public final class PathObject implements Iterable<Vec3i> {
     }
 
     public boolean sameAs(PathObject other) {
-        return Arrays.equals(points, other.points);
+        final Node[]
+            thisNodes = this.nodes,
+            otherNodes = other.nodes;
+
+        if (otherNodes.length != thisNodes.length)
+            return false;
+
+        int c = 0;
+        while (c < thisNodes.length) {
+            if (!thisNodes[c].key.equals(otherNodes[c].key))
+                return false;
+
+            c++;
+        }
+
+        return true;
     }
 
     @Override
@@ -378,7 +400,7 @@ public final class PathObject implements Iterable<Vec3i> {
 
     @Override
     public int hashCode() {
-        final Vec3i last = last();
+        final INode last = last();
         return last == null ? 0 : last.hashCode();
     }
 
@@ -389,11 +411,11 @@ public final class PathObject implements Iterable<Vec3i> {
         sb.append("Last Mutation: ");
         sb.append(this.lastMutationTime);
         sb.append(System.lineSeparator());
-        for (Vec3i pp : this.points) {
+        for (Node pp : this.nodes) {
             if (index++ == i)
                 sb.append('*');
 
-            sb.append(pp);
+            sb.append(pp.key);
             sb.append(System.lineSeparator());
         }
         return sb.toString();
@@ -402,7 +424,11 @@ public final class PathObject implements Iterable<Vec3i> {
     public void adjustPathPosition(PathObject formerPath, final IPathingEntity pathingEntity) {
         final float pointOffset = pointToPositionOffset(pathingEntity.width());
         final int length = this.length;
-        final Vec3i
+        final Node []
+            nodes = this.nodes,
+            formerPathNodes = formerPath.nodes;
+
+        final INode
                 lastPointVisited = formerPath.current();
 
         final com.extollit.linalg.immutable.Vec3d coordinates = pathingEntity.coordinates();
@@ -414,12 +440,13 @@ public final class PathObject implements Iterable<Vec3i> {
         double minSquareDistFromSource = Double.MAX_VALUE;
         int c = -1;
 
-        while(++c < formerPath.i && c < length && at(c).equals(formerPath.at(c)));
+        while(++c < formerPath.i && c < length && nodes[c].key.equals(formerPathNodes[c].key));
         c--;
 
         while(++c < length) {
-            final Vec3i p = at(c);
-            if (p.equals(lastPointVisited)) {
+            final INode node = nodes[c];
+            final Vec3i p = node.coordinates();
+            if (p.equals(lastPointVisited.coordinates())) {
                 i = c;
                 break;
             }
@@ -439,10 +466,10 @@ public final class PathObject implements Iterable<Vec3i> {
     }
 
     public boolean reachableFrom(PathObject otherPath) {
-        final Vec3i point = otherPath.current();
+        final INode pivot = otherPath.current();
 
-        for (Vec3i p : this.points)
-            if (p.equals(point))
+        for (Node node : this.nodes)
+            if (node.key.equals(pivot.coordinates()))
                 return true;
 
         return false;
