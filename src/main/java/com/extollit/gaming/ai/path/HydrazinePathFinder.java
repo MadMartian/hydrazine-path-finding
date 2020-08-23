@@ -530,8 +530,12 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 newPath = null;
 
             return this.currentPath = newPath;
-        } else
-            return this.currentPath = null;
+        } else {
+            if (!PathObject.active(this.currentPath))
+                this.currentPath = null;
+
+            return this.currentPath;
+        }
     }
 
     private PathObject triage(int iterations) {
