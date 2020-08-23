@@ -26,8 +26,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
             MAX_SURVIVE_FALL_DISTANCE = 20,
             CESA_LIMIT = 16;
     private static FloatRange
-            PROBATIONARY_TIME_LIMIT = new FloatRange(12, 18),
-            PASSIBLE_POINT_TIME_LIMIT = new FloatRange(4, 9);
+            PROBATIONARY_TIME_LIMIT = new FloatRange(16, 24),
+            PASSIBLE_POINT_TIME_LIMIT = new FloatRange(12, 36);
 
     private static byte FAILURE_COUNT_THRESHOLD = 3;
 
@@ -182,6 +182,8 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
 
             final Vec3i culprit = currentPath.at(currentPath.i);
             this.nodeMap.remove(culprit);
+
+            this.passiblePointPathTimeLimit += PASSIBLE_POINT_TIME_LIMIT.next(this.random);
         }
 
         return status;
