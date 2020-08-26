@@ -146,6 +146,11 @@ class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
         return point;
     }
 
+    @Override
+    public boolean omnidirectional() {
+        return false;
+    }
+
     private Passibility fallingSafety(Passibility passibility, int y0, int minY) {
         final int dy = y0 - minY;
         if (dy > 1)

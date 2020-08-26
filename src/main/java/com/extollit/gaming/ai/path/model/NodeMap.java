@@ -13,6 +13,9 @@ public final class NodeMap {
     private IOcclusionProvider occlusionProvider;
     private int cx0, cxN, cz0, czN;
 
+    public NodeMap(IInstanceSpace instanceSpace, IOcclusionProviderFactory occlusionProviderFactory) {
+        this(instanceSpace, null, occlusionProviderFactory);
+    }
     public NodeMap(IInstanceSpace instanceSpace, IPointPassibilityCalculator calculator, IOcclusionProviderFactory occlusionProviderFactory) {
         this.calculator = calculator;
         this.instanceSpace = instanceSpace;
@@ -114,7 +117,7 @@ public final class NodeMap {
         Node point = point0;
 
         if (point == null)
-            point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
+             point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
         else if (point.volatile_()) {
             point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
             if (point.key.equals(point0.key)) {

@@ -106,7 +106,7 @@ public final class PathObject implements Iterable<INode> {
             final int unlevelIndex;
 
             final IPathingEntity.Capabilities capabilities = subject.capabilities();
-            final boolean grounded = !capabilities.flyer();
+            final boolean grounded = !(capabilities.flyer() || capabilities.gilled() && capabilities.swimmer());
             final float fy;
 
             if (grounded) {

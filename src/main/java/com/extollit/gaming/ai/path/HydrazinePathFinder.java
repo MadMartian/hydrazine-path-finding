@@ -38,7 +38,7 @@ public class HydrazinePathFinder {
     private NodeMap nodeMap;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private boolean flying;
+    private boolean flying, swimming, gilling;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
     private int failureCount;
@@ -61,7 +61,7 @@ public class HydrazinePathFinder {
     HydrazinePathFinder(IPathingEntity entity, IInstanceSpace instanceSpace, IOcclusionProviderFactory occlusionProviderFactory) {
         this.subject = entity;
         this.instanceSpace = instanceSpace;
-        this.nodeMap = new NodeMap(instanceSpace, this.pathPointCalculator = createPassibilityCalculator(false), occlusionProviderFactory);
+        this.nodeMap = new NodeMap(instanceSpace, occlusionProviderFactory);
 
         applySubject();
         schedulingPriority(SchedulingPriority.low);
@@ -278,10 +278,19 @@ public class HydrazinePathFinder {
         return mutated;
     }
 
-    private IPointPassibilityCalculator createPassibilityCalculator(boolean flying) {
+    private IPointPassibilityCalculator createPassibilityCalculator(IPathingEntity.Capabilities capabilities) {
         final IPointPassibilityCalculator calculator;
-        if (flying)
-            calculator = new AirbornePassibilityCalculator(this.instanceSpace);
+        final boolean
+                flyer = capabilities.flyer(),
+                swimmer = capabilities.swimmer(),
+                gilled = capabilities.gilled();
+
+        if (flyer && swimmer && gilled)
+            calculator = new FluidicPassibilityCalculator(this.instanceSpace, Element.air, Element.water);
+        else if (flyer)
+            calculator = new FluidicPassibilityCalculator(this.instanceSpace, Element.air);
+        else if (swimmer && gilled)
+            calculator = new FluidicPassibilityCalculator(this.instanceSpace, Element.water);
         else
             calculator = new GroundPassibilityCalculator(this.instanceSpace);
         return calculator;
@@ -289,12 +298,18 @@ public class HydrazinePathFinder {
 
     private void applySubject() {
         final IPathingEntity.Capabilities capabilities = this.capabilities = this.subject.capabilities();
-        final boolean flying = capabilities.flyer();
-        if (flying != this.flying || this.pathPointCalculator == null) {
-            this.nodeMap.calculator(this.pathPointCalculator = createPassibilityCalculator(flying));
+        final boolean
+            flying = capabilities.flyer(),
+            swimming = capabilities.swimmer(),
+            gilling = capabilities.gilled();
+
+        if (this.pathPointCalculator == null || flying != this.flying || swimming != this.swimming || gilling != this.gilling) {
+            this.nodeMap.calculator(this.pathPointCalculator = createPassibilityCalculator(capabilities));
             if (!this.queue.isEmpty())
                 resetTriage();
             this.flying = flying;
+            this.swimming = swimming;
+            this.gilling = gilling;
         }
 
         this.actualSize = subject.width();
@@ -600,7 +615,6 @@ public class HydrazinePathFinder {
     private void processNode(Node current) {
         current.visited(true);
 
-        final boolean flying = this.flying;
         final Vec3i coords = current.key;
         final Node
                 west = cachedPassiblePointNear(coords.x - 1, coords.y, coords.z, coords),
@@ -610,7 +624,8 @@ public class HydrazinePathFinder {
         final Node
                 up, down;
 
-        if (flying) {
+        final boolean omnidirectional = this.pathPointCalculator.omnidirectional();
+        if (omnidirectional) {
             up = cachedPassiblePointNear(coords.x, coords.y + 1, coords.z, coords);
             down = cachedPassiblePointNear(coords.x, coords.y - 1, coords.z, coords);
         } else
@@ -629,7 +644,7 @@ public class HydrazinePathFinder {
 
             final Node[] pointOptions;
 
-            if (flying) {
+            if (omnidirectional) {
                 final com.extollit.linalg.mutable.AxisAlignedBBox
                         upBounds = blockBounds(coords, 0, +1, 0),
                         downBounds = blockBounds(coords, 0, -1, 0);

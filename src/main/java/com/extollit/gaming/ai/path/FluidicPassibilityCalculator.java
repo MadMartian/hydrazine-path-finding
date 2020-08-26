@@ -5,9 +5,16 @@ import com.extollit.linalg.immutable.Vec3i;
 
 import static java.lang.Math.round;
 
-class AirbornePassibilityCalculator extends AbstractPassibilityCalculator implements IPointPassibilityCalculator {
-    public AirbornePassibilityCalculator(IInstanceSpace instanceSpace) {
+class FluidicPassibilityCalculator extends AbstractPassibilityCalculator implements IPointPassibilityCalculator {
+    private final Element test, secondTest;
+
+    public FluidicPassibilityCalculator(IInstanceSpace instanceSpace, Element test) {
+        this(instanceSpace, test, null);
+    }
+    public FluidicPassibilityCalculator(IInstanceSpace instanceSpace, Element test, Element secondTest) {
         super(instanceSpace);
+        this.test = test;
+        this.secondTest = secondTest;
     }
 
     @Override
@@ -51,11 +58,16 @@ class AirbornePassibilityCalculator extends AbstractPassibilityCalculator implem
                     ) {
 
                 byte flags = flagSampler.flagsAt(x, y0, z);
-                if (Element.impassible(flags, capabilities))
-                    return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
-
                 final int yb = y0 - 1;
                 final byte flagsBeneath = flagSampler.flagsAt(x, yb, z);
+                gravitation = gravitation.between(Gravitation.from(flags));
+                gravitation = gravitation.between(Gravitation.from(flagsBeneath));
+                if (!this.test.in(flags))
+                    if (this.secondTest != null && this.secondTest.in(flags))
+                        passibility = passibility.between(Passibility.risky);
+                    else
+                        return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
+
                 final float partY = topOffsetAt(flagsBeneath, x, yb, z);
                 passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, y0, z, partY);
 
@@ -64,11 +76,6 @@ class AirbornePassibilityCalculator extends AbstractPassibilityCalculator implem
                     minPartY = partY;
                 } else if (partY > minPartY)
                     minPartY = partY;
-
-                passibility = passibility.between(Passibility.from(flagSampler.flagsAt(x, y0, z), capabilities));
-
-                gravitation = gravitation.between(Gravitation.from(flags));
-                gravitation = gravitation.between(Gravitation.from(flagsBeneath));
 
                 if (passibility.impassible(capabilities))
                     return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
@@ -85,5 +92,10 @@ class AirbornePassibilityCalculator extends AbstractPassibilityCalculator implem
         point.volatile_(flagSampler.volatility() > 0);
 
         return point;
+    }
+
+    @Override
+    public boolean omnidirectional() {
+        return true;
     }
 }

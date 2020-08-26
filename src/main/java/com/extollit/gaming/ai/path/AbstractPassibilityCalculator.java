@@ -68,7 +68,11 @@ abstract class AbstractPassibilityCalculator implements IPointPassibilityCalcula
         return (float) block.bounds().min.y;
     }
 
-    final Passibility clearance(byte flags) {
+    private final Passibility clearance(byte flags) {
+        return clearance(flags, this.capabilities);
+    }
+
+    static final Passibility clearance(byte flags, IPathingEntity.Capabilities capabilities) {
         if (Element.earth.in(flags))
             if (Logic.ladder.in(flags))
                 return Passibility.passible;
@@ -76,10 +80,17 @@ abstract class AbstractPassibilityCalculator implements IPointPassibilityCalcula
                 return Passibility.risky;
             else
                 return Passibility.impassible;
-        else if (Element.water.in(flags))
-            return this.capabilities.fireResistant() ? Passibility.dangerous : Passibility.risky;
-        else if (Element.fire.in(flags))
-            return this.capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
+        else if (Element.water.in(flags)) {
+            if (capabilities.fireResistant())
+                return Passibility.dangerous;
+            else if (capabilities.gilled() && capabilities.swimmer())
+                return Passibility.passible;
+            else
+                return Passibility.risky;
+        } else if (Element.fire.in(flags))
+            return capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
+        else if (capabilities.gilled())
+            return Passibility.risky;
         else
             return Passibility.passible;
     }
@@ -92,7 +103,8 @@ abstract class AbstractPassibilityCalculator implements IPointPassibilityCalcula
         if (Element.air.in(flags)
                 || Logic.climbable(flags)
                 || Element.earth.in(flags) && Logic.nothing.in(flags)
-                )
+                || Element.water.in(flags) && (capabilities.gilled() || !capabilities.swimmer())
+            )
             return 0;
 
         if (swimmingRequiredFor(flags))

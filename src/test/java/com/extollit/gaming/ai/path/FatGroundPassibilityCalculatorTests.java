@@ -1,6 +1,7 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.FlagSampler;
+import com.extollit.gaming.ai.path.model.IInstanceSpace;
 import com.extollit.gaming.ai.path.model.IPathingEntity;
 import com.extollit.gaming.ai.path.model.Node;
 import com.extollit.linalg.immutable.Vec3i;
@@ -13,10 +14,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FatGroundPassibilityCalculatorTests extends AbstractGroundPassibilityCalculatorTests {
+public class FatGroundPassibilityCalculatorTests extends AbstractPassibilityCalculatorTests {
     public void setup(IPathingEntity pathingEntity) {
         super.setup(pathingEntity);
         when(pathingEntity.width()).thenReturn(1.4f);
+    }
+
+    @Override
+    protected GroundPassibilityCalculator createCalculator(final IInstanceSpace instanceSpace) {
+        return new GroundPassibilityCalculator(instanceSpace);
     }
 
     @Test

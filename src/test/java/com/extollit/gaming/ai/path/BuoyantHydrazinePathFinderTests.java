@@ -1,5 +1,6 @@
 package com.extollit.gaming.ai.path;
 
+import com.extollit.gaming.ai.path.model.Element;
 import com.extollit.gaming.ai.path.model.PathObject;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
@@ -8,21 +9,29 @@ import org.junit.Test;
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
 
-public class AirborneHydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
+public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     @Before
     public void setup() {
         when(super.capabilities.cautious()).thenReturn(false);
-        when(super.capabilities.flyer()).thenReturn(true);
+        when(super.capabilities.gilled()).thenReturn(true);
+        when(super.capabilities.swimmer()).thenReturn(true);
 
         super.setup();
 
         pathFinder.schedulingPriority(125, 125);
     }
 
+    private void waterEverywhere() {
+        when(occlusionProvider.elementAt(anyInt(), anyInt(), anyInt())).thenReturn(Element.water.mask);
+    }
+
     @Test
-    public void takeOffEh() {
+    public void swimUp() {
+        waterEverywhere();
+
         solid(0, -1, 0);
         solid(0, -1, 1);
         solid(0, -1, 2);
@@ -37,6 +46,8 @@ public class AirborneHydrazinePathFinderTests extends AbstractHydrazinePathFinde
 
     @Test
     public void headSpace() {
+        waterEverywhere();
+
         solid(0, 1, 2);
 
         final PathObject path = pathFinder.initiatePathTo(0, 0, 4);
@@ -50,6 +61,23 @@ public class AirborneHydrazinePathFinderTests extends AbstractHydrazinePathFinde
                 new Vec3i(-1, 0, 3),
                 new Vec3i(0, 0, 3),
                 new Vec3i(0, 0, 4)
+        );
+    }
+
+    @Test
+    public void beachedAggressor() {
+        when(super.capabilities.cautious()).thenReturn(false);
+
+        water(0, -1, 0);
+        solid(1, -1, 0);
+
+        pos(0, -1, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(1, 0, 0);
+        assertPath(
+                path,
+                new Vec3i(0, -1, -0),
+                new Vec3i(1, 0, 0)
         );
     }
 }

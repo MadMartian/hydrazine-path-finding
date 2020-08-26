@@ -1,6 +1,7 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.Element;
+import com.extollit.gaming.ai.path.model.IInstanceSpace;
 import com.extollit.gaming.ai.path.model.Node;
 import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.linalg.immutable.Vec3i;
@@ -9,7 +10,12 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
-public class GroundPassibilityCalculatorTests extends AbstractGroundPassibilityCalculatorTests {
+public class GroundPassibilityCalculatorTests extends AbstractPassibilityCalculatorTests {
+    @Override
+    protected GroundPassibilityCalculator createCalculator(final IInstanceSpace instanceSpace) {
+        return new GroundPassibilityCalculator(instanceSpace);
+    }
+
     @Test
     public void stepUp() {
         solid(0, -1, 0);
@@ -327,11 +333,17 @@ public class GroundPassibilityCalculatorTests extends AbstractGroundPassibilityC
 
     @Test
     public void outPool() {
+        when(capabilities.swimmer()).thenReturn(true);
+
+        solid(0, -3, 0);
+        water(0, -2, 0);
         water(0, -1, 0);
         clear(0, 0, 0);
         clear(0, 1, 0);
         clear(0, 2, 0);
 
+        solid(1, -3, 0);
+        solid(1, -2, 0);
         solid(1, -1, 0);
         solid(1, 0, 0);
         clear(1, 1, 0);
@@ -344,11 +356,17 @@ public class GroundPassibilityCalculatorTests extends AbstractGroundPassibilityC
 
     @Test
     public void climbOutPool() {
+        when(capabilities.swimmer()).thenReturn(true);
+
+        solid(0, -3, 0);
+        water(0, -2, 0);
         water(0, -1, 0);
         climb(0, 0, 0);
         climb(0, 1, 0);
         climb(0, 2, 0);
 
+        solid(1, -3, 0);
+        solid(1, -2, 0);
         solid(1, -1, 0);
         solid(1, 0, 0);
         clear(1, 1, 0);
@@ -365,8 +383,8 @@ public class GroundPassibilityCalculatorTests extends AbstractGroundPassibilityC
         when(capabilities.fireResistant()).thenReturn(true);
 
         final Passibility
-                firePassibility = calculator.clearance(Element.fire.mask),
-                waterPassibility = calculator.clearance(Element.water.mask);
+                firePassibility = AbstractPassibilityCalculator.clearance(Element.fire.mask, super.capabilities),
+                waterPassibility = AbstractPassibilityCalculator.clearance(Element.water.mask, super.capabilities);
 
         assertEquals(Passibility.risky, firePassibility);
         assertEquals(Passibility.dangerous, waterPassibility);
@@ -377,8 +395,8 @@ public class GroundPassibilityCalculatorTests extends AbstractGroundPassibilityC
         when(capabilities.fireResistant()).thenReturn(false);
 
         final Passibility
-                firePassibility = calculator.clearance(Element.fire.mask),
-                waterPassibility = calculator.clearance(Element.water.mask);
+                firePassibility = AbstractPassibilityCalculator.clearance(Element.fire.mask, super.capabilities),
+                waterPassibility = AbstractPassibilityCalculator.clearance(Element.water.mask, super.capabilities);
 
         assertEquals(Passibility.dangerous, firePassibility);
         assertEquals(Passibility.risky, waterPassibility);
