@@ -23,6 +23,25 @@ public final class NodeMap {
         queue.clear();
     }
 
+    public final void cullBranchAt(Vec3i coords, SortedPointQueue queue) {
+        final Node
+            node = this.it.get(coords);
+
+        if (node == null)
+            return;
+
+        final Node
+            parent = node.up();
+
+        queue.cullBranch(node);
+        if (parent != null && !parent.assigned()) {
+            parent.visited(false);
+            queue.add(parent);
+        }
+
+        this.it.remove(coords);
+    }
+
     public final void clear() {
         this.it.clear();
     }

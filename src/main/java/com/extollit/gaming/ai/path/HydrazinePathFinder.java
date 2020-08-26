@@ -181,7 +181,7 @@ public class HydrazinePathFinder implements NodeMap.IPointPassibilityCalculator 
                 this.nextGraphCacheReset = pathTimeAge() + PROBATIONARY_TIME_LIMIT.next(this.random);
 
             final Vec3i culprit = currentPath.at(currentPath.i);
-            this.nodeMap.remove(culprit);
+            this.nodeMap.cullBranchAt(culprit, this.queue);
 
             this.passiblePointPathTimeLimit += PASSIBLE_POINT_TIME_LIMIT.next(this.random);
         }
