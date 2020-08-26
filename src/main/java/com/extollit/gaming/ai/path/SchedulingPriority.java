@@ -18,10 +18,10 @@ public enum SchedulingPriority {
     /**
      * Indicates low-priority scheduling, entities with engines configured for this rating complete path-finding later.
      * This is initialized with default values:
-     *  - 6 initial compute iterations
-     *  - 4 subsequent compute iterations
+     *  - 3 initial compute iterations
+     *  - 2 subsequent compute iterations
      */
-    low     (6, 4);
+    low     (3, 2);
 
     protected int initComputeIterations, periodicComputeIterations;
 
