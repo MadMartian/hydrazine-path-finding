@@ -481,13 +481,11 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertPath(path,
                 new Vec3i(0, 0, 0),
                 new Vec3i(0, 0, 1),
-                new Vec3i(0, 0, 2),
-                new Vec3i(0, 0, 3),
-                new Vec3i(0, 0, 4),
-                new Vec3i(0, 0, 5)
+                new Vec3i(0, 0, 2)
         );
 
         pos(0, 0, 2);
+        pathFinder.updatePathFor(this.pathingEntity);
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
             new Vec3i(0, 0, 2),
