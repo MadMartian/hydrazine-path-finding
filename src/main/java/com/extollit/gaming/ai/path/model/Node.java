@@ -228,7 +228,7 @@ public class Node implements INode {
                 dy = leftCoords.y - rightCoords.y,
                 dz = leftCoords.z - rightCoords.z;
 
-        return dx*dx + dy*dy*2 + dz*dz;
+        return dx*dx + dy*dy + dz*dz;
     }
 
     private boolean cyclic(Node parent) {
