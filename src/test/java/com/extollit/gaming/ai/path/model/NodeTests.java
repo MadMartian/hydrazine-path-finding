@@ -77,7 +77,7 @@ public class NodeTests {
 
     @Test
     public void appendTo() {
-        final Node subject = new Node(new Vec3i(1, 2, 3));
+        final Node subject = new Node(new Vec3i(2, 2, 3));
         subject.appendTo(this.root, 1, 3);
 
         final Node newNode = new Node(new Vec3i(4, 5, 6));

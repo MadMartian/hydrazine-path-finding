@@ -183,7 +183,7 @@ public class HydrazinePathFinder {
                 this.nextGraphCacheReset = pathTimeAge() + PROBATIONARY_TIME_LIMIT.next(this.random);
 
             final INode culprit = currentPath.at(currentPath.i);
-            this.nodeMap.remove(culprit);
+            this.nodeMap.cullBranchAt(culprit.coordinates(), this.queue);
 
             this.passiblePointPathTimeLimit += PASSIBLE_POINT_TIME_LIMIT.next(this.random);
         }
@@ -335,11 +335,7 @@ public class HydrazinePathFinder {
             v.normalize();
             v.mul(distance);
             v.add(init);
-            this.target = this.nodeMap.cachedPointAt(
-                floor(v.x),
-                ceil(v.y),
-                floor(v.z)
-            );
+            this.target = edgeAtTarget(v.x, v.y, v.z);
         }
 
         if (distance == 0)
@@ -421,16 +417,24 @@ public class HydrazinePathFinder {
         this.nodeMap.updateFieldWindow(x0, z0, xN, zN, cull);
     }
 
+    private Node edgeAtTarget(final double x, final double y, final double z) {
+        final int
+                nx = floor(x),
+                ny = floor(y),
+                nz = floor(z);
+
+        Node node = this.nodeMap.cachedPointAt(nx, ny, nz);
+        if (node.passibility() == Passibility.impassible && !this.capabilities.cautious())
+            node.passibility(Passibility.dangerous);
+        return node;
+    }
+
     private Node edgeAtDestination() {
         final Vec3d destinationPosition = this.destinationPosition;
         if (destinationPosition == null)
             return null;
 
-        return this.nodeMap.cachedPointAt(
-                floor(destinationPosition.x),
-                ceil(destinationPosition.y),
-                floor(destinationPosition.z)
-        );
+        return edgeAtTarget(destinationPosition.x, destinationPosition.y, destinationPosition.z);
     }
 
     private Node pointAtSource() {
@@ -442,7 +446,7 @@ public class HydrazinePathFinder {
 
         Node candidate = cachedPassiblePointNear(x, y, z);
         if (impassible(candidate))
-            candidate.passibility(Passibility.passible);
+            candidate.passibility(this.capabilities.cautious() ? Passibility.passible : Passibility.risky);
         return candidate;
     }
 

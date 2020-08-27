@@ -34,6 +34,25 @@ public final class NodeMap {
         queue.clear();
     }
 
+    public final void cullBranchAt(Vec3i coords, SortedPointQueue queue) {
+        final Node
+                node = this.it.get(coords);
+
+        if (node == null)
+            return;
+
+        final Node
+                parent = node.up();
+
+        queue.cullBranch(node);
+        if (parent != null && !parent.assigned()) {
+            parent.visited(false);
+            queue.add(parent);
+        }
+
+        this.it.remove(coords);
+    }
+
     public final void reset() {
         clear();
         this.occlusionProvider = null;
@@ -92,8 +111,13 @@ public final class NodeMap {
     public final Node cachedPointAt(Vec3i coords) {
         Node point = this.it.get(coords);
 
-        if (point == null)
-            this.it.put(coords, point = new Node(coords));
+        if (point == null) {
+            point = this.calculator.passiblePointNear(coords, null, new FlagSampler(this.occlusionProvider));
+            if (!point.key.equals(coords))
+                point = new Node(coords, Passibility.impassible, false);
+
+            this.it.put(coords, point);
+        }
 
         return point;
     }

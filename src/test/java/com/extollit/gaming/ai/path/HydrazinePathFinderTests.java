@@ -133,13 +133,11 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertPath(path,
                 new Vec3i(0, 0, 0),
                 new Vec3i(0, 0, 1),
-                new Vec3i(0, 0, 2),
-                new Vec3i(0, 0, 3),
-                new Vec3i(0, 0, 4),
-                new Vec3i(0, 0, 5)
+                new Vec3i(0, 0, 2)
         );
 
         pos(0, 0, 2);
+        pathFinder.updatePathFor(this.pathingEntity);
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
             new Vec3i(0, 0, 2),
@@ -357,6 +355,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         water(0, 0, 0);
         water(0, -1, 0);
         solid(0, -2, 0);
+        solid(1, 0, 0);
         solid(1, -1, 0);
         solid(1, -2, 0);
 
@@ -371,7 +370,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
                 new Vec3i(1, 1, 0)
         );
     }
-
+    
     @Test
     public void sink() {
         when(super.capabilities.swimmer()).thenReturn(false);
@@ -380,12 +379,30 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         water(0, 0, 0);
         water(0, -1, 0);
         solid(0, -2, 0);
+        solid(1, 0, 0);
         solid(1, -1, 0);
         solid(1, -2, 0);
 
         pos(0, -1, 0);
 
         final PathObject path = pathFinder.initiatePathTo(1, 1, 0);
+        assertNull(path);
+    }
+
+    @Test
+    public void noPathIntoAir() {
+        pos(0, 0, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(0, 5, 3);
+        assertNull(path);
+    }
+
+
+    @Test
+    public void noPathJustAbove() {
+        pos(0, 0, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(0, 1, 3);
         assertNull(path);
     }
 }

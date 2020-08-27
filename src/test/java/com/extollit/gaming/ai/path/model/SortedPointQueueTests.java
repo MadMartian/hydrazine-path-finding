@@ -31,7 +31,7 @@ public class SortedPointQueueTests {
     public void setup() {
         when(occlusionProviderFactory.fromInstanceSpace(any(), anyInt(), anyInt(), anyInt(), anyInt())).thenReturn(occlusionProvider);
         this.q = new SortedPointQueue();
-        this.graph = new NodeMap(instanceSpace, calculator, occlusionProviderFactory);
+        this.graph = new NodeMap(instanceSpace, new TestPointPassibilityCalculatorDecorator(this.calculator), occlusionProviderFactory);
         this.target = this.graph.cachedPointAt(0, 0, 7);
         (this.source = visited(0, 0, 0)).target(this.target.key);
     }
@@ -170,6 +170,76 @@ public class SortedPointQueueTests {
         assertSame(pivot, q.dequeue());
         q.dequeue();
         assertTrue(q.isEmpty());
+    }
+
+    @Test
+    public void cullBranch() {
+        final Node
+            left = visited(source, -1, 0, 0),
+            right = visited(source, +1, 0, 0),
+            leftRoot = visited(left, -2, 0, 1),
+            rightHead = add(right, +1, 0, 1),
+            rightOutlier = add(right, +2, 0, 1),
+            leftOutlier = add(leftRoot, -3, 0, 1),
+            leftTertiary = visited(leftRoot, -3, 0, 2),
+            leftHead = add(leftTertiary, -4, 0, 3);
+
+        graph.cullBranchAt(leftRoot.key, q);
+
+        assertQueuePoints(
+            new Vec3i(-1, 0, 0),
+            new Vec3i(2, 0, 1),
+            new Vec3i(1, 0, 1)
+        );
+
+        assertTrue(rightHead.assigned());
+        assertTrue(rightOutlier.assigned());
+
+        assertFalse(left.orphaned());
+        assertTrue(left.infecund());
+        assertTrue(leftRoot.orphaned() && leftRoot.infecund());
+        assertTrue(leftOutlier.orphaned() && leftOutlier.infecund());
+        assertTrue(leftTertiary.orphaned() && leftTertiary.infecund());
+        assertTrue(leftHead.orphaned() && leftHead.orphaned());
+
+        assertFalse(leftRoot.visited());
+        assertFalse(leftOutlier.visited());
+        assertFalse(leftTertiary.visited());
+        assertFalse(leftHead.visited());
+
+        assertTrue(left.assigned());
+        assertFalse(left.visited());
+    }
+
+    @Test
+    public void cullBranchNoOp() {
+        final Node
+                right = visited(source, +1, 0, 0),
+                rightHead = add(right, +1, 0, 1),
+                rightOutlier = add(right, +2, 0, 1);
+
+        final Vec3i candidate = new Vec3i(5, 6, 7);
+        graph.cullBranchAt(candidate, q);
+
+        assertQueuePoints(
+                new Vec3i(+1, 0, 1),
+                new Vec3i(2, 0, 1)
+        );
+
+        assertTrue(rightHead.assigned());
+        assertTrue(rightOutlier.assigned());
+    }
+
+    @Test
+    public void cullBranchRemoveNode() {
+        final Node
+                node = visited(source, +1, 0, 0);
+
+        assertSame(node, graph.cachedPointAt(node.key));
+
+        graph.cullBranchAt(node.key, q);
+
+        assertNotSame(node, graph.cachedPointAt(node.key));
     }
 
     protected Node visited(int x, int y, int z) {

@@ -22,7 +22,7 @@ public class NodeMapTests {
 
     @Before
     public void setup() {
-        this.nodeMap = new NodeMap(this.instanceSpace, this.calculator, this.occlusionProviderFactory);
+        this.nodeMap = new NodeMap(this.instanceSpace, new TestPointPassibilityCalculatorDecorator(this.calculator), this.occlusionProviderFactory);
     }
 
     @Test

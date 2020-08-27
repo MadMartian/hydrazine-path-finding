@@ -87,6 +87,34 @@ public final class SortedPointQueue {
         }
     }
 
+    void cullBranch(Node ancestor) {
+        final List<Node> list = this.list;
+        final Stack<Node> stack = new Stack<>();
+
+        ListIterator<Node> i = list.listIterator();
+        final List<Node> culled = new LinkedList<Node>();
+        while (i.hasNext()) {
+            final Node head = i.next();
+            Node point = head;
+            while (!point.orphaned() && point != ancestor) {
+                point = point.up();
+                stack.push(point);
+            }
+            if (point != ancestor)
+                head.index(i.previousIndex());
+            else {
+                i.remove();
+                head.unassign();
+                culled.add(head);
+                culled.addAll(stack);
+            }
+            stack.clear();
+        }
+
+        for (Node node : culled)
+            node.reset();
+    }
+
     public List<Node> view() { return Collections.unmodifiableList(this.list); }
 
     public Node top() {
