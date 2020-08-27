@@ -60,8 +60,13 @@ public final class NodeMap {
     public final Node cachedPointAt(Vec3i coords) {
         Node point = this.it.get(coords);
 
-        if (point == null)
-            this.it.put(coords, point = new Node(coords));
+        if (point == null) {
+            point = this.calculator.passiblePointNear(coords, null);
+            if (!point.key.equals(coords))
+                point = new Node(coords, Passibility.impassible, false);
+
+            this.it.put(coords, point);
+        }
 
         return point;
     }

@@ -24,7 +24,7 @@ public class SortedPointQueueTests {
     @Before
     public void setup() {
         this.q = new SortedPointQueue();
-        this.graph = new NodeMap(calculator);
+        this.graph = new NodeMap(new TestPointPassibilityCalculatorDecorator(this.calculator));
         this.target = this.graph.cachedPointAt(0, 0, 7);
         (this.source = visited(0, 0, 0)).target(this.target.key);
     }

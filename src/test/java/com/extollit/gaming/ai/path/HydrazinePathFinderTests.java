@@ -696,6 +696,48 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     }
 
     @Test
+    public void swimOut() {
+        when(super.capabilities.swimmer()).thenReturn(true);
+        when(super.capabilities.cautious()).thenReturn(false);
+
+        water(0, 0, 0);
+        water(0, -1, 0);
+        solid(0, -2, 0);
+        solid(1, 0, 0);
+        solid(1, -1, 0);
+        solid(1, -2, 0);
+
+        pos(0, -1, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(1, 1, 0);
+        assertNotNull(path);
+
+        assertPath(
+                path,
+                new Vec3i(0, 1, 0),
+                new Vec3i(1, 1, 0)
+        );
+    }
+
+    @Test
+    public void sink() {
+        when(super.capabilities.swimmer()).thenReturn(false);
+        when(super.capabilities.cautious()).thenReturn(false);
+
+        water(0, 0, 0);
+        water(0, -1, 0);
+        solid(0, -2, 0);
+        solid(1, 0, 0);
+        solid(1, -1, 0);
+        solid(1, -2, 0);
+
+        pos(0, -1, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(1, 1, 0);
+        assertNull(path);
+    }
+
+    @Test
     public void clearanceForFireMonster() {
         when(capabilities.fireResistant()).thenReturn(true);
 
@@ -717,5 +759,22 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertEquals(Passibility.dangerous, firePassibility);
         assertEquals(Passibility.risky, waterPassibility);
+    }
+
+    @Test
+    public void noPathIntoAir() {
+        pos(0, 0, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(0, 5, 3);
+        assertNull(path);
+    }
+
+
+    @Test
+    public void noPathJustAbove() {
+        pos(0, 0, 0);
+
+        final PathObject path = pathFinder.initiatePathTo(0, 1, 3);
+        assertNull(path);
     }
 }

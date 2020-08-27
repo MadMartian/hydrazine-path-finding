@@ -93,8 +93,11 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
     @Test
     public void solidStart() {
+        solid(0, -1, 0);
         solid(0, 0, 0);
         solid(0, 1, 0);
+
+        solid(1, -1, 0);
 
         pos(super.pathingEntity, 0, 0, 0);
 

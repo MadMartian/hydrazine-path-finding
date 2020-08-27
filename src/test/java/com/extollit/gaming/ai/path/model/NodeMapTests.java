@@ -21,7 +21,7 @@ public class NodeMapTests {
 
     @Before
     public void setup() {
-        this.nodeMap = new NodeMap(this.calculator);
+        this.nodeMap = new NodeMap(new TestPointPassibilityCalculatorDecorator(this.calculator));
     }
 
     @Test
