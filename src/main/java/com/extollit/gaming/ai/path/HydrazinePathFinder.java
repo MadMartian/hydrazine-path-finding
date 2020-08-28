@@ -286,12 +286,8 @@ public class HydrazinePathFinder {
                 swimmer = capabilities.swimmer(),
                 gilled = capabilities.gilled();
 
-        if (flyer && swimmer && gilled)
-            calculator = new FluidicPassibilityCalculator(this.instanceSpace, Element.air, Element.water);
-        else if (flyer)
-            calculator = new FluidicPassibilityCalculator(this.instanceSpace, Element.air);
-        else if (swimmer && gilled)
-            calculator = new FluidicPassibilityCalculator(this.instanceSpace, Element.water);
+        if (flyer || (swimmer && gilled))
+            calculator = new FluidicPassibilityCalculator(this.instanceSpace);
         else
             calculator = new GroundPassibilityCalculator(this.instanceSpace);
         return calculator;

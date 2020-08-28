@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.Element;
 import com.extollit.gaming.ai.path.model.FlagSampler;
 import com.extollit.gaming.ai.path.model.Node;
 import com.extollit.gaming.ai.path.model.Passibility;
@@ -22,7 +21,8 @@ public class FatFluidicPassibilityCalculatorTests extends AbstractHydrazinePathF
 
         this.flagSampler = new FlagSampler(super.occlusionProvider);
 
-        this.calculator = new FluidicPassibilityCalculator(super.instanceSpace, Element.air);
+        when(capabilities.flyer()).thenReturn(true);
+        this.calculator = new FluidicPassibilityCalculator(super.instanceSpace);
 
         when(super.pathingEntity.width()).thenReturn(1.4f);
         when(super.pathingEntity.height()).thenReturn(1.1f);

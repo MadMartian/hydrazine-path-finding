@@ -20,17 +20,22 @@ class PassibilityHelpers {
                     return Passibility.impassible;
 
             case air:
-                if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
+                if (capabilities.gilled())
+                    return Passibility.dangerous;
+                else if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
                     return Passibility.impassible;
                 else
                     return Passibility.passible;
 
-            case water:
-                if (capabilities.aquaphobic() || !capabilities.swimmer())
+            case water: {
+                final boolean gilled = capabilities.gilled();
+                if (capabilities.aquaphobic())
                     return Passibility.dangerous;
+                else if (gilled && capabilities.swimmer())
+                    return Passibility.passible;
                 else
                     return Passibility.risky;
-
+            }
             case fire:
                 if (!capabilities.fireResistant())
                     return Passibility.dangerous;

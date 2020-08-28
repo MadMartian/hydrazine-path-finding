@@ -3,19 +3,13 @@ package com.extollit.gaming.ai.path;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3i;
 
-import static com.extollit.gaming.ai.path.PassibilityHelpers.gravitationFrom;
+import static com.extollit.gaming.ai.path.PassibilityHelpers.*;
 import static java.lang.Math.round;
 
 class FluidicPassibilityCalculator extends AbstractPassibilityCalculator implements IPointPassibilityCalculator {
-    private final Element test, secondTest;
-
-    public FluidicPassibilityCalculator(IInstanceSpace instanceSpace, Element test) {
-        this(instanceSpace, test, null);
-    }
-    public FluidicPassibilityCalculator(IInstanceSpace instanceSpace, Element test, Element secondTest) {
+    public FluidicPassibilityCalculator(IInstanceSpace instanceSpace)
+    {
         super(instanceSpace);
-        this.test = test;
-        this.secondTest = secondTest;
     }
 
     @Override
@@ -61,13 +55,14 @@ class FluidicPassibilityCalculator extends AbstractPassibilityCalculator impleme
                 byte flags = flagSampler.flagsAt(x, y0, z);
                 final int yb = y0 - 1;
                 final byte flagsBeneath = flagSampler.flagsAt(x, yb, z);
+
                 gravitation = gravitation.between(gravitationFrom(flags));
                 gravitation = gravitation.between(gravitationFrom(flagsBeneath));
-                if (!this.test.in(flags))
-                    if (this.secondTest != null && this.secondTest.in(flags))
-                        passibility = passibility.between(Passibility.risky);
-                    else
-                        return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
+
+                if (impedesMovement(flags, capabilities))
+                    return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
+                else
+                    passibility = passibility.between(passibilityFrom(flags, capabilities));
 
                 final float partY = topOffsetAt(flagsBeneath, x, yb, z);
                 passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, y0, z, partY);

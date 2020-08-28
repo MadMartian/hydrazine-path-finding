@@ -1,6 +1,9 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.*;
+import com.extollit.gaming.ai.path.model.Gravitation;
+import com.extollit.gaming.ai.path.model.IInstanceSpace;
+import com.extollit.gaming.ai.path.model.Node;
+import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 
@@ -12,6 +15,7 @@ public class BuoyantPassibilityCalculatorTests extends AbstractPassibilityCalcul
 
     @Override
     public void setup() {
+        when(super.capabilities.aquaphobic()).thenReturn(false);
         when(super.capabilities.gilled()).thenReturn(true);
         when(super.capabilities.swimmer()).thenReturn(true);
 
@@ -20,7 +24,7 @@ public class BuoyantPassibilityCalculatorTests extends AbstractPassibilityCalcul
 
     @Override
     protected FluidicPassibilityCalculator createCalculator(IInstanceSpace instanceSpace) {
-        return new FluidicPassibilityCalculator(instanceSpace, Element.water);
+        return new FluidicPassibilityCalculator(instanceSpace);
     }
 
     @Test
@@ -127,12 +131,23 @@ public class BuoyantPassibilityCalculatorTests extends AbstractPassibilityCalcul
 
     @Test
     public void noBeaching() {
-        when(super.capabilities.cautious()).thenReturn(false);
+        when(super.capabilities.cautious()).thenReturn(true);
 
         water(0, -1, 0);
         solid(1, -1, 0);
 
         final Node node = calculator.passiblePointNear(new Vec3i(1, 0, 0), new Vec3i(0, -1, 0), this.flagSampler);
         assertEquals(Passibility.impassible, node.passibility());
+    }
+
+    @Test
+    public void beachedAggressor() {
+        when(super.capabilities.cautious()).thenReturn(false);
+
+        water(0, -1, 0);
+        solid(1, -1, 0);
+
+        final Node node = calculator.passiblePointNear(new Vec3i(1, 0, 0), new Vec3i(0, -1, 0), this.flagSampler);
+        assertEquals(Passibility.dangerous, node.passibility());
     }
 }

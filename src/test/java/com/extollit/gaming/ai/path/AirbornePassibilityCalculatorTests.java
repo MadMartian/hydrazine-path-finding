@@ -1,16 +1,28 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.*;
+import com.extollit.gaming.ai.path.model.Gravitation;
+import com.extollit.gaming.ai.path.model.IInstanceSpace;
+import com.extollit.gaming.ai.path.model.Node;
+import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.linalg.immutable.Vec3i;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.when;
 
 public class AirbornePassibilityCalculatorTests extends AbstractPassibilityCalculatorTests {
+    @Before
+    public void setup() {
+        when(super.capabilities.flyer()).thenReturn(true);
+
+        super.setup();
+    }
+
     @Override
     protected FluidicPassibilityCalculator createCalculator(IInstanceSpace instanceSpace) {
-        return new FluidicPassibilityCalculator(instanceSpace, Element.air);
+        return new FluidicPassibilityCalculator(instanceSpace);
     }
 
     @Test

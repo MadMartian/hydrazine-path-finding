@@ -39,7 +39,6 @@ public abstract class AbstractHydrazinePathFinderTests {
         pathFinder = new HydrazinePathFinder(pathingEntity, instanceSpace, occlusionProviderFactory);
         pathFinder.schedulingPriority(SchedulingPriority.high);
         when(capabilities.cautious()).thenReturn(true);
-        when(capabilities.aquaphobic()).thenReturn(true);
         when(capabilities.climber()).thenReturn(true);
         when(capabilities.opensDoors()).thenReturn(false);
         when(capabilities.avoidsDoorways()).thenReturn(true);

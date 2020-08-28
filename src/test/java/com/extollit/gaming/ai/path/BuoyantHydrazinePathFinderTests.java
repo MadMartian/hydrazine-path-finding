@@ -15,7 +15,8 @@ import static org.mockito.Mockito.when;
 public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     @Before
     public void setup() {
-        when(super.capabilities.cautious()).thenReturn(false);
+        when(super.capabilities.cautious()).thenReturn(true);
+
         when(super.capabilities.gilled()).thenReturn(true);
         when(super.capabilities.swimmer()).thenReturn(true);
 
@@ -77,6 +78,7 @@ public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinder
         assertPath(
                 path,
                 new Vec3i(0, -1, -0),
+                new Vec3i(0, 0, 0),
                 new Vec3i(1, 0, 0)
         );
     }
