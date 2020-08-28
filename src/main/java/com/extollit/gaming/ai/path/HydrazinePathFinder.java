@@ -40,7 +40,7 @@ public class HydrazinePathFinder {
     private NodeMap nodeMap;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private boolean flying, swimming, gilling;
+    private boolean flying, aqua, pathPointCalculatorChanged;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
     private int failureCount;
@@ -211,7 +211,8 @@ public class HydrazinePathFinder {
 
     private boolean graphTimeout() {
         if (this.failureCount >= FAILURE_COUNT_THRESHOLD
-            && pathTimeAge() > this.nextGraphCacheReset)
+            && pathTimeAge() > this.nextGraphCacheReset
+            || this.pathPointCalculatorChanged)
         {
             resetGraph();
             return true;
@@ -314,16 +315,14 @@ public class HydrazinePathFinder {
         final IPathingEntity.Capabilities capabilities = this.capabilities = this.subject.capabilities();
         final boolean
             flying = capabilities.flyer(),
-            swimming = capabilities.swimmer(),
-            gilling = capabilities.gilled();
+            aqua = capabilities.swimmer() && capabilities.gilled();
 
-        if (this.pathPointCalculator == null || flying != this.flying || swimming != this.swimming || gilling != this.gilling) {
+        final boolean initPathPointCalculator = this.pathPointCalculator == null;
+        if (initPathPointCalculator || flying != this.flying || aqua != this.aqua) {
+            this.pathPointCalculatorChanged = !initPathPointCalculator;
             this.nodeMap.calculator(this.pathPointCalculator = createPassibilityCalculator(capabilities));
-            if (!this.queue.isEmpty())
-                resetTriage();
             this.flying = flying;
-            this.swimming = swimming;
-            this.gilling = gilling;
+            this.aqua = aqua;
         }
 
         this.actualSize = subject.width();
@@ -361,6 +360,7 @@ public class HydrazinePathFinder {
         resetTriage();
         this.failureCount = 0;
         this.nextGraphCacheReset = 0;
+        this.pathPointCalculatorChanged = false;
     }
 
     private void updateFieldWindow(PathObject path) {
