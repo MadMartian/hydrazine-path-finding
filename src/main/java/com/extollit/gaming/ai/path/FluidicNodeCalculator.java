@@ -6,14 +6,14 @@ import com.extollit.linalg.immutable.Vec3i;
 import static com.extollit.gaming.ai.path.PassibilityHelpers.*;
 import static java.lang.Math.round;
 
-class FluidicPassibilityCalculator extends AbstractPassibilityCalculator implements IPointPassibilityCalculator {
-    public FluidicPassibilityCalculator(IInstanceSpace instanceSpace)
+class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalculator {
+    public FluidicNodeCalculator(IInstanceSpace instanceSpace)
     {
         super(instanceSpace);
     }
 
     @Override
-    public Node passiblePointNear(Vec3i coords0, Vec3i origin, FlagSampler flagSampler) {
+    public Node passibleNodeNear(Vec3i coords0, Vec3i origin, FlagSampler flagSampler) {
         final Node point;
         final IPathingEntity.Capabilities capabilities = this.capabilities;
         final int

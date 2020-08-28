@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 public class SortedPointQueueTests {
     @Mock private IInstanceSpace instanceSpace;
     @Mock private IOcclusionProviderFactory occlusionProviderFactory;
-    @Mock private IPointPassibilityCalculator calculator;
+    @Mock private INodeCalculator calculator;
     @Mock private IOcclusionProvider occlusionProvider;
 
     private SortedPointQueue q;
@@ -31,7 +31,7 @@ public class SortedPointQueueTests {
     public void setup() {
         when(occlusionProviderFactory.fromInstanceSpace(any(), anyInt(), anyInt(), anyInt(), anyInt())).thenReturn(occlusionProvider);
         this.q = new SortedPointQueue();
-        this.graph = new NodeMap(instanceSpace, new TestPointPassibilityCalculatorDecorator(this.calculator), occlusionProviderFactory);
+        this.graph = new NodeMap(instanceSpace, new TestNodeCalculatorDecorator(this.calculator), occlusionProviderFactory);
         this.target = this.graph.cachedPointAt(0, 0, 7);
         (this.source = visited(0, 0, 0)).target(this.target.key);
     }

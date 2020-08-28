@@ -12,7 +12,7 @@ import java.util.Random;
 
 import static com.extollit.num.FastMath.*;
 
-public final class PathObject implements Iterable<INode> {
+public final class PathObject implements IPath {
     private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(1, 2);
 
     final Node[] nodes;
@@ -61,6 +61,7 @@ public final class PathObject implements Iterable<INode> {
             return new PathObject(speed, result);
     }
 
+    @Override
     public void truncateTo(int length) {
         if (length < 0 || length >= this.nodes.length)
             throw new ArrayIndexOutOfBoundsException(
@@ -70,6 +71,7 @@ public final class PathObject implements Iterable<INode> {
         this.length = length;
     }
 
+    @Override
     public void untruncate() {
         this.length = this.nodes.length;
     }
@@ -78,11 +80,21 @@ public final class PathObject implements Iterable<INode> {
     public Iterator<INode> iterator() {
         return new ArrayIterable.Iter<INode>(this.nodes, this.length);
     }
+    @Override
     public final int length() { return this.length; }
+
+    @Override
+    public final int cursor() {
+        return this.i;
+    }
+
+    @Override
     public final INode at(int i) { return this.nodes[i]; }
+    @Override
     public final INode current() {
         return this.nodes[this.i];
     }
+    @Override
     public final INode last() {
         final Node[] nodes = this.nodes;
         final int length = this.length;
@@ -92,8 +104,9 @@ public final class PathObject implements Iterable<INode> {
             return null;
     }
 
-    public static boolean active(PathObject path) { return path != null && !path.done(); }
+    public static boolean active(IPath path) { return path != null && !path.done(); }
 
+    @Override
     public final boolean done() { return this.i >= this.length; }
 
     public void update(final IPathingEntity subject) {
@@ -182,10 +195,12 @@ public final class PathObject implements Iterable<INode> {
         }
     }
 
+    @Override
     public boolean taxiing() {
         return this.taxiUntil >= this.adjacentIndex;
     }
 
+    @Override
     public void taxiUntil(int index) {
         this.taxiUntil = index;
     }
@@ -371,23 +386,21 @@ public final class PathObject implements Iterable<INode> {
         return levelIndex;
     }
 
-    public boolean sameAs(PathObject other) {
-        final Node[]
-            thisNodes = this.nodes,
-            otherNodes = other.nodes;
-
-        if (otherNodes.length != thisNodes.length)
-            return false;
+    @Override
+    public boolean sameAs(IPath other) {
+        final Node[] thisNodes = this.nodes;
+        final int length = this.length;
 
         int c = 0;
-        while (c < thisNodes.length) {
-            if (!thisNodes[c].key.equals(otherNodes[c].key))
+        Iterator<INode> i = other.iterator();
+        while (c < length && i.hasNext()) {
+            if (!thisNodes[c].key.equals(i.next().coordinates()))
                 return false;
 
             c++;
         }
 
-        return true;
+        return c >= length && !i.hasNext();
     }
 
     @Override

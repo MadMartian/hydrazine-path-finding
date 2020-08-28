@@ -2,11 +2,11 @@ package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.FlagSampler;
 import com.extollit.gaming.ai.path.model.IInstanceSpace;
-import com.extollit.gaming.ai.path.model.IPointPassibilityCalculator;
+import com.extollit.gaming.ai.path.model.INodeCalculator;
 import org.junit.Before;
 
-public abstract class AbstractPassibilityCalculatorTests extends AbstractHydrazinePathFinderTests {
-    protected IPointPassibilityCalculator calculator;
+public abstract class AbstractNodeCalculatorTests extends AbstractHydrazinePathFinderTests {
+    protected INodeCalculator calculator;
     protected FlagSampler flagSampler;
 
     @Before
@@ -19,5 +19,5 @@ public abstract class AbstractPassibilityCalculatorTests extends AbstractHydrazi
         this.calculator.applySubject(super.pathingEntity);
     }
 
-    protected abstract IPointPassibilityCalculator createCalculator(IInstanceSpace instanceSpace);
+    protected abstract INodeCalculator createCalculator(IInstanceSpace instanceSpace);
 }

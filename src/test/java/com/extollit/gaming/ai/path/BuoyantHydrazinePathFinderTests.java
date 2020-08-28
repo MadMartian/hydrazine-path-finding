@@ -1,7 +1,7 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.Element;
-import com.extollit.gaming.ai.path.model.PathObject;
+import com.extollit.gaming.ai.path.model.IPath;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinder
         solid(0, -1, 3);
         solid(0, -1, 4);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 5, 4);
+        final IPath path = pathFinder.initiatePathTo(0, 5, 4);
 
         assertNotNull(path);
         assertEquals(new Vec3i(0, 5, 4), path.last().coordinates());
@@ -51,7 +51,7 @@ public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinder
 
         solid(0, 1, 2);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 0, 4);
+        final IPath path = pathFinder.initiatePathTo(0, 0, 4);
 
         assertPath(
                 path,
@@ -74,7 +74,7 @@ public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinder
 
         pos(0, -1, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(1, 0, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 0, 0);
         assertPath(
                 path,
                 new Vec3i(0, -1, -0),

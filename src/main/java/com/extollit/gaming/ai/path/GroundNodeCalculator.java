@@ -7,13 +7,13 @@ import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
 import static com.extollit.gaming.ai.path.PassibilityHelpers.passibilityFrom;
 import static java.lang.Math.round;
 
-class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
+class GroundNodeCalculator extends AbstractNodeCalculator {
     private static int
             MAX_SAFE_FALL_DISTANCE = 4,
             MAX_SURVIVE_FALL_DISTANCE = 20,
             CESA_LIMIT = 16;
 
-    public GroundPassibilityCalculator(IInstanceSpace instanceSpace) {
+    public GroundNodeCalculator(IInstanceSpace instanceSpace) {
         super(instanceSpace);
     }
 
@@ -24,7 +24,7 @@ class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
     }
 
     @Override
-    public Node passiblePointNear(Vec3i coords0, Vec3i origin, final FlagSampler flagSampler) {
+    public Node passibleNodeNear(Vec3i coords0, Vec3i origin, final FlagSampler flagSampler) {
         final Node point;
         final IPathingEntity.Capabilities capabilities = this.capabilities;
         final int

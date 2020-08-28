@@ -1,5 +1,6 @@
 package com.extollit.gaming.ai.path.model;
 
+import com.extollit.collect.CollectionsExt;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.text.MessageFormat;
@@ -16,30 +17,34 @@ public class PathObjectUtil {
 
         return new PathObject(1, nodes);
     }
-    public static void assertPathNot(PathObject path, Vec3i... coordinates) {
+    public static void assertPathNot(IPath path, Vec3i... coordinates) {
         if (coordinates == null || coordinates.length == 0)
             assertNull(path);
 
         try {
-            compareCoordinates(coordinates, path.nodes);
+            compareCoordinates(coordinates, nodesFrom(path));
         } catch (AssertionError e) {
             return;
         }
         throw new AssertionError(MessageFormat.format("Path should not equal {0}", Arrays.asList(coordinates)));
     }
 
-    public static void assertPath(PathObject path, Vec3i... coordinates) {
+    public static void assertPath(IPath path, Vec3i... coordinates) {
         if (coordinates == null || coordinates.length == 0)
             assertNull(path);
 
-        compareCoordinates(coordinates, path.nodes);
+        compareCoordinates(coordinates, nodesFrom(path));
     }
 
-    private static void compareCoordinates(Vec3i[] coordinates, Node[] nodes) {
+    private static void compareCoordinates(Vec3i[] coordinates, INode[] nodes) {
         final Vec3i[] otherCoords = new Vec3i[nodes.length];
         for (int c = 0; c < otherCoords.length; ++c)
-            otherCoords[c] = nodes[c].key;
+            otherCoords[c] = nodes[c].coordinates();
 
         assertArrayEquals(coordinates, otherCoords);
+    }
+
+    private static INode[] nodesFrom(IPath path) {
+        return CollectionsExt.toList(path).toArray(new INode[path.length()]);
     }
 }

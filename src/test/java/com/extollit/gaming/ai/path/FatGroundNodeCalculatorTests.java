@@ -14,15 +14,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FatGroundPassibilityCalculatorTests extends AbstractPassibilityCalculatorTests {
+public class FatGroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
     public void setup(IPathingEntity pathingEntity) {
         super.setup(pathingEntity);
         when(pathingEntity.width()).thenReturn(1.4f);
     }
 
     @Override
-    protected GroundPassibilityCalculator createCalculator(final IInstanceSpace instanceSpace) {
-        return new GroundPassibilityCalculator(instanceSpace);
+    protected GroundNodeCalculator createCalculator(final IInstanceSpace instanceSpace) {
+        return new GroundNodeCalculator(instanceSpace);
     }
 
     @Test
@@ -31,7 +31,7 @@ public class FatGroundPassibilityCalculatorTests extends AbstractPassibilityCalc
         solid(1, -1, 0);
         solid(2, 0, 0);
 
-        final Node actual = calculator.passiblePointNear(new Vec3i(1, 0, 0), ORIGIN, new FlagSampler(super.occlusionProvider));
+        final Node actual = calculator.passibleNodeNear(new Vec3i(1, 0, 0), ORIGIN, new FlagSampler(super.occlusionProvider));
         assertNotNull(actual);
         assertEquals(0, actual.key.y);
     }
@@ -42,7 +42,7 @@ public class FatGroundPassibilityCalculatorTests extends AbstractPassibilityCalc
         solid(-1, -1, 0);
         solid(-2, 0, 0);
 
-        final Node actual = calculator.passiblePointNear(new Vec3i(-1, 0, 0), ORIGIN, new FlagSampler(super.occlusionProvider));
+        final Node actual = calculator.passibleNodeNear(new Vec3i(-1, 0, 0), ORIGIN, new FlagSampler(super.occlusionProvider));
         assertNotNull(actual);
         assertEquals(1, actual.key.y);
     }
@@ -53,7 +53,7 @@ public class FatGroundPassibilityCalculatorTests extends AbstractPassibilityCalc
         solid(0, -1, 1);
         solid(0, 0, 2);
 
-        final Node actual = calculator.passiblePointNear(new Vec3i(0, 0, 1), ORIGIN, new FlagSampler(super.occlusionProvider));
+        final Node actual = calculator.passibleNodeNear(new Vec3i(0, 0, 1), ORIGIN, new FlagSampler(super.occlusionProvider));
         assertNotNull(actual);
         assertEquals(0, actual.key.y);
     }
@@ -64,7 +64,7 @@ public class FatGroundPassibilityCalculatorTests extends AbstractPassibilityCalc
         solid(0, -1, -1);
         solid(0, 0, -2);
 
-        final Node actual = calculator.passiblePointNear(new Vec3i(0, 0, -1), ORIGIN, new FlagSampler(super.occlusionProvider));
+        final Node actual = calculator.passibleNodeNear(new Vec3i(0, 0, -1), ORIGIN, new FlagSampler(super.occlusionProvider));
         assertNotNull(actual);
         assertEquals(1, actual.key.y);
     }

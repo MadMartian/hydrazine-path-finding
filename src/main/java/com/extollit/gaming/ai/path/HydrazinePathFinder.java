@@ -35,7 +35,8 @@ public class HydrazinePathFinder {
     private com.extollit.linalg.mutable.Vec3d sourcePosition, destinationPosition;
     private IDynamicMovableObject destinationEntity;
 
-    private IPointPassibilityCalculator pathPointCalculator;
+    private INodeCalculator pathPointCalculator;
+    private IPathProcessor pathProcessor;
     private NodeMap nodeMap;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
@@ -52,7 +53,7 @@ public class HydrazinePathFinder {
         PASSIBLE_POINT_TIME_LIMIT = configModel.passiblePointTimeLimit();
         DOT_THRESHOLD = configModel.dotThreshold();
 
-        GroundPassibilityCalculator.configureFrom(configModel);
+        GroundNodeCalculator.configureFrom(configModel);
     }
 
     public HydrazinePathFinder(IPathingEntity entity, IInstanceSpace instanceSpace) {
@@ -95,16 +96,16 @@ public class HydrazinePathFinder {
     }
     public final Vec3i currentTarget() { return this.target == null ? null : this.target.key; }
 
-    public PathObject trackPathTo(IDynamicMovableObject target) {
+    public IPath trackPathTo(IDynamicMovableObject target) {
         this.destinationEntity = target;
         return initiatePathTo(target.coordinates());
     }
 
-    public PathObject initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
+    public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
         return initiatePathTo(coordinates.x, coordinates.y, coordinates.z);
     }
 
-    public PathObject initiatePathTo(double x, double y, double z) {
+    public IPath initiatePathTo(double x, double y, double z) {
         applySubject();
         updateSourcePosition();
 
@@ -132,6 +133,22 @@ public class HydrazinePathFinder {
         }
 
         return null;
+    }
+
+    public HydrazinePathFinder withGraphNodeFilter(IGraphNodeFilter filter) {
+        this.nodeMap.filter(filter);
+        return this;
+    }
+    public IGraphNodeFilter graphNodeFilter() {
+        return this.nodeMap.filter();
+    }
+
+    public HydrazinePathFinder withPathProcessor(IPathProcessor trimmer) {
+        this.pathProcessor = trimmer;
+        return this;
+    }
+    public IPathProcessor pathProcessor() {
+        return this.pathProcessor;
     }
 
     protected PathObject update() {
@@ -279,17 +296,17 @@ public class HydrazinePathFinder {
         return mutated;
     }
 
-    private IPointPassibilityCalculator createPassibilityCalculator(IPathingEntity.Capabilities capabilities) {
-        final IPointPassibilityCalculator calculator;
+    private INodeCalculator createPassibilityCalculator(IPathingEntity.Capabilities capabilities) {
+        final INodeCalculator calculator;
         final boolean
                 flyer = capabilities.flyer(),
                 swimmer = capabilities.swimmer(),
                 gilled = capabilities.gilled();
 
         if (flyer || (swimmer && gilled))
-            calculator = new FluidicPassibilityCalculator(this.instanceSpace);
+            calculator = new FluidicNodeCalculator(this.instanceSpace);
         else
-            calculator = new GroundPassibilityCalculator(this.instanceSpace);
+            calculator = new GroundNodeCalculator(this.instanceSpace);
         return calculator;
     }
 
@@ -610,7 +627,10 @@ public class HydrazinePathFinder {
 
     private PathObject createPath(Node head) {
         final IPathingEntity.Capabilities capabilities = this.capabilities;
-        return PathObject.fromHead(capabilities.speed(), head);
+        final PathObject path = PathObject.fromHead(capabilities.speed(), head);
+        if (this.pathProcessor != null && path != null)
+            this.pathProcessor.processPath(path);
+        return path;
     }
 
     private void processNode(Node current) {
@@ -745,7 +765,7 @@ public class HydrazinePathFinder {
         return this.subject;
     }
 
-    public boolean sameDestination(PathObject delegate, com.extollit.linalg.immutable.Vec3d target) {
+    public boolean sameDestination(IPath delegate, com.extollit.linalg.immutable.Vec3d target) {
         if (this.currentPath == null)
             return false;
 

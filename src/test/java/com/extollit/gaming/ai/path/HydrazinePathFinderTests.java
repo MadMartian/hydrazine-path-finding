@@ -1,20 +1,25 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.Element;
+import com.extollit.gaming.ai.path.model.IPath;
+import com.extollit.gaming.ai.path.model.IPathProcessor;
 import com.extollit.gaming.ai.path.model.Logic;
-import com.extollit.gaming.ai.path.model.PathObject;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPathNot;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
+    @Mock
+    private IPathProcessor pathProcessor;
 
     @Test
     public void refinePassibilityGate() {
@@ -26,7 +31,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         longFence(0, 0, 0);
         when(occlusionProvider.elementAt(0, 0, 0)).thenReturn(Logic.doorway.to(Element.earth.mask));
 
-        final PathObject path = pathFinder.initiatePathTo(1, 0, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 0, 0);
 
         assertNull(path);
 
@@ -43,7 +48,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         longFence(0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(1, 0, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 0, 0);
 
         assertNull(path);
 
@@ -60,7 +65,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         longFence(0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(-1, 0, 0);
+        final IPath path = pathFinder.initiatePathTo(-1, 0, 0);
 
         assertNull(path);
 
@@ -77,7 +82,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         latFence(0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 0, 1);
+        final IPath path = pathFinder.initiatePathTo(0, 0, 1);
 
         assertNull(path);
 
@@ -94,7 +99,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         latFence(0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 0, -1);
+        final IPath path = pathFinder.initiatePathTo(0, 0, -1);
 
         assertNull(path);
 
@@ -129,7 +134,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(0, 0, 0);
 
-        PathObject path = pathFinder.initiatePathTo(0, 0, 7);
+        IPath path = pathFinder.initiatePathTo(0, 0, 7);
         assertPath(path,
                 new Vec3i(0, 0, 0),
                 new Vec3i(0, 0, 1),
@@ -202,7 +207,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(0, 0, 5);
 
-        PathObject path = pathFinder.initiatePathTo(0, 0, 7);
+        IPath path = pathFinder.initiatePathTo(0, 0, 7);
 
         assertNotNull(path);
         assertPath(path,
@@ -250,7 +255,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     public void closestsOscillator() {
         defaultGround();
         pos(1, 0, 3);
-        PathObject path = pathFinder.initiatePathTo(2, 1, 3);
+        IPath path = pathFinder.initiatePathTo(2, 1, 3);
         assertNotNull(path);
 
         assertPath(path,
@@ -271,7 +276,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     public void closestsDeterminism() {
         defaultGround();
         pos(1, 0, 3);
-        PathObject path = pathFinder.initiatePathTo(2, 1, 3);
+        IPath path = pathFinder.initiatePathTo(2, 1, 3);
         assertNotNull(path);
 
         assertPath(path,
@@ -298,7 +303,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(2, 3, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(3, 4, 0);
+        final IPath path = pathFinder.initiatePathTo(3, 4, 0);
         assertNull(path);
     }
 
@@ -312,7 +317,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(2, 3, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(3, 3, 0);
+        final IPath path = pathFinder.initiatePathTo(3, 3, 0);
         assertPath(path,
                 new Vec3i(2, 3, 0),
                 new Vec3i(3, 3, 0)
@@ -332,7 +337,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(0, 0, -1);
 
-        PathObject path = pathFinder.initiatePathTo(0, 0, 1);
+        IPath path = pathFinder.initiatePathTo(0, 0, 1);
         assertNull(path);
 
         door(0, 0, 0, true);
@@ -361,7 +366,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(0, -1, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(1, 1, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 1, 0);
         assertNotNull(path);
 
         assertPath(
@@ -385,7 +390,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         pos(0, -1, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(1, 1, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 1, 0);
         assertNull(path);
     }
 
@@ -393,7 +398,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     public void noPathIntoAir() {
         pos(0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 5, 3);
+        final IPath path = pathFinder.initiatePathTo(0, 5, 3);
         assertNull(path);
     }
 
@@ -402,7 +407,23 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     public void noPathJustAbove() {
         pos(0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 1, 3);
+        final IPath path = pathFinder.initiatePathTo(0, 1, 3);
         assertNull(path);
+    }
+
+    @Test
+    public void pathProcessor() {
+        pos(0, 0, 0);
+
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        solid(0, -1, 2);
+
+        final IPath path =
+            pathFinder
+                .withPathProcessor(pathProcessor)
+                .initiatePathTo(0, 0, 2);
+
+        verify(pathProcessor).processPath(path);
     }
 }

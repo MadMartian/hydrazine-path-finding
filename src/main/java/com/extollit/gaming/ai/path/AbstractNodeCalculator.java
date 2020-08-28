@@ -6,13 +6,13 @@ import com.extollit.num.FastMath;
 
 import static com.extollit.num.FastMath.floor;
 
-abstract class AbstractPassibilityCalculator implements IPointPassibilityCalculator {
+abstract class AbstractNodeCalculator implements INodeCalculator {
     protected final IInstanceSpace instanceSpace;
     protected IPathingEntity.Capabilities capabilities;
     protected int discreteSize, tall;
     protected float actualSize;
 
-    public AbstractPassibilityCalculator(IInstanceSpace instanceSpace) {
+    public AbstractNodeCalculator(IInstanceSpace instanceSpace) {
         this.instanceSpace = instanceSpace;
     }
 

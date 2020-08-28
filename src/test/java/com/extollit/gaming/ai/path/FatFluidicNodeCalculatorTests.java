@@ -11,8 +11,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
-public class FatFluidicPassibilityCalculatorTests extends AbstractHydrazinePathFinderTests {
-    private FluidicPassibilityCalculator calculator;
+public class FatFluidicNodeCalculatorTests extends AbstractHydrazinePathFinderTests {
+    private FluidicNodeCalculator calculator;
     private FlagSampler flagSampler;
 
     @Before
@@ -22,7 +22,7 @@ public class FatFluidicPassibilityCalculatorTests extends AbstractHydrazinePathF
         this.flagSampler = new FlagSampler(super.occlusionProvider);
 
         when(capabilities.flyer()).thenReturn(true);
-        this.calculator = new FluidicPassibilityCalculator(super.instanceSpace);
+        this.calculator = new FluidicNodeCalculator(super.instanceSpace);
 
         when(super.pathingEntity.width()).thenReturn(1.4f);
         when(super.pathingEntity.height()).thenReturn(1.1f);
@@ -39,7 +39,7 @@ public class FatFluidicPassibilityCalculatorTests extends AbstractHydrazinePathF
 
         solid(0, 0, 1);
 
-        final Node actual = calculator.passiblePointNear(new Vec3i(1, 0, 1), ORIGIN, this.flagSampler);
+        final Node actual = calculator.passibleNodeNear(new Vec3i(1, 0, 1), ORIGIN, this.flagSampler);
         assertNotNull(actual);
         assertEquals(Passibility.impassible, actual.passibility());
         assertEquals(1, actual.key.z);

@@ -1,6 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.PathObject;
+import com.extollit.gaming.ai.path.model.IPath;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +27,7 @@ public class FatIntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 0, -2);
+        final IPath path = pathFinder.initiatePathTo(0, 0, -2);
         assertNotNull(path);
         final Vec3i [] expectedPath = {
                 ORIGIN,

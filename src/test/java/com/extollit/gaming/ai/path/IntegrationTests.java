@@ -1,9 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.Gravitation;
-import com.extollit.gaming.ai.path.model.INode;
-import com.extollit.gaming.ai.path.model.Passibility;
-import com.extollit.gaming.ai.path.model.PathObject;
+import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
@@ -34,7 +31,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         pos(super.destinationEntity, 0.5, 0, 0.5);
         pos(super.pathingEntity, -4.5, 3, 0.5);
 
-        PathObject path = pathFinder.trackPathTo(destinationEntity);
+        IPath path = pathFinder.trackPathTo(destinationEntity);
 
         final Vec3i[] expectedPath = {
                 new Vec3i(-5, 3, 0),
@@ -58,7 +55,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 0, 0);
 
-        PathObject path = pathFinder.initiatePathTo(2, 0, 0);
+        IPath path = pathFinder.initiatePathTo(2, 0, 0);
 
         assertPath(path, new Vec3i(0, 0, 0), new Vec3i(1, 0, 0), new Vec3i(2, 0, 0));
     }
@@ -74,7 +71,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 0, 0);
 
-        PathObject path = pathFinder.initiatePathTo(2, 0, 0);
+        IPath path = pathFinder.initiatePathTo(2, 0, 0);
 
         assertPath(path, new Vec3i(0, 0, 0), new Vec3i(1, 0, 0), new Vec3i(2, 0, 0));
     }
@@ -90,7 +87,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 0, 0);
 
-        PathObject path = pathFinder.initiatePathTo(2, 0, 0);
+        IPath path = pathFinder.initiatePathTo(2, 0, 0);
         assertNull(path);
     }
 
@@ -104,7 +101,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 0, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(1, 0, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 0, 0);
 
         assertPath(path, new Vec3i(0, 0, 0), new Vec3i(1, 0, 0));
     }
@@ -118,7 +115,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(1, 0, 0);
 
 
-        final PathObject path = pathFinder.initiatePathTo(1, 1, 0);
+        final IPath path = pathFinder.initiatePathTo(1, 1, 0);
 
         assertPath(path, new Vec3i(0, 1, 0), new Vec3i(1, 1, 0));
     }
@@ -141,7 +138,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 5, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(3, 1, 0);
+        final PathObject path = (PathObject) pathFinder.initiatePathTo(3, 1, 0);
 
         assertPath(path,
                 new Vec3i(0, 1, 0),
@@ -206,7 +203,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(super.pathingEntity, 0, 0.5, 0);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 2, 3);
+        final PathObject path = (PathObject) pathFinder.initiatePathTo(0, 2, 3);
 
         assertPath(
             path,
@@ -248,7 +245,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(2, 9, 1);
         solid(3, 9, 1);
 
-        PathObject pathObject = pathFinder.trackPathTo(destinationEntity);
+        IPath pathObject = pathFinder.trackPathTo(destinationEntity);
 
         assertNotNull(pathObject);
         INode last = pathObject.last();
@@ -274,7 +271,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(0, 0, 1);
         longFence(1, 1, 1);
 
-        final PathObject path = pathFinder.initiatePathTo(0, 1, 1);
+        final IPath path = pathFinder.initiatePathTo(0, 1, 1);
 
         assertNull(path);
     }
@@ -299,7 +296,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         latFence(1, 1, 0);
         longFence(0, 1, 1);
 
-        final PathObject path = pathFinder.initiatePathTo(2, 1, 2);
+        final IPath path = pathFinder.initiatePathTo(2, 1, 2);
 
         assertPath(
                 path,
@@ -337,7 +334,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         pos(0.8f, 1, 0.8f);
 
-        final PathObject path = pathFinder.initiatePathTo(1, 1, -1);
+        final IPath path = pathFinder.initiatePathTo(1, 1, -1);
 
         assertNull(path);
     }
@@ -359,7 +356,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         longFence(1, 0, -1);
         longFence(1, 0, +1);
 
-        final PathObject path = pathFinder.initiatePathTo(2, 0, 0);
+        final IPath path = pathFinder.initiatePathTo(2, 0, 0);
 
         assertNull(path);
     }
@@ -373,7 +370,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         when(capabilities.speed()).thenReturn(1.0f);
         pos(0.5, 0, 0.5);
-        PathObject path = pathFinder.initiatePathTo(0, 0, 3);
+        PathObject path = (PathObject) pathFinder.initiatePathTo(0, 0, 3);
 
         solid(0, 0, 2);
         solid(0, 1, 2);

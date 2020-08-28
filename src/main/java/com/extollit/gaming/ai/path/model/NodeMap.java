@@ -9,20 +9,30 @@ public final class NodeMap {
     private final IInstanceSpace instanceSpace;
     private final IOcclusionProviderFactory occlusionProviderFactory;
 
-    private IPointPassibilityCalculator calculator;
+    private INodeCalculator calculator;
+    private IGraphNodeFilter filter;
     private IOcclusionProvider occlusionProvider;
     private int cx0, cxN, cz0, czN;
 
     public NodeMap(IInstanceSpace instanceSpace, IOcclusionProviderFactory occlusionProviderFactory) {
         this(instanceSpace, null, occlusionProviderFactory);
     }
-    public NodeMap(IInstanceSpace instanceSpace, IPointPassibilityCalculator calculator, IOcclusionProviderFactory occlusionProviderFactory) {
+    public NodeMap(IInstanceSpace instanceSpace, INodeCalculator calculator, IOcclusionProviderFactory occlusionProviderFactory) {
         this.calculator = calculator;
         this.instanceSpace = instanceSpace;
         this.occlusionProviderFactory = occlusionProviderFactory;
     }
 
-    public void calculator(IPointPassibilityCalculator calculator) {
+    public void filter(IGraphNodeFilter filter) {
+        this.filter = filter;
+        clear();
+    }
+
+    public IGraphNodeFilter filter() {
+        return this.filter;
+    }
+
+    public void calculator(INodeCalculator calculator) {
         this.calculator = calculator;
         clear();
     }
@@ -112,7 +122,7 @@ public final class NodeMap {
         Node point = this.it.get(coords);
 
         if (point == null) {
-            point = this.calculator.passiblePointNear(coords, null, new FlagSampler(this.occlusionProvider));
+            point = passibleNodeNear(coords, null);
             if (!point.key.equals(coords))
                 point = new Node(coords, Passibility.impassible, false);
 
@@ -137,9 +147,9 @@ public final class NodeMap {
         Node point = point0;
 
         if (point == null)
-             point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
+             point = passibleNodeNear(coords, origin);
         else if (point.volatile_()) {
-            point = this.calculator.passiblePointNear(coords, origin, new FlagSampler(this.occlusionProvider));
+            point = passibleNodeNear(coords, origin);
             if (point.key.equals(point0.key)) {
                 point0.passibility(point.passibility());
                 point0.volatile_(point.volatile_());
@@ -160,6 +170,18 @@ public final class NodeMap {
             nodeMap.put(coords, point);
 
         return point;
+    }
+
+    private Node passibleNodeNear(Vec3i coords, Vec3i origin) {
+        final Node node = this.calculator.passibleNodeNear(coords, origin, new FlagSampler(this.occlusionProvider));
+        final IGraphNodeFilter filter = this.filter;
+        if (filter != null) {
+            final Passibility newPassibility = filter.mapPassibility(node);
+            if (newPassibility != null)
+                node.passibility(newPassibility);
+        }
+
+        return node;
     }
 
     public boolean remove(int x, int y, int z) {
