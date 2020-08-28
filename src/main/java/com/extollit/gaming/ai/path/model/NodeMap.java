@@ -131,10 +131,6 @@ public final class NodeMap {
         return cachedPassiblePointNear(coords0, origin);
     }
 
-    public Node cachedPassiblePointNear(Vec3i coords) {
-        return cachedPassiblePointNear(coords, null);
-    }
-
     public final Node cachedPassiblePointNear(Vec3i coords, Vec3i origin) {
         final SparseSpatialMap<Node> nodeMap = this.it;
         final Node point0 = nodeMap.get(coords);
@@ -169,9 +165,7 @@ public final class NodeMap {
     public boolean remove(int x, int y, int z) {
         return remove(new Vec3i(x, y, z));
     }
-    public boolean remove(INode node) {
-        return remove(node.coordinates());
-    }
+
     public boolean remove(Vec3i coords) {
         final Node existing = this.it.remove(coords);
         if (existing != null) {
