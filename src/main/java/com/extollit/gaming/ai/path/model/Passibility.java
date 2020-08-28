@@ -1,7 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import java.text.MessageFormat;
-
 /**
  * Expresses ratings for traversal into a particular path-point according to increasing risk.
  *
@@ -30,49 +28,49 @@ public enum Passibility {
      */
     impassible;
 
+    /**
+     * Renders the least passibility between this and the given passibility rating.  For example, if this is
+     * {@link #passible} and the parameter is {@link #risky} then the result is <em>risky</em>.  Also, if this
+     * is {@link #dangerous} and the parameter is {@link #risky} then the result is <em>dangerous</em>.
+     *
+     * @param other other passibility to compare to
+     * @return the lesser of the two passibility ratings
+     */
     public Passibility between(Passibility other) {
         return values()[Math.max(ordinal(), other.ordinal())];
     }
+
+    /**
+     * Determines if the given passibility rating is better than this one.  For example, if this is {@link #dangerous}
+     * and the parameter is {@link #risky} then the result is <em>risky</em>.
+     *
+     * @param other other rating to compare with as potentially better than this one
+     * @return true if the given passibility rating is better than this one, false otherwise
+     */
     public boolean betterThan(Passibility other) {
         return ordinal() < other.ordinal();
     }
+
+    /**
+     * Determines if the given passibility rating is worse than this one.  For example, if this is {@link #dangerous}
+     * and the parameter is {@link #risky} then the result is <em>dangerous</em>.
+     *
+     * @param other other rating to compare with as potentially worse than this one
+     * @return true if the given passibility rating is worse than this one, false otherwise
+     */
     public boolean worseThan(Passibility other) {
         return ordinal() > other.ordinal();
     }
 
+    /**
+     * Determines if the entity should path to a node rated this way.  This may return false even if the location rated
+     * this way does not physically impede or even harm the entity, it depends on the capabilities of the entity.
+     *
+     * @param capabilities capabilities of the entity, used to determine if the entity is a cautious path-finder or not
+     * @return true if the entity can path to this rating, false if it should not
+     */
     public boolean impassible(IPathingEntity.Capabilities capabilities) {
         return this == Passibility.impassible
                 || (capabilities.cautious() && worseThan(Passibility.passible));
-    }
-
-    public static Passibility from(byte flags, IPathingEntity.Capabilities capabilities) {
-        final Element kind = Element.of(flags);
-        switch (kind) {
-            case earth:
-                if (Logic.ladder.in(flags) || (Logic.doorway.in(flags) && capabilities.opensDoors()))
-                    return passible;
-                else
-                    return impassible;
-
-            case air:
-                if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
-                    return impassible;
-                else
-                    return passible;
-
-            case water:
-                if (capabilities.aquaphobic() || !capabilities.swimmer())
-                    return dangerous;
-                else
-                    return risky;
-
-            case fire:
-                if (!capabilities.fireResistant())
-                    return dangerous;
-                else
-                    return risky;
-        }
-
-        throw new IllegalArgumentException(MessageFormat.format("Unhandled element type ''{0}''", kind));
     }
 }

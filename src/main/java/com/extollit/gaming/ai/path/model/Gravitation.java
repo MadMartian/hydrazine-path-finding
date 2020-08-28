@@ -19,18 +19,15 @@ public enum Gravitation {
      */
     airborne;
 
+    /**
+     * Determines the greatest gravitation restriction between this and the passed parameter.  For example, if
+     * this is {@link #buoyant} and the parameter is {@link #grounded} then the result is <em>grounded</em>.  Also,
+     * if this is {@link #airborne} and the parameter is {@link #buoyant} then the result is <em>buoyant</em>.
+     *
+     * @param other the other gravitation rating to compare with this one
+     * @return the more restrictive gravitation between this and the parameter
+     */
     public Gravitation between(Gravitation other) {
         return values()[Math.min(ordinal(), other.ordinal())];
-    }
-
-    public static Gravitation from(byte flags) {
-        if (Element.earth.in(flags))
-            return grounded;
-        if (Element.water.in(flags))
-            return buoyant;
-        if (Element.air.in(flags))
-            return airborne;
-
-        return grounded;
     }
 }

@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
 import static com.extollit.num.FastMath.ceil;
 import static com.extollit.num.FastMath.floor;
 
@@ -692,7 +693,7 @@ public class HydrazinePathFinder {
                 return null;
 
             bounds = block.bounds();
-        } else if (Element.impassible(flags, this.capabilities))
+        } else if (impedesMovement(flags, this.capabilities))
             bounds = FULL_BOUNDS;
         else
             return null;
@@ -736,7 +737,7 @@ public class HydrazinePathFinder {
     }
 
     private boolean fuzzyPassibility(byte flags) {
-        return Element.impassible(flags, this.capabilities) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
+        return impedesMovement(flags, this.capabilities) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
     }
 
     protected final boolean unreachableFromSource(Vec3i current, Vec3i target) {

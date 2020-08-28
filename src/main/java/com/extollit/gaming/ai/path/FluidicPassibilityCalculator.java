@@ -3,6 +3,7 @@ package com.extollit.gaming.ai.path;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3i;
 
+import static com.extollit.gaming.ai.path.PassibilityHelpers.gravitationFrom;
 import static java.lang.Math.round;
 
 class FluidicPassibilityCalculator extends AbstractPassibilityCalculator implements IPointPassibilityCalculator {
@@ -60,8 +61,8 @@ class FluidicPassibilityCalculator extends AbstractPassibilityCalculator impleme
                 byte flags = flagSampler.flagsAt(x, y0, z);
                 final int yb = y0 - 1;
                 final byte flagsBeneath = flagSampler.flagsAt(x, yb, z);
-                gravitation = gravitation.between(Gravitation.from(flags));
-                gravitation = gravitation.between(Gravitation.from(flagsBeneath));
+                gravitation = gravitation.between(gravitationFrom(flags));
+                gravitation = gravitation.between(gravitationFrom(flagsBeneath));
                 if (!this.test.in(flags))
                     if (this.secondTest != null && this.secondTest.in(flags))
                         passibility = passibility.between(Passibility.risky);

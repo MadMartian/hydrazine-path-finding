@@ -3,6 +3,8 @@ package com.extollit.gaming.ai.path;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3i;
 
+import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
+import static com.extollit.gaming.ai.path.PassibilityHelpers.passibilityFrom;
 import static java.lang.Math.round;
 
 class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
@@ -72,11 +74,11 @@ class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
                 );
 
                 byte flags = flagSampler.flagsAt(x, y, z);
-                if (Element.impassible(flags, capabilities)) {
+                if (impedesMovement(flags, capabilities)) {
                     final float partialDisparity = partY - topOffsetAt(flags, x, y++, z);
                     flags = flagSampler.flagsAt(x, y, z);
 
-                    if (partialDisparity < 0 || Element.impassible(flags, capabilities)) {
+                    if (partialDisparity < 0 || impedesMovement(flags, capabilities)) {
                         if (!hasOrigin)
                             return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
 
@@ -88,7 +90,7 @@ class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
                             while (climbsLadders && Logic.climbable(flags));
                         }
 
-                        if (Element.impassible(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (Element.impassible(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY < 0))
+                        if (impedesMovement(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (impedesMovement(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY < 0))
                             return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
                     }
                 }
@@ -126,7 +128,7 @@ class GroundPassibilityCalculator extends AbstractPassibilityCalculator {
                 } else if (y == minY && partY > minPartY)
                     minPartY = partY;
 
-                passibility = passibility.between(Passibility.from(flagSampler.flagsAt(x, y, z), capabilities));
+                passibility = passibility.between(passibilityFrom(flagSampler.flagsAt(x, y, z), capabilities));
                 if (passibility.impassible(capabilities))
                     return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
             }
