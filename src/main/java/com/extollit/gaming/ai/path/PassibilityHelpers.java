@@ -11,6 +11,9 @@ class PassibilityHelpers {
     }
 
     static Passibility passibilityFrom(byte flags, IPathingEntity.Capabilities capabilities) {
+        if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
+            return Passibility.impassible;
+
         final Element kind = Element.of(flags);
         switch (kind) {
             case earth:
@@ -22,8 +25,6 @@ class PassibilityHelpers {
             case air:
                 if (capabilities.gilled())
                     return Passibility.dangerous;
-                else if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
-                    return Passibility.impassible;
                 else
                     return Passibility.passible;
 

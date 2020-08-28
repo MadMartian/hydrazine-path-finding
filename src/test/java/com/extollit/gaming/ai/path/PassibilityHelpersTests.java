@@ -18,6 +18,22 @@ public class PassibilityHelpersTests {
     @Mock private IPathingEntity.Capabilities capabilities;
 
     @Test
+    public void avoidsDoorways() {
+        when(capabilities.avoidsDoorways()).thenReturn(true);
+
+        final Passibility
+            earthResult = passibilityFrom(Element.earth.to(Logic.doorway.mask), capabilities),
+            airResult = passibilityFrom(Element.air.to(Logic.doorway.mask), capabilities),
+            fireResult = passibilityFrom(Element.fire.to(Logic.doorway.mask), capabilities),
+            waterResult = passibilityFrom(Element.water.to(Logic.doorway.mask), capabilities);
+
+        assertEquals(Passibility.impassible, earthResult);
+        assertEquals(Passibility.impassible, airResult);
+        assertEquals(Passibility.impassible, fireResult);
+        assertEquals(Passibility.impassible, waterResult);
+    }
+
+    @Test
     public void earth() {
         final Passibility result = passibilityFrom(Element.earth.mask, capabilities);
 
@@ -54,15 +70,6 @@ public class PassibilityHelpersTests {
         final Passibility result = passibilityFrom(Element.air.mask, capabilities);
 
         assertEquals(Passibility.dangerous, result);
-    }
-
-    @Test
-    public void avoidsDoorways() {
-        when(capabilities.avoidsDoorways()).thenReturn(true);
-
-        final Passibility result = passibilityFrom(Element.air.to(Logic.doorway.mask), capabilities);
-
-        assertEquals(Passibility.impassible, result);
     }
 
     @Test
