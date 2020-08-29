@@ -14,7 +14,7 @@ public class AirborneHydrazinePathFinderTests extends AbstractHydrazinePathFinde
     @Before
     public void setup() {
         when(super.capabilities.cautious()).thenReturn(false);
-        when(super.capabilities.flyer()).thenReturn(true);
+        when(super.capabilities.avian()).thenReturn(true);
 
         super.setup();
 

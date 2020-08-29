@@ -23,13 +23,13 @@ class PassibilityHelpers {
                     return Passibility.impassible;
 
             case air:
-                if (capabilities.gilled())
+                if (capabilities.aquatic())
                     return Passibility.dangerous;
                 else
                     return Passibility.passible;
 
             case water: {
-                final boolean gilled = capabilities.gilled();
+                final boolean gilled = capabilities.aquatic();
                 if (capabilities.aquaphobic())
                     return Passibility.dangerous;
                 else if (gilled && capabilities.swimmer())

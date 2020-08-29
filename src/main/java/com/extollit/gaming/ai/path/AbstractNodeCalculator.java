@@ -83,13 +83,13 @@ abstract class AbstractNodeCalculator implements INodeCalculator {
         else if (Element.water.in(flags)) {
             if (capabilities.fireResistant())
                 return Passibility.dangerous;
-            else if (capabilities.gilled() && capabilities.swimmer())
+            else if (capabilities.aquatic() && capabilities.swimmer())
                 return Passibility.passible;
             else
                 return Passibility.risky;
         } else if (Element.fire.in(flags))
             return capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
-        else if (capabilities.gilled())
+        else if (capabilities.aquatic())
             return Passibility.risky;
         else
             return Passibility.passible;
@@ -103,7 +103,7 @@ abstract class AbstractNodeCalculator implements INodeCalculator {
         if (Element.air.in(flags)
                 || Logic.climbable(flags)
                 || Element.earth.in(flags) && Logic.nothing.in(flags)
-                || Element.water.in(flags) && (capabilities.gilled() || !capabilities.swimmer())
+                || Element.water.in(flags) && (capabilities.aquatic() || !capabilities.swimmer())
             )
             return 0;
 

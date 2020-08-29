@@ -65,7 +65,7 @@ public class PassibilityHelpersTests {
 
     @Test
     public void gilledAir() {
-        when(capabilities.gilled()).thenReturn(true);
+        when(capabilities.aquatic()).thenReturn(true);
 
         final Passibility result = passibilityFrom(Element.air.mask, capabilities);
 
@@ -90,7 +90,7 @@ public class PassibilityHelpersTests {
 
     @Test
     public void waterBreather() {
-        when(capabilities.gilled()).thenReturn(true);
+        when(capabilities.aquatic()).thenReturn(true);
 
         final Passibility result = passibilityFrom(Element.water.mask, capabilities);
 
@@ -108,7 +108,7 @@ public class PassibilityHelpersTests {
 
     @Test
     public void fish() {
-        when(capabilities.gilled()).thenReturn(true);
+        when(capabilities.aquatic()).thenReturn(true);
         when(capabilities.swimmer()).thenReturn(true);
 
         final Passibility result = passibilityFrom(Element.water.mask, capabilities);

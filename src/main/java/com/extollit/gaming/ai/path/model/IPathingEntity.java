@@ -111,13 +111,13 @@ public interface IPathingEntity extends IDynamicMovableObject {
          * above the fluid surface or whether it can path beneath and within fluid.  If the entity is also a swimmer, then
          * the engine assumes the entity has full control of their buoyancy and can path-find like a fish.
          *
-         * It is theoretically possible to have entities that are gilled but are not swimmers, these entities would path
+         * It is theoretically possible to have entities that are aquatic but are not swimmers, these entities would path
          * along the floor of the body of water / magma rather than swim like fish or dog-paddle like dogs.         *
          *
          * @return true if the entity can breathe and survive indefinitely within fluid, false if the entity cannot last
          * for long within fluid
          */
-        boolean gilled();
+        boolean aquatic();
 
         /**
          * Is this entity capable of flying?  This flag alters engine behavior to select points anywhere in the air and
@@ -127,7 +127,7 @@ public interface IPathingEntity extends IDynamicMovableObject {
          *
          * @return true if the entity can fly, false if the entity cannot move freely through the air defying gravity
          */
-        boolean flyer();
+        boolean avian();
 
         /**
          * Does this entity avoid water and other fluids?  This also influences the rating of path points discovered in fluid.

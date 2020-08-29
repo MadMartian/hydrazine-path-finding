@@ -21,7 +21,7 @@ public class FatFluidicNodeCalculatorTests extends AbstractHydrazinePathFinderTe
 
         this.flagSampler = new FlagSampler(super.occlusionProvider);
 
-        when(capabilities.flyer()).thenReturn(true);
+        when(capabilities.avian()).thenReturn(true);
         this.calculator = new FluidicNodeCalculator(super.instanceSpace);
 
         when(super.pathingEntity.width()).thenReturn(1.4f);

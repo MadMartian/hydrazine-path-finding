@@ -17,7 +17,7 @@ public class BuoyantHydrazinePathFinderTests extends AbstractHydrazinePathFinder
     public void setup() {
         when(super.capabilities.cautious()).thenReturn(true);
 
-        when(super.capabilities.gilled()).thenReturn(true);
+        when(super.capabilities.aquatic()).thenReturn(true);
         when(super.capabilities.swimmer()).thenReturn(true);
 
         super.setup();

@@ -300,9 +300,9 @@ public class HydrazinePathFinder {
     private INodeCalculator createPassibilityCalculator(IPathingEntity.Capabilities capabilities) {
         final INodeCalculator calculator;
         final boolean
-                flyer = capabilities.flyer(),
+                flyer = capabilities.avian(),
                 swimmer = capabilities.swimmer(),
-                gilled = capabilities.gilled();
+                gilled = capabilities.aquatic();
 
         if (flyer || (swimmer && gilled))
             calculator = new FluidicNodeCalculator(this.instanceSpace);
@@ -314,8 +314,8 @@ public class HydrazinePathFinder {
     private void applySubject() {
         final IPathingEntity.Capabilities capabilities = this.capabilities = this.subject.capabilities();
         final boolean
-            flying = capabilities.flyer(),
-            aqua = capabilities.swimmer() && capabilities.gilled();
+            flying = capabilities.avian(),
+            aqua = capabilities.swimmer() && capabilities.aquatic();
 
         final boolean initPathPointCalculator = this.pathPointCalculator == null;
         if (initPathPointCalculator || flying != this.flying || aqua != this.aqua) {

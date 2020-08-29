@@ -16,7 +16,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
     @Override
     public void setup() {
         when(super.capabilities.aquaphobic()).thenReturn(false);
-        when(super.capabilities.gilled()).thenReturn(true);
+        when(super.capabilities.aquatic()).thenReturn(true);
         when(super.capabilities.swimmer()).thenReturn(true);
 
         super.setup();
@@ -79,7 +79,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
     @Test
     public void buoyantButGrounded() {
         when(capabilities.swimmer()).thenReturn(true);
-        when(capabilities.gilled()).thenReturn(true);
+        when(capabilities.aquatic()).thenReturn(true);
         when(capabilities.aquaphobic()).thenReturn(false);
 
         solid(0, -2, 0);

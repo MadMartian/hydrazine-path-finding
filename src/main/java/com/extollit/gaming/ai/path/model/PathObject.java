@@ -119,7 +119,7 @@ public final class PathObject implements IPath {
             final int unlevelIndex;
 
             final IPathingEntity.Capabilities capabilities = subject.capabilities();
-            final boolean grounded = !(capabilities.flyer() || capabilities.gilled() && capabilities.swimmer());
+            final boolean grounded = !(capabilities.avian() || capabilities.aquatic() && capabilities.swimmer());
             final float fy;
 
             if (grounded) {

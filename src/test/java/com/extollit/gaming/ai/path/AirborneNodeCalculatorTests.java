@@ -15,7 +15,7 @@ import static org.mockito.Mockito.when;
 public class AirborneNodeCalculatorTests extends AbstractNodeCalculatorTests {
     @Before
     public void setup() {
-        when(super.capabilities.flyer()).thenReturn(true);
+        when(super.capabilities.avian()).thenReturn(true);
 
         super.setup();
     }

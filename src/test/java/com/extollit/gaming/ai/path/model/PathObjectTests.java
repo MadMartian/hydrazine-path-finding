@@ -402,7 +402,7 @@ public class PathObjectTests {
 
     @Test
     public void deviantRocket() {
-        when(capabilities.flyer()).thenReturn(true);
+        when(capabilities.avian()).thenReturn(true);
 
         final PathObject path = pathObject(
                 new Vec3i(0, 0, 0),
