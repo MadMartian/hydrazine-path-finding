@@ -7,10 +7,6 @@ import java.util.List;
 abstract class AbstractIterVisitor<T> extends OctantVisitor<T> implements LeafOctant.IFilterFunc<T> {
     private final List<LeafOctant<T>.Reference> leaves = new LinkedList<>();
 
-    protected AbstractIterVisitor(Root root) {
-        super(root);
-    }
-
     public final Iterator<T> iterator() { return new VoxelIterator<T>(this, this.leaves.iterator()); }
 
     @Override

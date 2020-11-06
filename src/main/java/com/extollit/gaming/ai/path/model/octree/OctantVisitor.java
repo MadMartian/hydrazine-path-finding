@@ -1,10 +1,10 @@
 package com.extollit.gaming.ai.path.model.octree;
 
 abstract class OctantVisitor<T> {
-    final Frame frame;
+    protected Frame frame;
 
-    protected OctantVisitor(Root root) {
-        this.frame = new Frame(root.frame);
+    protected void baseInit(Root root) {
+        this.frame = root.frame;
     }
 
     public OctantAllocator<T> octantAllocator() { return null; }
@@ -45,10 +45,9 @@ abstract class OctantVisitor<T> {
 }
 
 abstract class AllocatingOctantVisitor<T> extends OctantVisitor<T> implements OctantAllocator<T> {
-    final Class<T> elementClass;
+    private final Class<T> elementClass;
 
-    protected AllocatingOctantVisitor(Root root, Class<T> elementClass) {
-        super(root);
+    protected AllocatingOctantVisitor(Class<T> elementClass) {
         this.elementClass = elementClass;
     }
 

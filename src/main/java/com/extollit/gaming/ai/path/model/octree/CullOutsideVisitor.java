@@ -8,9 +8,9 @@ final class CullOutsideVisitor<T> extends OctantVisitor<T> {
     private final Iteratee<T> iteratee;
 
     public CullOutsideVisitor(Root root, IntAxisAlignedBox range, Iteratee<T> iteratee) {
-        super(root);
         this.range = range;
         this.iteratee = iteratee;
+        super.baseInit(root);
     }
 
     @Override

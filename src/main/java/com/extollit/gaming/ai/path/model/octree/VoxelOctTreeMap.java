@@ -12,18 +12,21 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
             LEAF_MASK = LEAF_SIZE - 1,
             HALF_LEAF_SIZE = LEAF_SIZE / 2;
 
-    private final class SetVisitor extends AllocatingOctantVisitor<T> {
-        public final int x, y, z;
-        public final T element;
+    private static final class SetVisitor<T> extends AllocatingOctantVisitor<T> {
+        private int x, y, z;
+        private T element, existing;
 
-        private T existing;
+        protected SetVisitor(final Class<T> elementClass) {
+            super(elementClass);
+        }
 
-        public SetVisitor(T element, int x, int y, int z) {
-            super(VoxelOctTreeMap.this.root, VoxelOctTreeMap.this.elementClass);
+        private void init(Root root, int x, int y, int z, T element) {
+            super.baseInit(root);
             this.x = x;
             this.y = y;
             this.z = z;
             this.element = element;
+            this.existing = null;
         }
 
         @Override
@@ -39,16 +42,17 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         public final T existing() { return this.existing; }
     }
 
-    private final class GetVisitor extends OctantVisitor<T> {
-        public final int x, y, z;
+    private static final class GetVisitor<T> extends OctantVisitor<T> {
+        private int x, y, z;
         
         private T element;
 
-        public GetVisitor(int x, int y, int z) {
-            super(VoxelOctTreeMap.this.root);
+        private void init(Root root, int x, int y, int z) {
+            super.baseInit(root);
             this.x = x;
             this.y = y;
             this.z = z;
+            this.element = null;
         }
 
         @Override
@@ -64,11 +68,11 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         public final T element() { return this.element; }
     }
 
-    private final class BoxIterVisitor extends AbstractIterVisitor<T> {
-        public final IntAxisAlignedBox range;
+    private static final class BoxIterVisitor<T> extends AbstractIterVisitor<T> {
+        private IntAxisAlignedBox range;
 
-        public BoxIterVisitor(IntAxisAlignedBox range) {
-            super(VoxelOctTreeMap.this.root);
+        private void init(Root root, IntAxisAlignedBox range) {
+            super.baseInit(root);
             this.range = range;
         }
 
@@ -82,9 +86,9 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         }
     }
 
-    private final class AllIterVisitor extends AbstractIterVisitor<T> {
-        public AllIterVisitor() {
-            super(VoxelOctTreeMap.this.root);
+    private static final class AllIterVisitor<T> extends AbstractIterVisitor<T> {
+        private void init(Root root) {
+            super.baseInit(root);
         }
 
         public boolean test(T element, int x, int y, int z) {
@@ -97,15 +101,20 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         }
     }
 
+    private final SetVisitor<T> setVisitor;
+    private final GetVisitor<T> getVisitor = new GetVisitor<T>();
+    private final BoxIterVisitor<T> boxIterVisitor = new BoxIterVisitor<T>();
+    private final AllIterVisitor<T> allIterVisitor = new AllIterVisitor<T>();
+
     private final Class<T> elementClass;
 
     private Root<T> root;
 
     public VoxelOctTreeMap(Class<T> elementClass) {
-        this.elementClass = elementClass;
+        this.setVisitor = new SetVisitor<T>(this.elementClass = elementClass);
     }
 
-    private AbstractOctant<T> acquireRoot(int x, int y, int z) {
+    private Root<T> acquireRootIncluding(int x, int y, int z) {
         Root<T> root = this.root;
 
         if (root == null)
@@ -113,13 +122,14 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         else
             this.root.findRoot(x, y, z);
 
-        return root.node();
+        return root;
     }
 
     public T put(int x, int y, int z, T value) {
-        final AbstractOctant<T> root = acquireRoot(x, y, z);
-        final SetVisitor visitor = new SetVisitor(value, x, y, z);
-        root.accept(visitor);
+        final Root<T> root = acquireRootIncluding(x, y, z);
+        final SetVisitor<T> visitor = this.setVisitor;
+        visitor.init(root, x, y, z, value);
+        root.node().accept(visitor);
         return visitor.existing();
     }
 
@@ -128,12 +138,14 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
     }
 
     public T remove(int x, int y, int z) {
-        if (this.root == null)
+        final Root<T> root = this.root;
+        if (root == null)
             return null;
 
-        final SetVisitor visitor = new SetVisitor(null, x, y, z);
-        this.root.node().accept(visitor);
-        this.root.trim();
+        final SetVisitor<T> visitor = this.setVisitor;
+        visitor.init(root, x, y, z, null);
+        root.node().accept(visitor);
+        root.trim();
         return visitor.existing();
     }
 
@@ -142,11 +154,13 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
     }
 
     public T get(int x, int y, int z) {
-        if (this.root == null || !this.root.frame.contains(x, y, z))
+        final Root<T> root = this.root;
+        if (root == null || !root.frame.contains(x, y, z))
             return null;
 
-        final GetVisitor visitor = new GetVisitor(x, y, z);
-        this.root.node().accept(visitor);
+        final GetVisitor<T> visitor = this.getVisitor;
+        visitor.init(root, x, y, z);
+        root.node().accept(visitor);
         return visitor.element();
     }
 
@@ -163,30 +177,35 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
     }
 
     public void cullOutside(IntAxisAlignedBox range, Iteratee<T> iteratee) {
-        if (this.root == null)
+        final Root<T> root = this.root;
+        if (root == null)
             return;
 
-        final CullOutsideVisitor<T> visitor = new CullOutsideVisitor<T>(this.root, range, iteratee);
-        this.root.node().accept(visitor);
-        this.root.trim();
+        final CullOutsideVisitor<T> visitor = new CullOutsideVisitor<T>(root, range, iteratee);
+        root.node().accept(visitor);
+        root.trim();
     }
 
     @Override
     public Iterator<T> iterator() {
-        if (this.root == null)
+        final Root<T> root = this.root;
+        if (root == null)
             return Collections.emptyIterator();
 
-        final AllIterVisitor visitor = new AllIterVisitor();
-        this.root.node().accept(visitor);
+        final AllIterVisitor<T> visitor = this.allIterVisitor;
+        visitor.init(root);
+        root.node().accept(visitor);
         return visitor.iterator();
     }
 
     public Iterator<T> iterator(Vec3i min, Vec3i max) {
-        if (this.root == null)
+        final Root<T> root = this.root;
+        if (root == null)
             return Collections.emptyIterator();
 
-        final BoxIterVisitor visitor = new BoxIterVisitor(new IntAxisAlignedBox(min, max));
-        this.root.node().accept(visitor);
+        final BoxIterVisitor<T> visitor = this.boxIterVisitor;
+        visitor.init(root, new IntAxisAlignedBox(min, max));
+        root.node().accept(visitor);
         return visitor.iterator();
     }
 
