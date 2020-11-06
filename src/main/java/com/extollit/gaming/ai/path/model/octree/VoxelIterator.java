@@ -5,14 +5,15 @@ import java.util.NoSuchElementException;
 
 final class VoxelIterator<T> implements Iterator<T> {
     private final Iterator<LeafOctant<T>.Reference> leaves;
-    private final AbstractIterVisitor<T> host;
+    private final LeafOctant.AbstractIterator<T> leafIterator;
 
-    private Iterator<T> li, li0;
+    private LeafOctant<T> leaf0;
+    private int index0;
     private T element;
 
-    public VoxelIterator(AbstractIterVisitor<T> host, Iterator<LeafOctant<T>.Reference> leaves) {
-        this.host = host;
+    public VoxelIterator(LeafOctant.AbstractIterator<T> leafIterator, Iterator<LeafOctant<T>.Reference> leaves) {
         this.leaves = leaves;
+        this.leafIterator = leafIterator;
     }
 
     @Override
@@ -21,11 +22,11 @@ final class VoxelIterator<T> implements Iterator<T> {
     }
 
     private void advanceLeafIterator() {
-        this.li = this.leaves.next().iterator(this.host);
+        this.leafIterator.init(this.leaves.next());
     }
 
     private T current() {
-        if (this.li == null) {
+        if (this.element == null) {
             if (this.leaves.hasNext())
                 advanceLeafIterator();
             else
@@ -40,10 +41,12 @@ final class VoxelIterator<T> implements Iterator<T> {
     private T find() {
         T element = null;
 
-        this.li0 = this.li;
+        final LeafOctant.AbstractIterator<T> voxelIterator = this.leafIterator;
+        this.leaf0 = voxelIterator.referrent();
+        this.index0 = voxelIterator.index();
         do {
-            if (this.li.hasNext())
-                element = this.li.next();
+            if (voxelIterator.hasNext())
+                element = voxelIterator.next();
             else if (this.leaves.hasNext())
                 advanceLeafIterator();
             else {
@@ -68,6 +71,6 @@ final class VoxelIterator<T> implements Iterator<T> {
 
     @Override
     public void remove() {
-        this.li0.remove();
+        this.leaf0.remove(this.index0);
     }
 }

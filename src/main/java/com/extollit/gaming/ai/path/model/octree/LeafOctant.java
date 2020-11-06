@@ -6,7 +6,7 @@ import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-final class LeafOctant<T> extends AbstractOctant<T> implements Iterable<T> {
+final class LeafOctant<T> extends AbstractOctant<T> {
     public final class Reference {
         public final Vec3i mp;
 
@@ -31,43 +31,81 @@ final class LeafOctant<T> extends AbstractOctant<T> implements Iterable<T> {
         public int hashCode() {
             return this.mp.hashCode();
         }
-
-        public Iterator<T> iterator(IFilterFunc<T> filter) {
-            return new Iter(this, filter);
-        }
     }
 
     private final T [][][] voxels;
-    private int occupied;
+    private byte [] indices = new byte[4];
+    private byte count;
 
     @SuppressWarnings("unchecked")
     public LeafOctant(final Class<T> elementClass) {
         this.voxels = (T[][][]) Array.newInstance(elementClass, VoxelOctTreeMap.LEAF_SIZE, VoxelOctTreeMap.LEAF_SIZE, VoxelOctTreeMap.LEAF_SIZE);
     }
 
-    public Reference referredBy(Frame frame) {
+    public final Reference referredBy(Frame frame) {
         return new Reference(new Vec3i(frame.mp()));
     }
+
+    public final byte size() { return this.count; }
 
     @Override
     public final void accept(OctantVisitor<T> visitor) {
         visitor.visit(this);
     }
 
+    public final T get(int x, int y, int z) {
+        return this.voxels[z][y][x];
+    }
+
+    final T remove(int index) {
+        byte c = this.indices[index];
+        final int dx = c & VoxelOctTreeMap.LEAF_MASK;
+        c >>= VoxelOctTreeMap.LEAF_BITS;
+        final int dy = c & VoxelOctTreeMap.LEAF_MASK;
+        c >>= VoxelOctTreeMap.LEAF_BITS;
+        final int dz = c & VoxelOctTreeMap.LEAF_MASK;
+
+        return set(dx, dy, dz, null);
+    }
+
     public final T set(int x, int y, int z, T element) {
         T existing = this.voxels[z][y][x];
         this.voxels[z][y][x] = element;
-        if (existing == null && element != null)
-            this.occupied++;
-        else if (existing != null && element == null)
-            this.occupied--;
+        if (existing == null && element != null) {
+            final int leafSize = VoxelOctTreeMap.LEAF_SIZE;
+            final int i = this.count++;
+            byte[] indices = this.indices;
+            if (i >= indices.length) {
+                byte [] newIndices = new byte[Math.min(leafSize * leafSize * leafSize, indices.length  + indices.length / 3)];
+                System.arraycopy(indices, 0, newIndices, 0, indices.length);
+                this.indices = indices = newIndices;
+            }
+
+            indices[i] = serial(x, y, z);
+        } else if (existing != null && element == null) {
+            final int count0 = this.count;
+            final byte[] indices = this.indices;
+            final byte serial = serial(x, y, z);
+            for (int i = 0; i < count0; ++i) {
+                if (indices[i] == serial) {
+                    indices[i] = indices[--this.count];
+                    break;
+                }
+            }
+        }
 
         return existing;
     }
-    public T get(int x, int y, int z) {
-        return this.voxels[z][y][x];
+
+    private static byte serial(int x, int y, int z) {
+        return (byte)(
+            (z << (VoxelOctTreeMap.LEAF_BITS << 1)) |
+            (y << VoxelOctTreeMap.LEAF_BITS) |
+            x
+        );
     }
-    public void clear() {
+
+    public final void clear() {
         final T[][][] voxels = this.voxels;
         final int leafSize = VoxelOctTreeMap.LEAF_SIZE;
         for (int z = 0; z < leafSize; ++z)
@@ -75,83 +113,65 @@ final class LeafOctant<T> extends AbstractOctant<T> implements Iterable<T> {
                 for (int x = 0; x < leafSize; ++x)
                     voxels[z][y][x] = null;
 
-        this.occupied = 0;
+        this.count = 0;
     }
 
     @Override
-    public boolean empty() { return this.occupied <= 0; }
+    public final boolean empty() { return this.count <= 0; }
 
-    private class Iter implements Iterator<T> {
-        private final Reference reference;
-        private final IFilterFunc<T> filter;
+    static abstract class AbstractIterator<T> implements Iterator<T> {
+        protected LeafOctant<T>.Reference reference;
 
-        private int
-                x = -1, y, z,
-                x0, y0, z0;
+        protected int i = -1;
+        private int i0;
 
         private T element;
 
-        public Iter() {
-            this(null, null);
+        void init(LeafOctant<T>.Reference reference) {
+            this.reference = reference;
+            this.i = -1;
         }
 
-        public Iter(Reference reference, IFilterFunc<T> filter) {
-            this.reference = reference;
-            this.filter = filter;
-        }
+        final LeafOctant<T> referrent() { return this.reference.referrent(); }
+        final int index() { return this.i0; }
 
         @Override
         public boolean hasNext() {
-            if (this.x == -1)
+            if (this.i == -1)
                 this.element = find();
 
             return this.element != null;
         }
 
         private T find() {
-            final int last = VoxelOctTreeMap.LEAF_SIZE - 1;
+            final LeafOctant<T> referrent = referrent();
+            final byte[] indices = referrent.indices;
+
+            this.i0 = this.i;
 
             T element;
+            int i;
+            while ((i = ++this.i) < referrent.size()) {
+                byte c = indices[i];
+                final int dx = c & VoxelOctTreeMap.LEAF_MASK;
+                c >>= VoxelOctTreeMap.LEAF_BITS;
+                final int dy = c & VoxelOctTreeMap.LEAF_MASK;
+                c >>= VoxelOctTreeMap.LEAF_BITS;
+                final int dz = c & VoxelOctTreeMap.LEAF_MASK;
 
-            final IFilterFunc<T> filter = this.filter;
-            this.x0 = this.x;
-            this.y0 = this.y;
-            this.z0 = this.z;
-            do {
-                if (this.x < last)
-                    this.x++;
-                else if (this.y < last) {
-                    this.y++;
-                    this.x = 0;
-                } else if (this.z < last) {
-                    this.z++;
-                    this.y = this.x = 0;
-                } else {
-                    element = null;
-                    break;
-                }
+                element = referrent.get(dx, dy, dz);
+                if (filterTestRelative(element, dx, dy, dz))
+                    return element;
+            }
 
-                element = LeafOctant.this.get(this.x, this.y, this.z);
-            } while (element == null || (filter != null && !filterTestRelative(element, filter)));
-
-            return element;
+            return null;
         }
 
-        private boolean filterTestRelative(T element, IFilterFunc<T> filter) {
-            final Reference reference = this.reference;
-            final int halfScale = VoxelOctTreeMap.HALF_LEAF_SIZE;
-            final Vec3i mp = reference.mp;
-            final int
-                x = this.x + mp.x - halfScale,
-                y = this.y + mp.y - halfScale,
-                z = this.z + mp.z - halfScale;
-
-            return filter.test(element, x, y, z);
-        }
+        protected abstract boolean filterTestRelative(T element, int dx, int dy, int dz);
 
         @Override
         public T next() {
-            if (this.x == -1)
+            if (this.i == -1)
                 this.element = find();
             else if (this.element == null)
                 throw new NoSuchElementException();
@@ -163,16 +183,48 @@ final class LeafOctant<T> extends AbstractOctant<T> implements Iterable<T> {
 
         @Override
         public void remove() {
-            LeafOctant.this.set(this.x0, this.y0, this.z0, null);
+            final LeafOctant<T> referrent = this.reference.referrent();
+            byte c = referrent.indices[this.i0];
+            final int dx = c & VoxelOctTreeMap.LEAF_MASK;
+            c >>= VoxelOctTreeMap.LEAF_BITS;
+            final int dy = c & VoxelOctTreeMap.LEAF_MASK;
+            c >>= VoxelOctTreeMap.LEAF_BITS;
+            final int dz = c & VoxelOctTreeMap.LEAF_MASK;
+
+            referrent.set(dx, dy, dz, null);
+        }
+    }
+
+
+    static final class FullIterator<T> extends AbstractIterator<T> {
+        @Override
+        protected boolean filterTestRelative(T element, int dx, int dy, int dz) {
+            return true;
+        }
+    }
+
+    static final class FilteredIterator<T> extends AbstractIterator<T> {
+        private final IFilterFunc<T> filter;
+
+        public FilteredIterator(IFilterFunc<T> filter) {
+            this.filter = filter;
+        }
+
+        @Override
+        protected boolean filterTestRelative(T element, int dx, int dy, int dz) {
+            final LeafOctant<T>.Reference reference = this.reference;
+            final int halfScale = VoxelOctTreeMap.HALF_LEAF_SIZE;
+            final Vec3i mp = reference.mp;
+            final int
+                    x = dx + mp.x - halfScale,
+                    y = dy + mp.y - halfScale,
+                    z = dz + mp.z - halfScale;
+
+            return this.filter.test(element, x, y, z);
         }
     }
 
     interface IFilterFunc<T> {
         boolean test(T element, int x, int y, int z);
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-        return new Iter();
     }
 }

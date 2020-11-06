@@ -8,7 +8,8 @@ import java.util.Iterator;
 
 public class VoxelOctTreeMap< T > implements Iterable<T> {
     static final int
-            LEAF_SIZE = 8,
+            LEAF_BITS = 2,
+            LEAF_SIZE = 1 << LEAF_BITS,
             LEAF_MASK = LEAF_SIZE - 1,
             HALF_LEAF_SIZE = LEAF_SIZE / 2;
 
@@ -68,12 +69,17 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         public final T element() { return this.element; }
     }
 
-    private static final class BoxIterVisitor<T> extends AbstractIterVisitor<T> {
+    private static final class BoxIterVisitor<T> extends AbstractIterVisitor<T> implements LeafOctant.IFilterFunc<T> {
         private IntAxisAlignedBox range;
 
         private void init(Root root, IntAxisAlignedBox range) {
             super.baseInit(root);
             this.range = range;
+        }
+
+        @Override
+        protected Iterator<T> iterator(Iterator<LeafOctant<T>.Reference> leaves) {
+            return new VoxelIterator<T>(new LeafOctant.FilteredIterator<T>(this), leaves);
         }
 
         public boolean test(T element, int x, int y, int z) {
@@ -91,8 +97,9 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
             super.baseInit(root);
         }
 
-        public boolean test(T element, int x, int y, int z) {
-            return true;
+        @Override
+        protected Iterator<T> iterator(Iterator<LeafOctant<T>.Reference> leaves) {
+            return new VoxelIterator<T>(new LeafOctant.FullIterator<T>(), leaves);
         }
 
         @Override

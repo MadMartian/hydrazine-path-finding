@@ -4,10 +4,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-abstract class AbstractIterVisitor<T> extends OctantVisitor<T> implements LeafOctant.IFilterFunc<T> {
+abstract class AbstractIterVisitor<T> extends OctantVisitor<T> {
     private final List<LeafOctant<T>.Reference> leaves = new LinkedList<>();
 
-    public final Iterator<T> iterator() { return new VoxelIterator<T>(this, this.leaves.iterator()); }
+    public final Iterator<T> iterator() { return iterator(this.leaves.iterator()); }
+
+    protected abstract Iterator<T> iterator(Iterator<LeafOctant<T>.Reference> leaves);
 
     @Override
     public void visit(LeafOctant<T> leaf) {
