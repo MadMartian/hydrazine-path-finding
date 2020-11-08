@@ -41,9 +41,18 @@ public final class NodeMap {
         clear();
     }
 
+    private static final class ResetIteratee implements Iteratee<Node> {
+        public static final Iteratee<Node> INSTANCE = new ResetIteratee();
+
+        private ResetIteratee() {}
+
+        @Override
+        public void visit(Node element, int x, int y, int z) {
+            element.rollback();
+        }
+    }
     public final void reset(SortedPointQueue queue) {
-        for (Node p : this.it)
-            p.rollback();
+        this.it.forEach(ResetIteratee.INSTANCE);
 
         queue.clear();
     }

@@ -14,12 +14,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import static com.extollit.collect.CollectionsExt.toList;
 import static com.extollit.collect.CollectionsExt.zip;
 import static java.util.Collections.sort;
 import static org.junit.Assert.*;
@@ -49,11 +45,20 @@ public class VoxelOctTreeMapProperty {
     }
 
     @Property
+    public void get(@ForAll @Size(min = 10, max = 500) List<@From("points") @IntRange(min = -1000, max = +1000) @Unique Vec3i> list) {
+        final VoxelOctTreeMap<Vec3i> map = mapFrom(list);
+
+        for (Vec3i p : list)
+            assertEquals(p, map.get(p));
+    }
+
+    @Property
     public void four_iterate(@ForAll @Size(4) List<@From("points") @IntRange(min = -100, max = +100) @Unique Vec3i> list,
                              @ForAll @Size(4) List<@From("names") @Unique String> names) {
         final VoxelOctTreeMap<String> map = mapFrom(list, names);
+        final List<String> existing = new ArrayList<>();
 
-        final List<String> existing = toList(map);
+        map.forEach((element, x, y, z) -> existing.add(element));
         sort(existing);
         sort(names);
         assertEquals(names, existing);
@@ -93,15 +98,28 @@ public class VoxelOctTreeMapProperty {
     }
 
     @Property
+    public void all_iteratee(@ForAll @Size(min = 5, max = 50) List<@From("points") @Unique @IntRange(min = -1000, max = +1000) Vec3i> list) {
+        final VoxelOctTreeMap<Vec3i> map = mapFrom(list);
+        final Set<Vec3i>
+            expectation = new HashSet<>(list),
+            result = new HashSet<>();
+
+        map.forEach(
+            (element, x, y, z) -> {
+                assertEquals(element, new Vec3i(x, y, z));
+                result.add(element);
+            }
+        );
+
+        assertEquals(expectation, result);
+    }
+
+    @Property
     public void box_iterate(@ForAll @Size(min = 5, max = 50) List<@From("points") @Unique @IntRange(min = -200, max = +200) Vec3i> list,
                             @ForAll @From("boxes") @IntRange(min = -199, max = +199) IntAxisAlignedBox bounds) {
         final VoxelOctTreeMap<Vec3i> map = mapFrom(list);
 
-        final Iterator<Vec3i> i = map.iterator(bounds);
-        while (i.hasNext()) {
-            final Vec3i p = i.next();
-            assertTrue(bounds.contains(p));
-        }
+        map.forEachIn(bounds, (element, x, y, z) -> assertTrue(bounds.contains(element)));
     }
 
     @Property

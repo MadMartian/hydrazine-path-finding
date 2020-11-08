@@ -3,10 +3,7 @@ package com.extollit.gaming.ai.path.model.octree;
 import com.extollit.linalg.immutable.IntAxisAlignedBox;
 import com.extollit.linalg.immutable.Vec3i;
 
-import java.util.Collections;
-import java.util.Iterator;
-
-public class VoxelOctTreeMap< T > implements Iterable<T> {
+public class VoxelOctTreeMap< T > {
     static final int
             LEAF_BITS = 2,
             LEAF_SIZE = 1 << LEAF_BITS,
@@ -69,17 +66,19 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         public final T element() { return this.element; }
     }
 
-    private static final class BoxIterVisitor<T> extends AbstractIterVisitor<T> implements LeafOctant.IFilterFunc<T> {
+    private static final class BoxEachVisitor<T> extends IterateeVisitor<T> implements LeafOctant.IFilterFunc<T> {
         private IntAxisAlignedBox range;
 
-        private void init(Root root, IntAxisAlignedBox range) {
-            super.baseInit(root);
-            this.range = range;
-        }
+        private BoxEachVisitor() {}
 
         @Override
-        protected Iterator<T> iterator(Iterator<LeafOctant<T>.Reference> leaves) {
-            return new VoxelIterator<T>(new LeafOctant.FilteredIterator<T>(this), leaves);
+        protected LeafOctant.AbstractIterator<T> createIterator() {
+            return new LeafOctant.FilteredIterator<T>(this);
+        }
+
+        private void init(Root root, IntAxisAlignedBox range, Iteratee<T> iteratee) {
+            super.baseInit(root, iteratee);
+            this.range = range;
         }
 
         public boolean test(T element, int x, int y, int z) {
@@ -90,16 +89,19 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         public void visit(ContainerOctant<T> container) {
             container.traverseBounded(this, this.range);
         }
+
     }
 
-    private static final class AllIterVisitor<T> extends AbstractIterVisitor<T> {
-        private void init(Root root) {
-            super.baseInit(root);
-        }
+    private static final class ForEachVisitor<T> extends IterateeVisitor<T> {
+        private ForEachVisitor() {}
 
         @Override
-        protected Iterator<T> iterator(Iterator<LeafOctant<T>.Reference> leaves) {
-            return new VoxelIterator<T>(new LeafOctant.FullIterator<T>(), leaves);
+        protected LeafOctant.AbstractIterator<T> createIterator() {
+            return new LeafOctant.FullIterator<T>();
+        }
+
+        private void init(Root root, Iteratee<T> iteratee) {
+            super.baseInit(root, iteratee);
         }
 
         @Override
@@ -110,8 +112,8 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
 
     private final SetVisitor<T> setVisitor;
     private final GetVisitor<T> getVisitor = new GetVisitor<T>();
-    private final BoxIterVisitor<T> boxIterVisitor = new BoxIterVisitor<T>();
-    private final AllIterVisitor<T> allIterVisitor = new AllIterVisitor<T>();
+    private final BoxEachVisitor<T> boxEachVisitor = new BoxEachVisitor<T>();
+    private final ForEachVisitor<T> forEachVisitor = new ForEachVisitor<T>();
 
     private final Class<T> elementClass;
 
@@ -193,31 +195,28 @@ public class VoxelOctTreeMap< T > implements Iterable<T> {
         root.trim();
     }
 
-    @Override
-    public Iterator<T> iterator() {
+    public void forEach(Iteratee<T> iteratee) {
         final Root<T> root = this.root;
         if (root == null)
-            return Collections.emptyIterator();
+            return;
 
-        final AllIterVisitor<T> visitor = this.allIterVisitor;
-        visitor.init(root);
+        final ForEachVisitor<T> visitor = this.forEachVisitor;
+        visitor.init(root, iteratee);
         root.node().accept(visitor);
-        return visitor.iterator();
     }
 
-    public Iterator<T> iterator(Vec3i min, Vec3i max) {
+    public void forEachIn(Vec3i min, Vec3i max, Iteratee<T> iteratee) {
         final Root<T> root = this.root;
         if (root == null)
-            return Collections.emptyIterator();
+            return;
 
-        final BoxIterVisitor<T> visitor = this.boxIterVisitor;
-        visitor.init(root, new IntAxisAlignedBox(min, max));
+        final BoxEachVisitor<T> visitor = this.boxEachVisitor;
+        visitor.init(root, new IntAxisAlignedBox(min, max), iteratee);
         root.node().accept(visitor);
-        return visitor.iterator();
     }
 
-    public Iterator<T> iterator(IntAxisAlignedBox bounds) {
-        return iterator(bounds.min, bounds.max);
+    public void forEachIn(IntAxisAlignedBox bounds, Iteratee<T> iteratee) {
+        forEachIn(bounds.min, bounds.max, iteratee);
     }
 }
 

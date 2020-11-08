@@ -31,6 +31,16 @@ final class LeafOctant<T> extends AbstractOctant<T> {
         public int hashCode() {
             return this.mp.hashCode();
         }
+
+        final int x(int dx) {
+            return this.mp.x + dx - VoxelOctTreeMap.HALF_LEAF_SIZE;
+        }
+        final int y(int dy) {
+            return this.mp.y + dy - VoxelOctTreeMap.HALF_LEAF_SIZE;
+        }
+        final int z(int dz) {
+            return this.mp.z + dz - VoxelOctTreeMap.HALF_LEAF_SIZE;
+        }
     }
 
     private final T [][][] voxels;
@@ -126,6 +136,9 @@ final class LeafOctant<T> extends AbstractOctant<T> {
         private int i0;
 
         private T element;
+        private int
+            dx0, dy0, dz0,
+            dx, dy, dz;
 
         void init(LeafOctant<T>.Reference reference) {
             this.reference = reference;
@@ -148,16 +161,19 @@ final class LeafOctant<T> extends AbstractOctant<T> {
             final byte[] indices = referrent.indices;
 
             this.i0 = this.i;
+            this.dx0 = this.dx;
+            this.dy0 = this.dy;
+            this.dz0 = this.dz;
 
             T element;
             int i;
             while ((i = ++this.i) < referrent.size()) {
                 byte c = indices[i];
-                final int dx = c & VoxelOctTreeMap.LEAF_MASK;
+                final int dx = this.dx = c & VoxelOctTreeMap.LEAF_MASK;
                 c >>= VoxelOctTreeMap.LEAF_BITS;
-                final int dy = c & VoxelOctTreeMap.LEAF_MASK;
+                final int dy = this.dy = c & VoxelOctTreeMap.LEAF_MASK;
                 c >>= VoxelOctTreeMap.LEAF_BITS;
-                final int dz = c & VoxelOctTreeMap.LEAF_MASK;
+                final int dz = this.dz = c & VoxelOctTreeMap.LEAF_MASK;
 
                 element = referrent.get(dx, dy, dz);
                 if (filterTestRelative(element, dx, dy, dz))
@@ -181,17 +197,22 @@ final class LeafOctant<T> extends AbstractOctant<T> {
             return current;
         }
 
+        public void next(Iteratee<T> iteratee) {
+            final LeafOctant<T>.Reference reference = this.reference;
+            final T next = next();
+            iteratee.visit(
+                next,
+
+                reference.x(this.dx0),
+                reference.y(this.dy0),
+                reference.z(this.dz0)
+            );
+        }
+
         @Override
         public void remove() {
             final LeafOctant<T> referrent = this.reference.referrent();
-            byte c = referrent.indices[this.i0];
-            final int dx = c & VoxelOctTreeMap.LEAF_MASK;
-            c >>= VoxelOctTreeMap.LEAF_BITS;
-            final int dy = c & VoxelOctTreeMap.LEAF_MASK;
-            c >>= VoxelOctTreeMap.LEAF_BITS;
-            final int dz = c & VoxelOctTreeMap.LEAF_MASK;
-
-            referrent.set(dx, dy, dz, null);
+            referrent.set(this.dx0, this.dy0, this.dz0, null);
         }
     }
 
