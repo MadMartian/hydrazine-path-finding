@@ -1,7 +1,6 @@
 package com.extollit.gaming.ai.path.model.octree;
 
 import com.extollit.linalg.immutable.IntAxisAlignedBox;
-import com.extollit.linalg.mutable.Vec3i;
 
 import java.lang.reflect.Array;
 
@@ -9,37 +8,43 @@ final class ContainerOctant<T> extends AbstractOctant<T> {
     private final AbstractOctant<T> [] children;
     private byte occupied;
 
-    public ContainerOctant() {
+    public ContainerOctant(ContainerOctant<T> parent, FramePointer pointer)
+    {
+        super(pointer, parent);
         this.children = createChildren();
     }
 
-    public ContainerOctant(AbstractOctant<T> child, final byte parity) {
+    public ContainerOctant(ContainerOctant<T> parent, FramePointer pointer, AbstractOctant<T> child, final byte parity) {
+        super(pointer, parent);
         (this.children = createChildren())[parity] = child;
+        child.bindTo(this);
         this.occupied = 1;
     }
 
+    public ContainerOctant(FramePointer pointer) {
+        this(null, pointer);
+    }
+
+    public ContainerOctant(FramePointer pointer, AbstractOctant<T> child, final byte parity) {
+        this(null, pointer, child, parity);
+    }
+
     @Override
-    public AbstractOctant<T> trim(Frame frame) {
+    public AbstractOctant<T> trim() {
         final AbstractOctant<T>[] children = this.children;
         AbstractOctant<T> next = this;
-        byte parity = -1;
-        for (byte c = 0; c < children.length; ++c) {
-            final AbstractOctant<T> o = children[c];
-
+        for (final AbstractOctant<T> o : children) {
             if (o != null)
-                if (next == this) {
-                    parity = c;
+                if (next == this)
                     next = o;
-                } else
+                else
                     return this;
         }
 
         if (next == this)
             return this;
 
-        frame.down(parity);
-
-        return next.trim(frame);
+        return next.trim();
     }
 
     @SuppressWarnings("unchecked")
@@ -59,29 +64,29 @@ final class ContainerOctant<T> extends AbstractOctant<T> {
     }
 
     public void traverseBounded(OctantVisitor<T> visitor, IntAxisAlignedBox key) {
-        final Frame frame = visitor.frame;
-        final Vec3i p = new Vec3i(key.min);
+        final FramePointer pointer = this.pointer;
+        final com.extollit.linalg.mutable.Vec3i p = new com.extollit.linalg.mutable.Vec3i(key.min);
         final boolean [] flagged = new boolean[8];
 
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.max.x;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.min.x;
         p.y = key.max.y;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.max.x;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.min.x;
         p.y = key.min.y;
         p.z = key.max.z;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.max.x;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.min.x;
         p.y = key.max.y;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
         p.x = key.max.x;
-        flagged[frame.parityTo(p)] = true;
+        flagged[pointer.parityTo(p)] = true;
 
         if (flagged[0])
             traverse(visitor, (byte)0);
@@ -102,41 +107,37 @@ final class ContainerOctant<T> extends AbstractOctant<T> {
     }
 
     public final void traverseTo(OctantVisitor<T> visitor, int x, int y, int z) {
-        assert visitor.frame.contains(x, y, z);
-        traverse(visitor, visitor.frame.parityTo(x, y, z));
+        assert this.pointer.contains(x, y, z);
+        traverse(visitor, this.pointer.parityTo(x, y, z));
     }
 
     private void traverse(OctantVisitor<T> visitor, byte parity) {
-        final Frame
+        final Root<T>
             frame = visitor.frame;
-
-        frame.down(parity);
 
         AbstractOctant<T> child = this.children[parity];
         if (child == null) {
             final OctantAllocator<T> allocator = visitor.octantAllocator();
             if (allocator != null)
-                child = allocateChild(allocator, parity, frame.scale());
+                child = allocateChild(allocator, parity, this.pointer.downTo(parity));
         }
 
         if (child != null) {
-            child.accept(visitor);
+            frame.accept(child, visitor);
 
             if (child.empty()) {
-                this.children[parity] = null;
+                this.children[parity] = child = null;
                 this.occupied--;
             }
         }
-
-        frame.up(parity);
     }
 
-    private AbstractOctant<T> allocateChild(final OctantAllocator<T> allocator, byte parity, int scale) {
+    private AbstractOctant<T> allocateChild(final OctantAllocator<T> allocator, byte parity, FramePointer pointer) {
         AbstractOctant<T> child;
-        if (scale <= VoxelOctTreeMap.LEAF_SIZE)
-            child = allocator.allocateLeaf();
+        if (pointer.scale <= VoxelOctTreeMap.LEAF_SIZE)
+            child = allocator.allocateLeaf(this, pointer);
         else
-            child = allocator.allocateContainer();
+            child = allocator.allocateContainer(this, pointer);
 
         this.children[parity] = child;
         this.occupied++;

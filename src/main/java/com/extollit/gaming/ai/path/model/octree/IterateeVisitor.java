@@ -19,7 +19,7 @@ abstract class IterateeVisitor<T> extends OctantVisitor<T> {
     @Override
     public final void visit(LeafOctant<T> leaf) {
         final LeafOctant.AbstractIterator<T> i = this.voxelIterator;
-        i.init(leaf.referredBy(super.frame));
+        i.init(leaf);
 
         final Iteratee<T> iteratee = this.iteratee;
         while (i.hasNext())

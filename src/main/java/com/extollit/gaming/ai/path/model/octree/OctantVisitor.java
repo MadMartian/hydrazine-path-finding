@@ -1,10 +1,12 @@
 package com.extollit.gaming.ai.path.model.octree;
 
-abstract class OctantVisitor<T> {
-    protected Frame frame;
+import com.extollit.linalg.immutable.Vec3i;
 
-    protected void baseInit(Root root) {
-        this.frame = root.frame;
+abstract class OctantVisitor<T> {
+    protected Root<T> frame;
+
+    protected void baseInit(Root<T> root) {
+        this.frame = root;
     }
 
     public OctantAllocator<T> octantAllocator() { return null; }
@@ -13,32 +15,30 @@ abstract class OctantVisitor<T> {
 
     protected final com.extollit.linalg.immutable.Vec3i offset() {
         final int halfLeafSize = VoxelOctTreeMap.HALF_LEAF_SIZE;
-        final Frame frame = this.frame;
-        return new com.extollit.linalg.immutable.Vec3i(
-            frame.x() - halfLeafSize,
-            frame.y() - halfLeafSize,
-            frame.z() - halfLeafSize
-        );
+        final FramePointer pointer = this.frame.pointer();
+        return pointer.mp.subOf(halfLeafSize);
     }
 
     protected final T set(LeafOctant<T> leaf, int x, int y, int z, T element) {
-        final Frame frame = this.frame;
         final int halfLeafSize = VoxelOctTreeMap.HALF_LEAF_SIZE;
+        final FramePointer pointer = this.frame.pointer();
+        final Vec3i mp = pointer.mp;
         final int
-                dx = x - (frame.x() - halfLeafSize),
-                dy = y - (frame.y() - halfLeafSize),
-                dz = z - (frame.z() - halfLeafSize);
+                dx = x - (mp.x - halfLeafSize),
+                dy = y - (mp.y - halfLeafSize),
+                dz = z - (mp.z - halfLeafSize);
 
         return leaf.set(dx, dy, dz, element);
     }
 
     protected final T get(LeafOctant<T> leaf, int x, int y, int z) {
-        final Frame frame = this.frame;
         final int halfLeafSize = VoxelOctTreeMap.HALF_LEAF_SIZE;
+        final FramePointer pointer = this.frame.pointer();
+        final Vec3i mp = pointer.mp;
         final int
-                dx = x - (frame.x() - halfLeafSize),
-                dy = y - (frame.y() - halfLeafSize),
-                dz = z - (frame.z() - halfLeafSize);
+                dx = x - (mp.x - halfLeafSize),
+                dy = y - (mp.y - halfLeafSize),
+                dz = z - (mp.z - halfLeafSize);
 
         return leaf.get(dx, dy, dz);
     }
@@ -57,12 +57,12 @@ abstract class AllocatingOctantVisitor<T> extends OctantVisitor<T> implements Oc
     }
 
     @Override
-    public LeafOctant<T> allocateLeaf() {
-        return new LeafOctant<>(this.elementClass);
+    public LeafOctant<T> allocateLeaf(ContainerOctant<T> parent, FramePointer pointer) {
+        return new LeafOctant<>(parent, pointer, this.elementClass);
     }
 
     @Override
-    public ContainerOctant<T> allocateContainer() {
-        return new ContainerOctant<>();
+    public ContainerOctant<T> allocateContainer(ContainerOctant<T> parent, FramePointer pointer) {
+        return new ContainerOctant<>(parent, pointer);
     }
 }

@@ -7,53 +7,18 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 final class LeafOctant<T> extends AbstractOctant<T> {
-    public final class Reference {
-        public final Vec3i mp;
-
-        public Reference(Vec3i mp) {
-            this.mp = mp;
-        }
-
-        public final LeafOctant<T> referrent() { return LeafOctant.this; }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Reference reference = (Reference) o;
-
-            if (reference.referrent() != LeafOctant.this) return false;
-            return mp.equals(reference.mp);
-        }
-
-        @Override
-        public int hashCode() {
-            return this.mp.hashCode();
-        }
-
-        final int x(int dx) {
-            return this.mp.x + dx - VoxelOctTreeMap.HALF_LEAF_SIZE;
-        }
-        final int y(int dy) {
-            return this.mp.y + dy - VoxelOctTreeMap.HALF_LEAF_SIZE;
-        }
-        final int z(int dz) {
-            return this.mp.z + dz - VoxelOctTreeMap.HALF_LEAF_SIZE;
-        }
-    }
-
     private final T [][][] voxels;
     private byte [] indices = new byte[4];
     private byte count;
 
     @SuppressWarnings("unchecked")
-    public LeafOctant(final Class<T> elementClass) {
+    public LeafOctant(ContainerOctant<T> parent, FramePointer pointer, final Class<T> elementClass) {
+        super(pointer, parent);
         this.voxels = (T[][][]) Array.newInstance(elementClass, VoxelOctTreeMap.LEAF_SIZE, VoxelOctTreeMap.LEAF_SIZE, VoxelOctTreeMap.LEAF_SIZE);
     }
 
-    public final Reference referredBy(Frame frame) {
-        return new Reference(new Vec3i(frame.mp()));
+    public LeafOctant(FramePointer pointer, final Class<T> elementClass) {
+        this(null, pointer, elementClass);
     }
 
     public final byte size() { return this.count; }
@@ -130,7 +95,7 @@ final class LeafOctant<T> extends AbstractOctant<T> {
     public final boolean empty() { return this.count <= 0; }
 
     static abstract class AbstractIterator<T> implements Iterator<T> {
-        protected LeafOctant<T>.Reference reference;
+        protected LeafOctant<T> delegate;
 
         protected int i = -1;
         private int i0;
@@ -140,12 +105,12 @@ final class LeafOctant<T> extends AbstractOctant<T> {
             dx0, dy0, dz0,
             dx, dy, dz;
 
-        void init(LeafOctant<T>.Reference reference) {
-            this.reference = reference;
+        void init(LeafOctant<T> delegate) {
+            this.delegate = delegate;
             this.i = -1;
         }
 
-        final LeafOctant<T> referrent() { return this.reference.referrent(); }
+        final LeafOctant<T> delegate() { return this.delegate; }
         final int index() { return this.i0; }
 
         @Override
@@ -157,7 +122,7 @@ final class LeafOctant<T> extends AbstractOctant<T> {
         }
 
         private T find() {
-            final LeafOctant<T> referrent = referrent();
+            final LeafOctant<T> referrent = delegate();
             final byte[] indices = referrent.indices;
 
             this.i0 = this.i;
@@ -198,21 +163,22 @@ final class LeafOctant<T> extends AbstractOctant<T> {
         }
 
         public void next(Iteratee<T> iteratee) {
-            final LeafOctant<T>.Reference reference = this.reference;
+            final Vec3i mp = this.delegate.pointer.mp;
+            final int halfScale = this.delegate.pointer.scale >> 1;
             final T next = next();
             iteratee.visit(
                 next,
 
-                reference.x(this.dx0),
-                reference.y(this.dy0),
-                reference.z(this.dz0)
+                mp.x + this.dx0 - halfScale,
+                mp.y + this.dy0 - halfScale,
+                mp.z + this.dz0 - halfScale
             );
         }
 
         @Override
         public void remove() {
-            final LeafOctant<T> referrent = this.reference.referrent();
-            referrent.set(this.dx0, this.dy0, this.dz0, null);
+            final LeafOctant<T> delegate = this.delegate;
+            delegate.set(this.dx0, this.dy0, this.dz0, null);
         }
     }
 
@@ -233,9 +199,8 @@ final class LeafOctant<T> extends AbstractOctant<T> {
 
         @Override
         protected boolean filterTestRelative(T element, int dx, int dy, int dz) {
-            final LeafOctant<T>.Reference reference = this.reference;
+            final Vec3i mp = this.delegate.pointer.mp;
             final int halfScale = VoxelOctTreeMap.HALF_LEAF_SIZE;
-            final Vec3i mp = reference.mp;
             final int
                     x = dx + mp.x - halfScale,
                     y = dy + mp.y - halfScale,

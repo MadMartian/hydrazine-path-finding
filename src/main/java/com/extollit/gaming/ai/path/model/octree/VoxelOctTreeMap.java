@@ -18,7 +18,7 @@ public class VoxelOctTreeMap< T > {
             super(elementClass);
         }
 
-        private void init(Root root, int x, int y, int z, T element) {
+        private void init(Root<T> root, int x, int y, int z, T element) {
             super.baseInit(root);
             this.x = x;
             this.y = y;
@@ -45,7 +45,7 @@ public class VoxelOctTreeMap< T > {
         
         private T element;
 
-        private void init(Root root, int x, int y, int z) {
+        private void init(Root<T> root, int x, int y, int z) {
             super.baseInit(root);
             this.x = x;
             this.y = y;
@@ -129,16 +129,25 @@ public class VoxelOctTreeMap< T > {
         if (root == null)
             root = this.root = new Root<T>(elementClass, x, y, z);
         else
-            this.root.findRoot(x, y, z);
+            this.root.findRoot(x, y, z, true);
 
         return root;
+    }
+
+    private AbstractOctant<T> attainRootIncluding(int x, int y, int z) {
+        Root<T> root = this.root;
+
+        if (root == null)
+            return null;
+        else
+            return this.root.findRoot(x, y, z, false);
     }
 
     public T put(int x, int y, int z, T value) {
         final Root<T> root = acquireRootIncluding(x, y, z);
         final SetVisitor<T> visitor = this.setVisitor;
         visitor.init(root, x, y, z, value);
-        root.node().accept(visitor);
+        root.accept(visitor);
         return visitor.existing();
     }
 
@@ -147,14 +156,14 @@ public class VoxelOctTreeMap< T > {
     }
 
     public T remove(int x, int y, int z) {
-        final Root<T> root = this.root;
-        if (root == null)
+        final AbstractOctant<T> octant = attainRootIncluding(x, y, z);
+        if (octant == null)
             return null;
 
         final SetVisitor<T> visitor = this.setVisitor;
-        visitor.init(root, x, y, z, null);
-        root.node().accept(visitor);
-        root.trim();
+        visitor.init(this.root, x, y, z, null);
+        octant.accept(visitor);
+        this.root.trim();
         return visitor.existing();
     }
 
@@ -163,13 +172,13 @@ public class VoxelOctTreeMap< T > {
     }
 
     public T get(int x, int y, int z) {
-        final Root<T> root = this.root;
-        if (root == null || !root.frame.contains(x, y, z))
+        final AbstractOctant<T> octant = attainRootIncluding(x, y, z);
+        if (octant == null)
             return null;
 
         final GetVisitor<T> visitor = this.getVisitor;
-        visitor.init(root, x, y, z);
-        root.node().accept(visitor);
+        visitor.init(this.root, x, y, z);
+        octant.accept(visitor);
         return visitor.element();
     }
 
@@ -182,37 +191,46 @@ public class VoxelOctTreeMap< T > {
     }
 
     public boolean empty() {
-        return this.root != null && !this.root.node().empty();
+        return this.root != null && !this.root.empty();
     }
 
     public void cullOutside(IntAxisAlignedBox range, Iteratee<T> iteratee) {
-        final Root<T> root = this.root;
-        if (root == null)
+        if (this.root == null)
             return;
 
-        final CullOutsideVisitor<T> visitor = new CullOutsideVisitor<T>(root, range, iteratee);
-        root.node().accept(visitor);
-        root.trim();
+        final AbstractOctant<T> octant = this.root.resetRoot();
+        if (octant == null)
+            return;
+
+        final CullOutsideVisitor<T> visitor = new CullOutsideVisitor<T>(this.root, range, iteratee);
+        this.root.accept(visitor);
+        this.root.trim();
     }
 
     public void forEach(Iteratee<T> iteratee) {
-        final Root<T> root = this.root;
-        if (root == null)
+        if (this.root == null)
+            return;
+
+        final AbstractOctant<T> octant = this.root.resetRoot();
+        if (octant == null)
             return;
 
         final ForEachVisitor<T> visitor = this.forEachVisitor;
-        visitor.init(root, iteratee);
-        root.node().accept(visitor);
+        visitor.init(this.root, iteratee);
+        this.root.accept(visitor);
     }
 
     public void forEachIn(Vec3i min, Vec3i max, Iteratee<T> iteratee) {
-        final Root<T> root = this.root;
-        if (root == null)
+        if (this.root == null)
+            return;
+
+        final AbstractOctant<T> octant = this.root.resetRoot();
+        if (octant == null)
             return;
 
         final BoxEachVisitor<T> visitor = this.boxEachVisitor;
-        visitor.init(root, new IntAxisAlignedBox(min, max), iteratee);
-        root.node().accept(visitor);
+        visitor.init(this.root, new IntAxisAlignedBox(min, max), iteratee);
+        this.root.accept(visitor);
     }
 
     public void forEachIn(IntAxisAlignedBox bounds, Iteratee<T> iteratee) {

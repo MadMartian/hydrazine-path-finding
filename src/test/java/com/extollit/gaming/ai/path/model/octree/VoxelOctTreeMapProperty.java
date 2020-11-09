@@ -53,7 +53,18 @@ public class VoxelOctTreeMapProperty {
     }
 
     @Property
-    public void four_iterate(@ForAll @Size(4) List<@From("points") @IntRange(min = -100, max = +100) @Unique Vec3i> list,
+    public void compact_cherry_picks(@ForAll @Size(17576) List<@From("points") @IntRange(min = -14, max = +14) @Unique Vec3i> list,
+                                     @ForAll @Size(min = 1, max = 12) List<@IntRange(max = 17576 - 1) Integer> cherryPicks) {
+        final VoxelOctTreeMap<Vec3i> map = mapFrom(list);
+
+        for (int cherryPickedIndex : cherryPicks) {
+            final Vec3i cherryPick = list.get(cherryPickedIndex);
+            assertEquals(cherryPick, map.get(cherryPick));
+        }
+    }
+
+    @Property
+    public void four_iteratee(@ForAll @Size(4) List<@From("points") @IntRange(min = -100, max = +100) @Unique Vec3i> list,
                              @ForAll @Size(4) List<@From("names") @Unique String> names) {
         final VoxelOctTreeMap<String> map = mapFrom(list, names);
         final List<String> existing = new ArrayList<>();
@@ -65,7 +76,7 @@ public class VoxelOctTreeMapProperty {
     }
 
     @Property
-    public void removal1(@ForAll @Size(min = 1, max = 50) List<@From("points") @IntRange(min = -100, max = +100) @Unique Vec3i> list,
+    public void removal_1(@ForAll @Size(min = 1, max = 50) List<@From("points") @IntRange(min = -100, max = +100) @Unique Vec3i> list,
                          @ForAll @IntRange(min =  1, max = 50) int index) {
         final VoxelOctTreeMap<Vec3i> map = mapFrom(list);
 
@@ -115,7 +126,7 @@ public class VoxelOctTreeMapProperty {
     }
 
     @Property
-    public void box_iterate(@ForAll @Size(min = 5, max = 50) List<@From("points") @Unique @IntRange(min = -200, max = +200) Vec3i> list,
+    public void box_iteratee(@ForAll @Size(min = 5, max = 50) List<@From("points") @Unique @IntRange(min = -200, max = +200) Vec3i> list,
                             @ForAll @From("boxes") @IntRange(min = -199, max = +199) IntAxisAlignedBox bounds) {
         final VoxelOctTreeMap<Vec3i> map = mapFrom(list);
 
@@ -125,7 +136,7 @@ public class VoxelOctTreeMapProperty {
     @Property
     public void outside(@ForAll @Size(10) List<@From("points") @Unique @IntRange(min = -100, max = +100) Vec3i> list,
                         @ForAll @Size(10) List<@From("names") @Unique String> names,
-                        @ForAll @From("points") @Outside(x0 = -100, y0 = -100, z0 = -100, xN = +100, yN = +100, zN = +100) Vec3i p) {
+                        @ForAll @From("points") @Outside(x0 = -100, y0 = -100, z0 = -100, xN = +100, yN = +100, zN = +100) @IntRange(min = -1000, max = +1000) Vec3i p) {
         final VoxelOctTreeMap<String> map = mapFrom(list, names);
 
         assertNull(map.get(p));

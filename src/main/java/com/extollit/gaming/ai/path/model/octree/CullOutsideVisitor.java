@@ -7,7 +7,7 @@ final class CullOutsideVisitor<T> extends OctantVisitor<T> {
 
     private final Iteratee<T> iteratee;
 
-    public CullOutsideVisitor(Root root, IntAxisAlignedBox range, Iteratee<T> iteratee) {
+    public CullOutsideVisitor(Root<T> root, IntAxisAlignedBox range, Iteratee<T> iteratee) {
         this.range = range;
         this.iteratee = iteratee;
         super.baseInit(root);
@@ -15,7 +15,7 @@ final class CullOutsideVisitor<T> extends OctantVisitor<T> {
 
     @Override
     public void visit(ContainerOctant<T> container) {
-        if (!this.frame.inside(this.range))
+        if (!container.pointer.inside(this.range))
             container.traverseAll(this);
     }
 

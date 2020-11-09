@@ -4,14 +4,14 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 final class VoxelIterator<T> implements Iterator<T> {
-    private final Iterator<LeafOctant<T>.Reference> leaves;
+    private final Iterator<LeafOctant<T>> leaves;
     private final LeafOctant.AbstractIterator<T> leafIterator;
 
     private LeafOctant<T> leaf0;
     private int index0;
     private T element;
 
-    public VoxelIterator(LeafOctant.AbstractIterator<T> leafIterator, Iterator<LeafOctant<T>.Reference> leaves) {
+    public VoxelIterator(LeafOctant.AbstractIterator<T> leafIterator, Iterator<LeafOctant<T>> leaves) {
         this.leaves = leaves;
         this.leafIterator = leafIterator;
     }
@@ -42,7 +42,7 @@ final class VoxelIterator<T> implements Iterator<T> {
         T element = null;
 
         final LeafOctant.AbstractIterator<T> voxelIterator = this.leafIterator;
-        this.leaf0 = voxelIterator.referrent();
+        this.leaf0 = voxelIterator.delegate();
         this.index0 = voxelIterator.index();
         do {
             if (voxelIterator.hasNext())
