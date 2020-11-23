@@ -13,7 +13,7 @@ import java.util.Random;
 import static com.extollit.num.FastMath.*;
 
 public final class PathObject implements IPath {
-    private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(1, 2);
+    private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(20, 28);
 
     final Node[] nodes;
     private final float speed;

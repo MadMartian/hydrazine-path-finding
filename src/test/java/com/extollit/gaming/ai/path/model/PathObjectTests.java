@@ -365,33 +365,33 @@ public class PathObjectTests {
         path.update(pathingEntity);
         assertEquals(1, path.i);
 
-        tick(1);
+        tick(20);
 
         pos(2.1, 4, 1.3);
         path.update(pathingEntity);
 
         assertEquals(3, path.i);
 
-        tick(1);
+        tick(20);
 
         pos(2.1, 4, 0.9);
         path.update(pathingEntity);
         assertEquals(1, path.i);
 
-        tick(1);
+        tick(20);
 
         pos(2.1, 4, 1.3);
         path.update(pathingEntity);
 
         assertEquals(3, path.i);
 
-        tick(1);
+        tick(20);
 
         pos(2.1, 4, 0.9);
         path.update(pathingEntity);
         assertEquals(1, path.i);
 
-        tick(1);
+        tick(20);
 
         pos(2.1, 4, 1.3);
         path.update(pathingEntity);

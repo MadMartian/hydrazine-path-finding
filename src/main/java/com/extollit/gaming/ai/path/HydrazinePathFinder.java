@@ -20,8 +20,8 @@ public class HydrazinePathFinder {
 
     private static double DOT_THRESHOLD = 0.6;
     private static FloatRange
-            PROBATIONARY_TIME_LIMIT = new FloatRange(16, 24),
-            PASSIBLE_POINT_TIME_LIMIT = new FloatRange(12, 36);
+            PROBATIONARY_TIME_LIMIT = new FloatRange(36, 64),
+            PASSIBLE_POINT_TIME_LIMIT = new FloatRange(24, 48);
 
     private static byte FAILURE_COUNT_THRESHOLD = 3;
 
