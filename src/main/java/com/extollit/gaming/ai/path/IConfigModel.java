@@ -70,20 +70,33 @@ public interface IConfigModel {
      * session is reset.
      *
      * @return minium and maximum path time period before stuck before the entity's engine increases its failure count.
-     * @see #failureCountThreshold()
+     * @see #faultCountThreshold()
      */
     FloatRange passiblePointTimeLimit();
 
     /**
-     * The number of failures permitted before a pathing entity's engine proceeds to perform additional steps to aid the
+     * The number of faults permitted before a pathing entity's engine proceeds to perform additional steps to aid the
      * entity along its path (typically cache invalidation).  The engine's probationary time-limit must have also been
      * exceeded, so it is possible that the actual failure count may be higher than this threshold depending on the
      * situation.
      *
-     * @return the pre-configured failure count
+     * @return the pre-configured fault count
      * @see #passiblePointTimeLimit()
      */
-    byte failureCountThreshold();
+    byte faultCountThreshold();
+
+    /**
+     * The maximum number of faults permitted before a path-finding aborts for the current entity.  This will result in
+     * the path-engine for the respective entity to return null when requested for an updated path.  Callers must call
+     * to initiate a new path and/or reset the path-engine object to continue path-finding again.
+     *
+     * @return the pre-configured maximum fault count
+     * @see #passiblePointTimeLimit()
+     * @see HydrazinePathFinder#update()
+     * @see HydrazinePathFinder#initiatePathTo(double, double, double)
+     * @see HydrazinePathFinder#reset()
+     */
+    int faultLimit();
 
     /**
      * The minimum and maximum required path time that an entity may remain in failure state
@@ -95,7 +108,7 @@ public interface IConfigModel {
      * a zero failure count to a failure count of one).
      *
      * @return the pre-configured minimum and maximum possible time-limit in path time units
-     * @see #failureCountThreshold()
+     * @see #faultCountThreshold()
      */
     FloatRange probationaryTimeLimit();
 

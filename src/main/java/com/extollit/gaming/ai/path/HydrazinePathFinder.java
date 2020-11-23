@@ -23,7 +23,8 @@ public class HydrazinePathFinder {
             PROBATIONARY_TIME_LIMIT = new FloatRange(36, 64),
             PASSIBLE_POINT_TIME_LIMIT = new FloatRange(24, 48);
 
-    private static byte FAILURE_COUNT_THRESHOLD = 3;
+    private static byte FAULT_COUNT_THRESHOLD = 3;
+    private static int FAULT_LIMIT = 23;
 
     private final SortedPointQueue queue = new SortedPointQueue();
     private final Set<Vec3i>
@@ -43,12 +44,13 @@ public class HydrazinePathFinder {
     private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
-    private int failureCount;
+    private int faultCount, nextGraphResetFailureCount;
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
     private Random random = new Random();
 
     public static void configureFrom(IConfigModel configModel) {
-        FAILURE_COUNT_THRESHOLD = configModel.failureCountThreshold();
+        FAULT_COUNT_THRESHOLD = configModel.faultCountThreshold();
+        FAULT_LIMIT = configModel.faultLimit();
         PROBATIONARY_TIME_LIMIT = configModel.probationaryTimeLimit();
         PASSIBLE_POINT_TIME_LIMIT = configModel.passiblePointTimeLimit();
         DOT_THRESHOLD = configModel.dotThreshold();
@@ -68,7 +70,7 @@ public class HydrazinePathFinder {
         applySubject();
         schedulingPriority(SchedulingPriority.low);
 
-        this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
+        resetFaultTimings();
     }
 
     public void setRandomNumberGenerator(Random random) {
@@ -108,6 +110,7 @@ public class HydrazinePathFinder {
     public IPath initiatePathTo(double x, double y, double z) {
         applySubject();
         updateSourcePosition();
+        resetFaultTimings();
 
         final float rangeSquared = this.searchRangeSquared;
         final com.extollit.linalg.immutable.Vec3d sourcePos = new com.extollit.linalg.immutable.Vec3d(this.sourcePosition);
@@ -161,6 +164,11 @@ public class HydrazinePathFinder {
         updateSourcePosition();
         graphTimeout();
 
+        if (this.faultCount >= FAULT_LIMIT) {
+            resetTriage();
+            return null;
+        }
+
         if (reachedTarget() || triageTimeout() || destinationDeviatedFromTarget())
             resetTriage();
 
@@ -197,7 +205,7 @@ public class HydrazinePathFinder {
                 currentPath.stagnantFor(this.subject) > this.passiblePointPathTimeLimit;
 
         if (status) {
-            if (++this.failureCount == 1)
+            if (++this.faultCount == 1)
                 this.nextGraphCacheReset = pathTimeAge() + PROBATIONARY_TIME_LIMIT.next(this.random);
 
             final INode culprit = currentPath.at(currentPath.i);
@@ -210,9 +218,15 @@ public class HydrazinePathFinder {
     }
 
     private boolean graphTimeout() {
-        if (this.failureCount >= FAILURE_COUNT_THRESHOLD
-            && pathTimeAge() > this.nextGraphCacheReset
-            || this.pathPointCalculatorChanged)
+        final int failureCount = this.faultCount;
+        if (failureCount >= this.nextGraphResetFailureCount
+            && pathTimeAge() > this.nextGraphCacheReset) {
+            this.nextGraphResetFailureCount = failureCount + FAULT_COUNT_THRESHOLD;
+            resetGraph();
+            return true;
+        }
+
+        if (this.pathPointCalculatorChanged)
         {
             resetGraph();
             return true;
@@ -359,7 +373,6 @@ public class HydrazinePathFinder {
     private void resetGraph() {
         this.nodeMap.clear();
         resetTriage();
-        this.failureCount = 0;
         this.nextGraphCacheReset = 0;
         this.pathPointCalculatorChanged = false;
     }
@@ -503,10 +516,8 @@ public class HydrazinePathFinder {
 
     private boolean reachedTarget() {
         final boolean flag = this.target == null || this.source == this.target || this.current == this.target;
-        if (flag) {
-            this.failureCount = 0;
-            this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
-        }
+        if (flag)
+            resetFaultTimings();
         return flag;
     }
 
@@ -547,9 +558,17 @@ public class HydrazinePathFinder {
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
-        this.failureCount = 0;
+
+        resetFaultTimings();
+    }
+
+    private void resetFaultTimings() {
+        final Random random = this.random;
+
+        this.faultCount = 0;
+        this.nextGraphResetFailureCount = FAULT_COUNT_THRESHOLD;
+        this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(random);
         this.nextGraphCacheReset = 0;
-        this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
     }
 
     private PathObject updatePath(PathObject newPath) {
