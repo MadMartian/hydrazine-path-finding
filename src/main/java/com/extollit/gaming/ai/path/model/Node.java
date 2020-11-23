@@ -145,13 +145,12 @@ public class Node implements INode {
     }
 
     public boolean contains(Node node) {
-        if (this == node)
-            return true;
-        else {
-            final Node previous = up();
-            if (previous != null)
-                return previous.contains(node);
-        }
+        Node curr = this;
+
+        do {
+            if (curr == node)
+                return true;
+        } while ((curr = curr.previous) != null);
 
         return false;
     }

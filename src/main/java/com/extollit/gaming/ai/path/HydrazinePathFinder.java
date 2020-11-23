@@ -40,7 +40,7 @@ public class HydrazinePathFinder {
     private NodeMap nodeMap;
     private PathObject currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private boolean flying, aqua, pathPointCalculatorChanged;
+    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
     private int failureCount;
@@ -239,6 +239,7 @@ public class HydrazinePathFinder {
         final Node source = this.current = this.source = pointAtSource();
         source.length(0);
         source.orphan();
+        this.trimmedToCurrent = true;
 
         refinePassibility(source.key);
 
@@ -526,7 +527,10 @@ public class HydrazinePathFinder {
 
         updateFieldWindow(x, z, x, z, false);
 
+        final Node last = this.current;
         this.current = pointAtSource();
+        if (last != null && last != this.current)
+            this.trimmedToCurrent = false;
     }
 
     public void reset() {
@@ -539,6 +543,7 @@ public class HydrazinePathFinder {
         this.source =
         this.closest = null;
         this.current = null;
+        this.trimmedToCurrent = false;
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
@@ -584,12 +589,16 @@ public class HydrazinePathFinder {
                 resetTriage();
 
         PathObject nextPath = null;
+        boolean trimmedToSource = this.trimmedToCurrent;
 
         while (!queue.isEmpty() && iterations-- > 0) {
             final Node source = this.current;
-            if (!queue.nextContains(source)) {
-                if (source != null)
+            if (!trimmedToSource && !queue.nextContains(source)) {
+                if (source != null) {
                     this.queue.trimFrom(source);
+                    this.trimmedToCurrent = trimmedToSource = true;
+                    iterations++;
+                }
                 continue;
             }
 
