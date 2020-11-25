@@ -1,5 +1,7 @@
 package com.extollit.gaming.ai.path.model;
 
+import com.extollit.linalg.immutable.Vec3d;
+
 /**
  * Represents a linear set of contiguous points that can be traversed by a pathing entity.  This object also maintains
  * state of the pathing entity's progress along the path including the current path point or whether taxiing is
@@ -100,4 +102,26 @@ public interface IPath extends Iterable<INode> {
      * @return true if both paths have the same path points and the same number of path points.
      */
     boolean sameAs(IPath other);
+
+    /**
+     * Determines how long an entity has been stuck and not progressing along this path in relative path time.
+     * This is used internally to determine appropriate countermeasures under such circumstances.
+     *
+     * Path time is a time value relative to the pathing entity's dynamic movement speed.  A single unit of
+     * path time is the time it takes (in server ticks) for the pathing entity to move one block with its current
+     * movement speed.
+     *
+     * @param subject the pathing entity
+     * @return the time this path object has been unchanged and not progressed measured in path time units
+     */
+    float stagnantFor(IPathingEntity subject);
+
+    /**
+     * Updates pathing progress for the specified entity.  This results in computing the next point the specified entity
+     * must move toward and then moving it toward it.
+     *
+     * @param pathingEntity the pathing entity that may be moved by this call
+     * @see IPathingEntity#moveTo(Vec3d, Passibility, Gravitation)
+     */
+    void update(IPathingEntity pathingEntity);
 }

@@ -370,7 +370,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         when(capabilities.speed()).thenReturn(1.0f);
         pos(0.5, 0, 0.5);
-        PathObject path = (PathObject) pathFinder.initiatePathTo(0, 0, 3);
+        IPath path = pathFinder.initiatePathTo(0, 0, 3);
 
         solid(0, 0, 2);
         solid(0, 1, 2);
@@ -380,7 +380,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         verify(pathingEntity).moveTo(new Vec3d(0.5, 0, 3.5), Passibility.passible, Gravitation.grounded);
         pos(0.5, 0, 1.5);
 
-        PathObject path2 = pathFinder.update();
+        IPath path2 = pathFinder.update();
 
         assertSame(path, path2);
 
@@ -395,9 +395,39 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         when(pathingEntity.age()).thenReturn(200);
 
         path2 = pathFinder.update();
-        assertSame(path, path2);
+        assertTrue(path.sameAs(path2));
         path2.update(pathingEntity);
 
         assertTrue(path2.taxiing());
+    }
+
+    @Test
+    public void bufferUnderrun() {
+        defaultGround();
+        pos(1.5, 0, 3.5);
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        for (int x = -5; x <= +5; ++x) {
+            solid(x, 0, 5);
+            solid(x, 1, 5);
+        }
+
+        IPath path;
+
+        path = pathFinder.initiatePathTo(1, 0, 7);
+        int iterations = 0,
+                incompletes = 0;
+        for (int i = 0; i < 1000 && PathObject.active(path = pathFinder.updatePathFor(this.pathingEntity)); ++i, iterations++) {
+            if (path instanceof IncompletePath)
+                incompletes++;
+
+            final Vec3i coords = path.current().coordinates();
+            pos(coords.x + 0.5, coords.y, coords.z + 0.5);
+        }
+
+        assertEquals(54, iterations);
+        assertEquals(1, incompletes);
+
+        verify(pathingEntity).moveTo(new Vec3d(1.5, 0, 7.5), Passibility.passible, Gravitation.grounded);
     }
 }

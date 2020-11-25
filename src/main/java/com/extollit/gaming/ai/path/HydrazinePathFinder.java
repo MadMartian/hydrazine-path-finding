@@ -37,7 +37,7 @@ public class HydrazinePathFinder {
     private INodeCalculator pathPointCalculator;
     private IPathProcessor pathProcessor;
     private NodeMap nodeMap;
-    private PathObject currentPath;
+    private IPath currentPath;
     private IPathingEntity.Capabilities capabilities;
     private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent;
     private Node current, source, target, closest;
@@ -123,17 +123,27 @@ public class HydrazinePathFinder {
         return triage(this.initComputeIterations);
     }
 
-    public PathObject updatePathFor(IPathingEntity pathingEntity) {
-        final PathObject path = update();
-        if (PathObject.active(path)) {
-            path.update(pathingEntity);
-            if (path.done())
-                return null;
+    public IPath updatePathFor(IPathingEntity pathingEntity) {
+        final IPath path = update();
+        if (path == null)
+            return null;
 
-            return path;
+        if (!path.done()) {
+            path.update(pathingEntity);
+            if (!path.done())
+                return path;
         }
 
-        return null;
+        final INode last = path.last();
+        if (last != null) {
+            final Vec3d dd = new Vec3d(this.destinationPosition);
+            dd.sub(last.coordinates());
+            if (dd.mg2() < 1)
+                return null;
+            else
+                return new IncompletePath(last);
+        } else
+            return null;
     }
 
     public HydrazinePathFinder withGraphNodeFilter(IGraphNodeFilter filter) {
@@ -152,7 +162,7 @@ public class HydrazinePathFinder {
         return this.pathProcessor;
     }
 
-    protected PathObject update() {
+    protected IPath update() {
         if (this.destinationEntity != null)
             updateDestination(this.destinationEntity.coordinates());
 
@@ -162,12 +172,12 @@ public class HydrazinePathFinder {
         updateSourcePosition();
         graphTimeout();
 
-        if (this.faultCount >= FAULT_LIMIT) {
+        if (this.faultCount >= FAULT_LIMIT || reachedTarget()) {
             resetTriage();
             return null;
         }
 
-        if (reachedTarget() || triageTimeout() || destinationDeviatedFromTarget())
+        if (triageTimeout() || destinationDeviatedFromTarget())
             resetTriage();
 
         return triage(this.periodicComputeIterations);
@@ -196,7 +206,7 @@ public class HydrazinePathFinder {
     }
 
     private boolean triageTimeout() {
-        final PathObject currentPath = this.currentPath;
+        final IPath currentPath = this.currentPath;
         final boolean status =
                 PathObject.active(currentPath) &&
                 currentPath.length() > 0 &&
@@ -206,7 +216,7 @@ public class HydrazinePathFinder {
             if (++this.faultCount == 1)
                 this.nextGraphCacheReset = pathTimeAge() + PROBATIONARY_TIME_LIMIT.next(this.random);
 
-            final INode culprit = currentPath.at(currentPath.i);
+            final INode culprit = currentPath.current();
             this.nodeMap.cullBranchAt(culprit.coordinates(), this.queue);
 
             this.passiblePointPathTimeLimit += PASSIBLE_POINT_TIME_LIMIT.next(this.random);
@@ -375,7 +385,7 @@ public class HydrazinePathFinder {
         this.pathPointCalculatorChanged = false;
     }
 
-    private void updateFieldWindow(PathObject path) {
+    private void updateFieldWindow(IPath path) {
         INode node = path.last();
         if (node == null)
             return;
@@ -387,7 +397,7 @@ public class HydrazinePathFinder {
                 max = new com.extollit.linalg.mutable.Vec3i(pp.x, pp.y, pp.z);
 
         if (!path.done())
-            for (int c = path.i; c < path.length(); ++c) {
+            for (int c = path.cursor(); c < path.length(); ++c) {
                 node = path.at(c);
                 pp = node.coordinates();
                 if (pp.x < min.x)
@@ -568,32 +578,25 @@ public class HydrazinePathFinder {
         this.nextGraphCacheReset = 0;
     }
 
-    private PathObject updatePath(PathObject newPath) {
-        if (PathObject.active(newPath)) {
-            if (this.currentPath != null) {
-                if (this.currentPath.sameAs(newPath))
-                    newPath = this.currentPath;
-                else if (!this.currentPath.done())
-                    newPath.adjustPathPosition(this.currentPath, this.subject);
-            }
+    private IPath updatePath(final IPath newPath) {
+        if (newPath == null)
+            return this.currentPath = null;
 
-            if (this.nodeMap.needsOcclusionProvider())
-                updateFieldWindow(newPath);
+        final IPath currentPath = this.currentPath;
+        if (currentPath != null && !currentPath.sameAs(newPath) && !currentPath.done() && newPath instanceof PathObject)
+            ((PathObject)newPath).adjustPathPosition(currentPath, this.subject);
 
-            if (newPath.done())
-                newPath = null;
+        if (this.nodeMap.needsOcclusionProvider())
+            updateFieldWindow(newPath);
 
-            return this.currentPath = newPath;
-        } else {
-            if (!PathObject.active(this.currentPath))
-                this.currentPath = null;
+        if (newPath.done())
+            return this.currentPath = new IncompletePath(newPath.last());
 
-            return this.currentPath;
-        }
+        return this.currentPath = newPath;
     }
 
-    private PathObject triage(int iterations) {
-        final PathObject currentPath = this.currentPath;
+    private IPath triage(int iterations) {
+        final IPath currentPath = this.currentPath;
         final SortedPointQueue queue = this.queue;
 
         if (queue.isEmpty())
@@ -604,7 +607,7 @@ public class HydrazinePathFinder {
             else
                 resetTriage();
 
-        PathObject nextPath = null;
+        IPath nextPath = null;
         boolean trimmedToSource = this.trimmedToCurrent;
         this.current.traversed(true);
 
@@ -627,15 +630,12 @@ public class HydrazinePathFinder {
                     closest == null
                     || closest.orphaned()
                     || Node.squareDelta(current, this.target) < Node.squareDelta(closest, this.target)
-                ) && !current.traversed()) {
+                ) && !current.traversed())
                 this.closest = current;
-                current.traversed(true);
-            }
 
             if (current == target) {
                 nextPath = createPath(current);
                 if (PathObject.active(nextPath)) {
-                    nextPath.setRandomNumberGenerator(this.random);
                     this.queue.clear();
                     break;
                 }
@@ -646,16 +646,18 @@ public class HydrazinePathFinder {
         }
 
         final Node closest = this.closest;
-        if (nextPath == null && closest != null && !queue.isEmpty())
+        if (nextPath == null && closest != null && !queue.isEmpty()) {
             nextPath = createPath(closest);
+            closest.traversed(true);
+        }
 
         return updatePath(nextPath);
     }
 
-    private PathObject createPath(Node head) {
+    private IPath createPath(Node head) {
         final IPathingEntity.Capabilities capabilities = this.capabilities;
-        final PathObject path = PathObject.fromHead(capabilities.speed(), head);
-        if (this.pathProcessor != null && path != null)
+        final IPath path = PathObject.fromHead(capabilities.speed(), this.random, head);
+        if (this.pathProcessor != null)
             this.pathProcessor.processPath(path);
         return path;
     }

@@ -13,14 +13,14 @@ import java.util.Random;
 import static com.extollit.num.FastMath.*;
 
 public final class PathObject implements IPath {
-    private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(20, 28);
+    private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(1, 2);
 
     final Node[] nodes;
     private final float speed;
+    private final Random random;
 
     public int i;
 
-    private Random random = new Random();
     private int
         taxiUntil = 0,
         adjacentIndex = 0,
@@ -32,18 +32,19 @@ public final class PathObject implements IPath {
         DIRECT_LINE_TIME_LIMIT = configModel.directLineTimeLimit();
     }
 
-    protected PathObject(float speed, Node... nodes) {
+    PathObject(float speed, Node... nodes) {
+        this(speed, new Random(), nodes);
+    }
+
+    protected PathObject(float speed, Random random, Node... nodes) {
         this.nodes = nodes;
         this.length = nodes.length;
         this.speed = speed;
-        this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
-    }
-
-    public void setRandomNumberGenerator(Random random) {
         this.random = random;
+        this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(random);
     }
 
-    public static PathObject fromHead(float speed, Node head) {
+    public static IPath fromHead(float speed, Random random, Node head) {
         int i = 1;
 
         for (Node p = head; p.up() != null; p = p.up())
@@ -56,9 +57,9 @@ public final class PathObject implements IPath {
             p = p.up();
 
         if (result.length <= 1)
-            return null;
+            return new IncompletePath(result[0]);
         else
-            return new PathObject(speed, result);
+            return new PathObject(speed, random, result);
     }
 
     @Override
@@ -434,12 +435,11 @@ public final class PathObject implements IPath {
         return sb.toString();
     }
 
-    public void adjustPathPosition(PathObject formerPath, final IPathingEntity pathingEntity) {
+    public void adjustPathPosition(IPath formerPath, final IPathingEntity pathingEntity) {
         final float pointOffset = pointToPositionOffset(pathingEntity.width());
         final int length = this.length;
         final Node []
-            nodes = this.nodes,
-            formerPathNodes = formerPath.nodes;
+            nodes = this.nodes;
 
         final INode
                 lastPointVisited = formerPath.current();
@@ -453,7 +453,7 @@ public final class PathObject implements IPath {
         double minSquareDistFromSource = Double.MAX_VALUE;
         int c = -1;
 
-        while(++c < formerPath.i && c < length && nodes[c].key.equals(formerPathNodes[c].key));
+        while(++c < formerPath.cursor() && c < length && nodes[c].key.equals(formerPath.at(c).coordinates()));
         c--;
 
         while(++c < length) {
