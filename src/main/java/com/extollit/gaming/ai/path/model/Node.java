@@ -17,7 +17,8 @@ public class Node implements INode {
         Length_BitOffs = (byte)(Volatile_BitOffs + 1),
         Remain_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
         Visited_BitOffs = (byte)(Remain_BitOffs + BitWidth_128),
-        Gravitation_BitOffs = (byte)(Visited_BitOffs + 1);
+        Gravitation_BitOffs = (byte)(Visited_BitOffs + 1),
+        Traversed_BitOffs = (byte)(Gravitation_BitOffs + 2);
 
     public static final short MAX_PATH_DISTANCE = (1 << BitWidth_128) - 1;
 
@@ -54,7 +55,7 @@ public class Node implements INode {
     public Vec3i coordinates() { return this.key; }
 
     private static int wordReset(Node copy) {
-        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs) | (Mask_Gravitation << Gravitation_BitOffs))) | (Mask_512 << Index_BitOffs);
+        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs) | (1 << Traversed_BitOffs) | (Mask_Gravitation << Gravitation_BitOffs))) | (Mask_512 << Index_BitOffs);
     }
 
     public final byte length() {
@@ -107,6 +108,11 @@ public class Node implements INode {
         isolate();
     }
 
+    final void rollback() {
+        reset();
+        traversed(false);
+    }
+
     final short index() {
         short index = (short) ((this.word >> Index_BitOffs) & Mask_512);
         return index == Mask_512 ? -1 : index;
@@ -117,6 +123,10 @@ public class Node implements INode {
 
         this.word = (this.word & ~(Mask_512 << Index_BitOffs)) | ((index & Mask_512) << Index_BitOffs);
         return true;
+    }
+    public final boolean traversed() { return ((this.word >> Traversed_BitOffs) & 1) == 1; }
+    public final void traversed(boolean flag) {
+        this.word = (this.word & ~(1 << Traversed_BitOffs)) | ((flag ? 1 << Traversed_BitOffs : 0));
     }
     public final boolean visited() {
         return ((this.word >> Visited_BitOffs) & 1) == 1;

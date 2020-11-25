@@ -39,7 +39,7 @@ public final class NodeMap {
 
     public final void reset(SortedPointQueue queue) {
         for (Node p : this.it.values())
-            p.reset();
+            p.rollback();
 
         queue.clear();
     }
@@ -109,7 +109,7 @@ public final class NodeMap {
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
         for (Node p : this.it.cullOutside(new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN)))
-            p.reset();
+            p.rollback();
     }
 
     public final Node cachedPointAt(int x, int y, int z)
@@ -191,7 +191,7 @@ public final class NodeMap {
     public boolean remove(Vec3i coords) {
         final Node existing = this.it.remove(coords);
         if (existing != null) {
-            existing.reset();
+            existing.rollback();
             return true;
         }
 

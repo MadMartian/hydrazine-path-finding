@@ -27,9 +27,7 @@ public class HydrazinePathFinder {
     private static int FAULT_LIMIT = 23;
 
     private final SortedPointQueue queue = new SortedPointQueue();
-    private final Set<Vec3i>
-            unreachableFromSource = new HashSet<>(3),
-            closests = new HashSet<>();
+    private final Set<Vec3i> unreachableFromSource = new HashSet<>(3);
     private final IPathingEntity subject;
     private final IInstanceSpace instanceSpace;
 
@@ -259,11 +257,11 @@ public class HydrazinePathFinder {
 
         setTargetFor(source);
 
-        this.closests.clear();
         this.nodeMap.reset(this.queue);
         this.queue.add(source);
         this.closest = null;
         this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
+        source.traversed(true);
     }
 
     protected final boolean refinePassibility(Vec3i sourcePoint) {
@@ -546,7 +544,6 @@ public class HydrazinePathFinder {
 
     public void reset() {
         this.currentPath = null;
-        this.closests.clear();
         this.queue.clear();
         this.nodeMap.reset();
         this.unreachableFromSource.clear();
@@ -609,6 +606,7 @@ public class HydrazinePathFinder {
 
         PathObject nextPath = null;
         boolean trimmedToSource = this.trimmedToCurrent;
+        this.current.traversed(true);
 
         while (!queue.isEmpty() && iterations-- > 0) {
             final Node source = this.current;
@@ -629,9 +627,9 @@ public class HydrazinePathFinder {
                     closest == null
                     || closest.orphaned()
                     || Node.squareDelta(current, this.target) < Node.squareDelta(closest, this.target)
-                ) && !this.closests.contains(current.key)) {
+                ) && !current.traversed()) {
                 this.closest = current;
-                this.closests.add(current.key);
+                current.traversed(true);
             }
 
             if (current == target) {
@@ -647,8 +645,9 @@ public class HydrazinePathFinder {
                 processNode(current);
         }
 
-        if (nextPath == null && this.closest != null && !queue.isEmpty())
-            nextPath = createPath(this.closest);
+        final Node closest = this.closest;
+        if (nextPath == null && closest != null && !queue.isEmpty())
+            nextPath = createPath(closest);
 
         return updatePath(nextPath);
     }
