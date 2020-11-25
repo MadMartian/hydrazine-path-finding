@@ -8,6 +8,16 @@ package com.extollit.gaming.ai.path;
  */
 public enum SchedulingPriority {
     /**
+     * Indicates extreme-priority scheduling, entities with engines configured for this rating complete path-finding the
+     * soonest.  While this results in the most fluid and deterministic pathing behavior it is also the most
+     * computationally expensive and should only be used for special circumstances.
+     * This is initialized with default values:
+     *  - 24 initial compute iterations
+     *  - 18 subsequent compute iterations
+     */
+    extreme (24, 18),
+
+    /**
      * Indicates high-priority scheduling, entities with engines configured for this rating complete path-finding sooner.
      * This is initialized with default values:
      *  - 12 initial compute iterations
@@ -17,6 +27,8 @@ public enum SchedulingPriority {
 
     /**
      * Indicates low-priority scheduling, entities with engines configured for this rating complete path-finding later.
+     * While the results of pathing for mobs with this scheduling priority can appear erratic or even stupid it is also
+     * the least computationally expensive.  This scheduling priority is most suitable for mindless animals.
      * This is initialized with default values:
      *  - 3 initial compute iterations
      *  - 2 subsequent compute iterations
