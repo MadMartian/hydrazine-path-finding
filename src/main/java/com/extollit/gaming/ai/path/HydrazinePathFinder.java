@@ -578,13 +578,17 @@ public class HydrazinePathFinder {
         this.nextGraphCacheReset = 0;
     }
 
-    private IPath updatePath(final IPath newPath) {
+    private IPath updatePath(IPath newPath) {
         if (newPath == null)
             return this.currentPath = null;
 
         final IPath currentPath = this.currentPath;
-        if (currentPath != null && !currentPath.sameAs(newPath) && !currentPath.done() && newPath instanceof PathObject)
-            ((PathObject)newPath).adjustPathPosition(currentPath, this.subject);
+        if (currentPath != null) {
+            if (currentPath.sameAs(newPath))
+                newPath = currentPath;
+            else if (!currentPath.done() && newPath instanceof PathObject)
+                ((PathObject) newPath).adjustPathPosition(currentPath, this.subject);
+        }
 
         if (this.nodeMap.needsOcclusionProvider())
             updateFieldWindow(newPath);
