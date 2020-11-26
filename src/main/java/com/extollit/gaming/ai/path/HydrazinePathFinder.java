@@ -589,8 +589,13 @@ public class HydrazinePathFinder {
         if (this.nodeMap.needsOcclusionProvider())
             updateFieldWindow(newPath);
 
-        if (newPath.done())
-            return this.currentPath = new IncompletePath(newPath.last());
+        if (newPath.done()) {
+            INode last = newPath.last();
+            if (last == null)
+                last = pointAtSource();
+
+            return this.currentPath = new IncompletePath(last);
+        }
 
         return this.currentPath = newPath;
     }

@@ -8,6 +8,9 @@ public final class IncompletePath implements IPath {
     final INode node;
 
     public IncompletePath(INode node) {
+        if (node == null)
+            throw new NullPointerException();
+
         this.node = node;
     }
 
