@@ -12,7 +12,26 @@ Then the primary entry-point for using the engine is `com.extollit.gaming.ai.pat
     if (path != null)
     do {
         path = pathFinder.updatePathFor(myEntity);
-    } while (game.running());            
+    } while (game.running());
+    
+### Path-finding Scheduling
+There are three different ways to refine how much computing resources are allocated to a particular entity's path-finding
+object through what is called a scheduling priority, namely `low`, `high` and `extreme`.  The higher the scheduling priority
+the more fluid the path-finding operation at the expense of CPU utilization.  It is conventional to set this priority 
+according to the type of pathing entity upon construction time, although the priority can be changed at any time:
+
+    // For animals
+    final HydrazinePathFinder animalPathFinder = new HydrazinePathFinder(myCow, myWorld);
+    animalPathFinder.schedulingPriority(SchedulingPriority.low)
+    
+    // For zombies
+    final HydrazinePathFinder geekPathFinder = new HydrazinePathFinder(myGeek, myWorld);
+    geekPathFinder.schedulingPriority(SchedulingPriority.high)
+    
+    // For intelligent assassin-like entities
+    final HydrazinePathFinder maestroPathFinder = new HydrazinePathFinder(myMaestro, myWorld);
+    maestroPathFinder.schedulingPriority(SchedulingPriority.extreme)
+
 
 ### Notifying the Engine of Changes
 The path-finding engine must be notified of certain changes that occur to keep it up-to-date.  
