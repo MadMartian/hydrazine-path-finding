@@ -101,18 +101,32 @@ public class HydrazinePathFinder {
         return initiatePathTo(target.coordinates());
     }
 
+    public IPath computePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
+        return computePathTo(coordinates.x, coordinates.y, coordinates.z);
+    }
+
+    private IPath computePathTo(double x, double y, double z) {
+        this.destinationEntity = null;
+
+        initializeOperation();
+        if (tooFarTo(x, y, z))
+            return null;
+
+        updateDestination(x, y, z);
+
+        if (!graphTimeout())
+            resetTriage();
+
+        return triage(Integer.MAX_VALUE);
+    }
+
     public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
         return initiatePathTo(coordinates.x, coordinates.y, coordinates.z);
     }
 
     public IPath initiatePathTo(double x, double y, double z) {
-        applySubject();
-        updateSourcePosition();
-        resetFaultTimings();
-
-        final float rangeSquared = this.searchRangeSquared;
-        final com.extollit.linalg.immutable.Vec3d sourcePos = new com.extollit.linalg.immutable.Vec3d(this.sourcePosition);
-        if (sourcePos.subOf(x, y, z).mg2() > rangeSquared)
+        initializeOperation();
+        if (tooFarTo(x, y, z))
             return null;
 
         final boolean initiate = updateDestination(x, y, z) && this.queue.isEmpty();
@@ -121,6 +135,18 @@ public class HydrazinePathFinder {
             resetTriage();
 
         return triage(this.initComputeIterations);
+    }
+
+    private boolean tooFarTo(double x, double y, double z) {
+        final float rangeSquared = this.searchRangeSquared;
+        final com.extollit.linalg.immutable.Vec3d sourcePos = new com.extollit.linalg.immutable.Vec3d(this.sourcePosition);
+        return sourcePos.subOf(x, y, z).mg2() > rangeSquared;
+    }
+
+    private void initializeOperation() {
+        applySubject();
+        updateSourcePosition();
+        resetFaultTimings();
     }
 
     public IPath updatePathFor(IPathingEntity pathingEntity) {

@@ -32,6 +32,22 @@ according to the type of pathing entity upon construction time, although the pri
     final HydrazinePathFinder maestroPathFinder = new HydrazinePathFinder(myMaestro, myWorld);
     maestroPathFinder.schedulingPriority(SchedulingPriority.extreme)
 
+### Compute Path (Non-Incremental)
+For use-cases where it is most intuitive to compute a complete path from source position to destination all at once as
+with most traditional A* path-finding algorithms use the `computePathTo` method:
+    
+    final HydrazinePathFinder pathFinder = new HydrazinePathFinder(myEntity, myWorld);
+
+    final IPath path = pathFinder.computePathTo(new Vec3d(1, 3.2, 5.8));
+
+    if (path == null)
+        ; // Destination is definitely unreachable
+    else
+        path.update(myEntity);
+
+**NOTE**: This method bypasses the incremental algorithm, which is designed to distribute path-finding effort over the 
+lifetime of the path-traversal.  While this method guarantees a definitive and more accurate result it is exponentially 
+more expensive than the incremental approach.
 
 ### Notifying the Engine of Changes
 The path-finding engine must be notified of certain changes that occur to keep it up-to-date.  
