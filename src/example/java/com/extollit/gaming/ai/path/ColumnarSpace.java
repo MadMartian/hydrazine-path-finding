@@ -1,8 +1,16 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.*;
+import com.extollit.gaming.ai.path.model.ColumnarOcclusionFieldList;
+import com.extollit.gaming.ai.path.model.IColumnarSpace;
+import com.extollit.gaming.ai.path.model.IInstanceSpace;
 
 public class ColumnarSpace implements IColumnarSpace {
+    private static final BlockObject air = new BlockObject();
+
+    static {
+        air.fullyBounded = true;
+    }
+
     public static final class Pointer {
         public final int cx, cz;
 
@@ -41,7 +49,12 @@ public class ColumnarSpace implements IColumnarSpace {
 
     @Override
     public BlockObject blockAt(int x, int y, int z) {
-        return this.blocks[z][y][x];
+        final BlockObject block = this.blocks[z][y][x];
+        return block == null ? air : block;
+    }
+
+    public void setBlockAt(int x, int y, int z, BlockObject block) {
+        this.blocks[z][y][x] = block;
     }
 
     @Override

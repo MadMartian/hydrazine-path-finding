@@ -57,14 +57,15 @@ public class SortedPointQueueTests {
 
     @Test
     public void trimFrom() {
+        Node n;
         final Node
-            lower = add(source, 0, 0, 1),
-            up = add(lower, 0, 0, 2),
-            middle = add(up, 0, 0, 3);
+            lower = add(n = visited(source, 0, 0, 1), 0, -1, 4),
+            up = add(n = visited(n, 0, 0, 2), 0, -1, 5),
+            middle = visited(n, 0, 0, 3);
 
-        add(add(middle, 0, 0, 4), 0, 0, 5);
-        add(add(middle, 1, 0, 3), 2, 0, 3);
-        add(add(lower, 1, 0, 1), 2, 0, 1);
+        add(visited(middle, 0, 0, 4), 0, 0, 5);
+        add(visited(middle, 1, 0, 3), 2, 0, 3);
+        add(visited(lower, 1, 0, 1), 2, 0, 1);
 
         q.trimFrom(middle);
 
@@ -72,23 +73,22 @@ public class SortedPointQueueTests {
         assertFalse(lower.assigned());
         assertFalse(source.assigned());
 
-        assertTrue(up.infecund() && up.orphaned());
+        assertTrue(up.infecund() && !up.orphaned());
 
         assertQueuePoints(
-            new Vec3i(0, 0, 3),
-            new Vec3i(0, 0, 4),
             new Vec3i(0, 0, 5),
-            new Vec3i(1, 0, 3),
-            new Vec3i(2, 0, 3)
+            new Vec3i(2, 0, 3),
+            new Vec3i(2, 0, 1)
         );
     }
 
     @Test
     public void trimVisited() {
+        Node n;
         final Node
-                lower = visited(source, 0, 0, 1),
-                up = add(lower, 0, 0, 2),
-                middle = visited(up, 0, 0, 3);
+                lower = add(n = visited(source, 0, 0, 1), 0, -1, 4),
+                up = add(n = visited(n, 0, 0, 2), 0, -1, 5),
+                middle = visited(n, 0, 0, 3);
 
         final Node
             alphaChild = visited(middle, 0, 0, 4),
@@ -104,34 +104,10 @@ public class SortedPointQueueTests {
         assertFalse(up.visited());
         assertFalse(lower.visited());
         assertFalse(branch.visited());
-        assertFalse(source.visited());
+        assertTrue(source.visited());
         assertTrue(alphaChild.visited());
         assertTrue(betaChild.visited());
         assertTrue(middle.visited());
-    }
-
-    @Test
-    public void trimFromEnsureAssigned() {
-        final Node
-                lower = add(source, 0, 0, 1),
-                up = add(lower, 0, 0, 2),
-                middle = visited(up, 0, 0, 3);
-
-        add(add(middle, 0, 0, 4), 0, 0, 5);
-        add(add(middle, 1, 0, 3), 2, 0, 3);
-        add(add(lower, 1, 0, 1), 2, 0, 1);
-
-        q.trimFrom(middle);
-
-        assertTrue(middle.assigned());
-
-        assertQueuePoints(
-                new Vec3i(0, 0, 4),
-                new Vec3i(0, 0, 5),
-                new Vec3i(1, 0, 3),
-                new Vec3i(2, 0, 3),
-                new Vec3i(0, 0, 3)
-        );
     }
 
     @Test
@@ -196,11 +172,6 @@ public class SortedPointQueueTests {
         assertTrue(rightOutlier.assigned());
 
         assertFalse(left.orphaned());
-        assertTrue(left.infecund());
-        assertTrue(leftRoot.orphaned() && leftRoot.infecund());
-        assertTrue(leftOutlier.orphaned() && leftOutlier.infecund());
-        assertTrue(leftTertiary.orphaned() && leftTertiary.infecund());
-        assertTrue(leftHead.orphaned() && leftHead.orphaned());
 
         assertFalse(leftRoot.visited());
         assertFalse(leftOutlier.visited());
@@ -242,6 +213,71 @@ public class SortedPointQueueTests {
         assertNotSame(node, graph.cachedPointAt(node.key));
     }
 
+    @Test
+    public void bowTie() {
+        final Node test, pivot, another;
+        add(source, visited(-1, 0, -1), test = visited(0, 0, -1), another = visited(+1, 0, -1));
+        add(source, visited(+1, 0, +1));
+        visited(source, pivot = visited(0, 0, +1));
+
+        final Node next;
+        add(visited(0, 0, -1), visited(-1, 0, -2), visited(0, 0, -2), visited(+1, 0, -2));
+        add(pivot, visited(-1, 0, +2), next = visited(0, 0, +2), visited(+1, 0, +2));
+
+        visited(next, visited(0, 1, +3), visited(1, 1, +3));
+
+        final Node prune;
+        chain(pivot, prune = visited(-1, 0, +1), visited(-1, 0, +2), add(-1, 0, +3));
+
+        final Node root = q.trimFrom(next);
+
+        assertEquals(source, root);
+        assertQueueRoot(next);
+
+        assertQueuePoints(
+                prune.key,
+                next.key,
+                new Vec3i(-1, 0, -1),
+                another.key,
+                new Vec3i(0, 0, -1),
+                new Vec3i(0, 0, -2),
+                new Vec3i(-1, 0, -2),
+                new Vec3i(1, 0, -2)
+        );
+
+        assertEquals(3, test.length());
+        assertEquals(2, test.up().length());
+        assertEquals(1, test.up().up().length());
+        assertEquals(3, another.length());
+        assertEquals(1, pivot.length());
+    }
+
+    @Test
+    public void narrowTreeTrim() {
+        final Node next = visited(0, 0, 3),
+            alpha, beta, gamma;
+        Node n;
+
+        add(source, alpha = visited(-1, 0, 0));
+        visited(source, n = visited(0, 0, 1));
+        add(n, beta = visited(-1, 0, 1));
+        visited(n, n = visited(0, 0, 2));
+        add(n, gamma = visited(-1, 0, 2));
+        visited(n, next);
+        add(next, visited(-1, 0, 3));
+        visited(next, n = visited(0, 0, 4));
+        add(n, visited(-1, 0, 4));
+
+        final Node root = q.trimFrom(next);
+
+        assertEquals(source, root);
+        assertQueueRoot(next);
+
+        assertEquals(4, alpha.length());
+        assertEquals(3, beta.length());
+        assertEquals(2, gamma.length());
+    }
+
     protected Node visited(int x, int y, int z) {
         Node node = graph.cachedPointAt(x, y, z);
         node.visited(true);
@@ -250,7 +286,7 @@ public class SortedPointQueueTests {
 
     protected Node visited(Node parent, int x, int y, int z) {
         Node cached = visited(x, y, z);
-        cached.appendTo(parent, 0, 0);
+        cached.appendTo(parent, 1, 0);
         return cached;
     }
 
@@ -264,8 +300,29 @@ public class SortedPointQueueTests {
     protected Node add(Node parent, int x, int y, int z) {
         Node p = visited(x, y, z);
         p.visited(false);
+        p.length(parent.length() + 1);
         q.appendTo(p, parent, target.key);
         return p;
+    }
+
+    protected void add(Node parent, Node... children) {
+        for (Node p : children) {
+            p.length(parent.length() + 1);
+            q.appendTo(p, parent, target.key);
+        }
+    }
+
+    protected void visited(Node parent, Node... children) {
+        for (Node p : children)
+            p.appendTo(parent, 1, 0);
+    }
+
+    protected Node chain(Node parent, Node... chain) {
+        for (Node p : chain) {
+            p.appendTo(parent, 1,0);
+            parent = p;
+        }
+        return parent;
     }
 
     protected void assertQueueIndices() {
@@ -296,5 +353,10 @@ public class SortedPointQueueTests {
         }
 
         assertArrayEquals(expected, actual);
+    }
+
+    protected void assertQueueRoot(Node root) {
+        for (Node p : q.view())
+            assertEquals(root, p.root());
     }
 }

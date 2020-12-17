@@ -33,6 +33,7 @@ public class NodeTests {
         assertEquals(0, node.journey());
         assertEquals(Passibility.risky, node.passibility());
         assertFalse(node.assigned());
+        assertTrue(node.dirty());
         assertFalse(node.visited());
         assertTrue(node.volatile_());
     }
@@ -85,5 +86,25 @@ public class NodeTests {
 
         assertTrue(this.root.infecund());
         assertTrue(CollectionsExt.toList(newNode.children()).contains(subject));
+    }
+
+    @Test
+    public void lengthSetDirtiness() {
+        final Node subject = new Node(new Vec3i(1, 2, 3));
+
+        subject.dirty(true);
+        assertTrue(subject.dirty());
+        subject.length(42);
+        assertFalse(subject.dirty());
+    }
+
+    @Test
+    public void lengthDirty() {
+        final Node subject = new Node(new Vec3i(1, 2, 3));
+
+        subject.dirty(true);
+        assertTrue(subject.dirty());
+        subject.dirty(false);
+        assertFalse(subject.dirty());
     }
 }

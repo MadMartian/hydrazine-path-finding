@@ -18,7 +18,7 @@ public class Node implements INode {
         Remain_BitOffs = (byte)(Length_BitOffs + BitWidth_128),
         Visited_BitOffs = (byte)(Remain_BitOffs + BitWidth_128),
         Gravitation_BitOffs = (byte)(Visited_BitOffs + 1),
-        Traversed_BitOffs = (byte)(Gravitation_BitOffs + 2);
+        LengthDirty_BitOffs = (byte)(Gravitation_BitOffs + 2);
 
     public static final short MAX_PATH_DISTANCE = (1 << BitWidth_128) - 1;
 
@@ -55,7 +55,7 @@ public class Node implements INode {
     public Vec3i coordinates() { return this.key; }
 
     private static int wordReset(Node copy) {
-        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs) | (1 << Traversed_BitOffs) | (Mask_Gravitation << Gravitation_BitOffs))) | (Mask_512 << Index_BitOffs);
+        return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs) | (Mask_Gravitation << Gravitation_BitOffs))) | ((Mask_512 << Index_BitOffs) | (1 << LengthDirty_BitOffs));
     }
 
     public final byte length() {
@@ -69,6 +69,14 @@ public class Node implements INode {
     }
     public final Node up() {
         return this.previous;
+    }
+
+    public Node root() {
+        Node node = this;
+        while (!node.orphaned())
+            node = node.up();
+
+        return node;
     }
 
     @Override
@@ -92,8 +100,11 @@ public class Node implements INode {
         if (length > Mask_128 || length < 0)
             return false;
 
-        this.word = (this.word & ~(Mask_128 << Length_BitOffs)) | (length << Length_BitOffs);
+        this.word = (this.word & ~((Mask_128 << Length_BitOffs) | (1 << LengthDirty_BitOffs))) | (length << Length_BitOffs);
         return true;
+    }
+    void addLength(int dl) {
+        length(length() + dl);
     }
     final boolean remaining(int delta) {
         if (delta > Mask_128 || delta < 0)
@@ -105,12 +116,10 @@ public class Node implements INode {
 
     final void reset() {
         this.word = wordReset(this);
-        isolate();
     }
 
     final void rollback() {
         reset();
-        traversed(false);
     }
 
     final short index() {
@@ -124,9 +133,9 @@ public class Node implements INode {
         this.word = (this.word & ~(Mask_512 << Index_BitOffs)) | ((index & Mask_512) << Index_BitOffs);
         return true;
     }
-    public final boolean traversed() { return ((this.word >> Traversed_BitOffs) & 1) == 1; }
-    public final void traversed(boolean flag) {
-        this.word = (this.word & ~(1 << Traversed_BitOffs)) | ((flag ? 1 << Traversed_BitOffs : 0));
+    public final boolean dirty() { return ((this.word >> LengthDirty_BitOffs) & 1) == 1; }
+    public final void dirty(boolean flag) {
+        this.word = (this.word & ~(1 << LengthDirty_BitOffs)) | ((flag ? 1 << LengthDirty_BitOffs : 0));
     }
     public final boolean visited() {
         return ((this.word >> Visited_BitOffs) & 1) == 1;
@@ -178,7 +187,7 @@ public class Node implements INode {
         sterilize();
     }
 
-    void sterilize() {
+    public void sterilize() {
         if (this.children != null) {
             for (Node child : this.children) {
                 assert child.previous == this;
@@ -202,6 +211,18 @@ public class Node implements INode {
     }
 
     final boolean appendTo(final Node parent, final int delta, final int remaining) {
+        bindParent(parent);
+
+        if (!length(parent.length() + delta))
+            return false;
+
+        if (!remaining(remaining))
+            return false;
+
+        return true;
+    }
+
+    void bindParent(Node parent) {
         assert !cyclic(parent);
 
         orphan();
@@ -209,8 +230,6 @@ public class Node implements INode {
         parent.addChild(this);
 
         passibility(passibility());
-        return length(parent.length() + delta)
-                && remaining(remaining);
     }
 
     private void addChild(Node child) {
@@ -279,7 +298,10 @@ public class Node implements INode {
             sb.append(index);
         }
 
-        return sb.toString() + MessageFormat.format(" ({0}) : length={1}, remaining={2}, journey={3}", passibility(), length(), remaining(), journey());
+        String length = Byte.toString(length());
+        if (dirty())
+            length += '*';
+        return sb.toString() + MessageFormat.format(" ({0}) : length={1}, remaining={2}, journey={3}", passibility(), length, remaining(), journey());
     }
 
     @Override

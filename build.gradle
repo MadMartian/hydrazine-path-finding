@@ -11,7 +11,7 @@ version '1.5.2-SNAPSHOT'
 
 apply plugin: 'java'
 
-compileJava   {
+compileJava {
     sourceCompatibility = '1.7'
     targetCompatibility = '1.7'
 }
@@ -21,6 +21,12 @@ sourceSets {
         java {
             compileClasspath = main.compileClasspath + main.output
             runtimeClasspath = main.runtimeClasspath + main.output
+        }
+    }
+    test {
+        java {
+            compileClasspath = test.compileClasspath + example.output
+            runtimeClasspath = test.runtimeClasspath + example.output
         }
     }
 }

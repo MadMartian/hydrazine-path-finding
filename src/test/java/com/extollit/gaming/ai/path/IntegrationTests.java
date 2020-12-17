@@ -425,8 +425,8 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
             pos(coords.x + 0.5, coords.y, coords.z + 0.5);
         }
 
-        assertEquals(54, iterations);
-        assertEquals(1, incompletes);
+        assertEquals(65, iterations);
+        assertEquals(5, incompletes);
 
         verify(pathingEntity).moveTo(new Vec3d(1.5, 0, 7.5), Passibility.passible, Gravitation.grounded);
     }

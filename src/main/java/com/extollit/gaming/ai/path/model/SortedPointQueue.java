@@ -11,10 +11,7 @@ public final class SortedPointQueue {
 
     private final ArrayList<Node> list = new ArrayList<>(8);
 
-    private boolean fastAdd(Node point) {
-        if (point.assigned())
-            throw new IllegalStateException("Point is already assigned");
-
+    boolean fastAdd(Node point) {
         if (!point.index(this.list.size()))
             return false;
 
@@ -33,30 +30,29 @@ public final class SortedPointQueue {
         return this.list.isEmpty();
     }
 
-    public void trimFrom(Node source) {
+    public Node trimFrom(Node source) {
         if (source.orphaned())
-            return;
+            return source;
+
+        final Node root0 = source.root();
+        final Vec3i dd = source.key.subOf(root0.key);
+        final List<Node> list = this.list;
 
         final byte length0 = source.length();
+        final Stack<Node> path = new Stack<>();
+        final TreeTransitional treeTransitional = new TreeTransitional(source);
+        final ListIterator<Node> i = list.listIterator();
 
-        final List<Node> list = this.list;
-        final Stack<Node> stack = new Stack<>();
-        final Node up = source.up();
-
-        source.orphan();
-        source.length(0);
-
-        ListIterator<Node> i = list.listIterator();
         while (i.hasNext()) {
             final Node head = i.next();
             Node point = head;
-            while (!point.orphaned() && point != source) {
+            while (!point.orphaned()) {
                 point = point.up();
-                stack.push(point);
+                path.push(point);
             }
             if (point == source) {
-                while (!stack.isEmpty()) {
-                    point = stack.pop();
+                while (!path.isEmpty()) {
+                    point = path.pop();
                     final int length = point.length() - length0;
                     point.length(length);
                 }
@@ -64,27 +60,38 @@ public final class SortedPointQueue {
                 head.length(length);
                 head.index(i.previousIndex());
             } else {
-                i.remove();
-                head.reset();
-                while (!stack.isEmpty()) {
-                    Node node = stack.pop();
-                    node.reset();
-                    assert node.orphaned();
+                final Node root;
+                if (path.isEmpty())
+                    root = head;
+                else
+                    root = path.pop();
+
+                if (head == point || head.key.subOf(point.key).dot(dd) <= 0) {
+                    head.dirty(true);
+                    while (!path.isEmpty())
+                        path.pop().dirty(true);
+
+                    treeTransitional.queue(head, root);
+                    head.index(i.previousIndex());
+                } else {
+                    if (!path.isEmpty()) {
+                        final Node branch = path.pop();
+                        branch.dirty(true);
+                        treeTransitional.queue(branch, root);
+                    }
+
+                    i.remove();
+
+                    path.clear();
+                    head.unassign();
+                    head.visited(false);
                 }
             }
         }
 
-        Node p = up;
-        do {
-            assert !p.assigned();
-            p.reset();
-            assert p.orphaned();
-        } while ((p = p.up()) != null);
+        treeTransitional.finish(this);
 
-        if (!source.assigned()) {
-            source.index(list.size());
-            list.add(source);
-        }
+        return root0;
     }
 
     void cullBranch(Node ancestor) {
@@ -111,8 +118,10 @@ public final class SortedPointQueue {
             stack.clear();
         }
 
-        for (Node node : culled)
+        for (Node node : culled) {
             node.reset();
+            node.visited(false);
+        }
     }
 
     public List<Node> view() { return Collections.unmodifiableList(this.list); }
@@ -224,25 +233,39 @@ public final class SortedPointQueue {
         final byte length = point.length();
         if (!point.assigned() || (parent.length() + squareDelta < length*length && !point.passibility().betterThan(parent.passibility()))) {
             final byte distance0 = point.journey();
-            if (point.appendTo(parent, (int)Math.sqrt(squareDelta), remaining)) {
-                final int distance = point.journey();
-                if (point.assigned()) {
-                    if (distance < distance0)
-                        sortBack(point.index());
-                    else
-                        sortForward(point.index());
-
-                    return true;
-                } else
-                    add(point);
-            } else
+            if (point.appendTo(parent, (int)Math.sqrt(squareDelta), remaining))
+                return resort(point, distance0);
+            else
                 point.orphan();
         }
 
         return false;
     }
 
+    public boolean addLength(Node point, int diff) {
+        final byte journey0 = point.journey();
+        point.addLength(diff);
+        return resort(point, journey0);
+    }
+
+    private boolean resort(Node point, byte journey0) {
+        final int journey = point.journey();
+        if (point.assigned()) {
+            if (journey < journey0)
+                sortBack(point.index());
+            else
+                sortForward(point.index());
+
+            return true;
+        } else
+            add(point);
+        return false;
+    }
+
     public void add(Node point) {
+        if (point.assigned())
+            throw new IllegalStateException("Point is already assigned");
+
         if (fastAdd(point))
             return;
 
@@ -260,6 +283,18 @@ public final class SortedPointQueue {
 
     public int size() {
         return this.list.size();
+    }
+
+    public final Set<Node> roots() {
+        final Set<Node> roots = new HashSet<>(1);
+
+        for (Node node : this.list) {
+            final Node root = node.root();
+            if (!roots.contains(root))
+                roots.add(root);
+        }
+
+        return roots;
     }
 
     @Override

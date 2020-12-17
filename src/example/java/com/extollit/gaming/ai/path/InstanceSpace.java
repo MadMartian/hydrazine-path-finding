@@ -1,6 +1,7 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.*;
+import com.extollit.gaming.ai.path.model.IBlockObject;
+import com.extollit.gaming.ai.path.model.IInstanceSpace;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,20 +16,29 @@ public class InstanceSpace implements IInstanceSpace {
         if (columnarSpace == null)
             return null;
 
-        return columnarSpace.blockAt(x - (x & 0xF), y, z - (z & 0xF));
+        return columnarSpace.blockAt(x & 0xF, y, z & 0xF);
     }
 
     @Override
     public ColumnarSpace columnarSpaceAt(int cx, int cz) {
         final ColumnarSpace.Pointer pointer = new ColumnarSpace.Pointer(cx, cz);
+        final Map<ColumnarSpace.Pointer, ColumnarSpace> columnarSpaces = this.columnarSpaces;
 
-        return this.columnarSpaces.get(pointer);
+        final ColumnarSpace columnarSpace;
+        if (columnarSpaces.containsKey(pointer))
+            columnarSpace = columnarSpaces.get(pointer);
+        else
+            columnarSpaces.put(pointer, columnarSpace = new ColumnarSpace(this, pointer));
+
+        return columnarSpace;
     }
 
     public void setBlock(int x, int y, int z, BlockObject block, int metaData) {
         final ColumnarSpace columnarSpace = columnarSpaceAt(x >> 4, z >> 4);
 
-        if (columnarSpace != null)
+        if (columnarSpace != null) {
+            columnarSpace.setBlockAt(x & 0xF, y, z & 0xF, block);
             columnarSpace.occlusionFields().onBlockChanged(x, y, z, block, metaData);
+        }
     }
 }

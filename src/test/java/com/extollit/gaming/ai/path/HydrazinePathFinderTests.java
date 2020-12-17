@@ -1,14 +1,13 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.Element;
-import com.extollit.gaming.ai.path.model.IPath;
-import com.extollit.gaming.ai.path.model.IPathProcessor;
-import com.extollit.gaming.ai.path.model.Logic;
+import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.util.List;
 
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPathNot;
@@ -425,5 +424,38 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
                 .initiatePathTo(0, 0, 2);
 
         verify(pathProcessor).processPath(path);
+    }
+
+    @Test
+    public void dontNeuterSatisfactoryQueuedNodes() {
+        defaultGround();
+
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        pathFinder.initiatePathTo(0, 0, 4);
+        final List<Node> q = pathFinder.queue.view();
+        pathFinder.applyPointOptions(q.get(7), q.get(5));
+        assertEquals(1, pathFinder.queue.roots().size());
+    }
+
+    @Test
+    public void dontNeuterUndesirableQueuedNodes() {
+        cautious(false);
+        defaultGround();
+
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        pathFinder.initiatePathTo(0, 0, 4);
+        final List<Node> q = pathFinder.queue.view();
+        final Node
+            parent = q.get(7),
+            enigma = new Node(new Vec3i(-20, 0, 1));
+
+        boolean lengthSetResult = parent.length(109);
+        assertTrue(lengthSetResult);
+
+        enigma.passibility(Passibility.risky);
+        pathFinder.applyPointOptions(parent, enigma);
+        assertEquals(1, pathFinder.queue.roots().size());
     }
 }

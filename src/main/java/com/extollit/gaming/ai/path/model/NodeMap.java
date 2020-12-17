@@ -4,6 +4,8 @@ import com.extollit.collect.SparseSpatialMap;
 import com.extollit.linalg.immutable.IntAxisAlignedBox;
 import com.extollit.linalg.immutable.Vec3i;
 
+import java.util.Collection;
+
 public final class NodeMap {
     private final SparseSpatialMap<Node> it = new SparseSpatialMap<>(3);
     private final IInstanceSpace instanceSpace;
@@ -105,6 +107,10 @@ public final class NodeMap {
             if (cull)
                 cullOutside(x0, z0, xN, zN);
         }
+    }
+
+    public Collection<Node> all() {
+        return this.it.values();
     }
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {

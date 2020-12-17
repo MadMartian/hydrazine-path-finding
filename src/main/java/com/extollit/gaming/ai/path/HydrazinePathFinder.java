@@ -26,7 +26,9 @@ public class HydrazinePathFinder {
     private static byte FAULT_COUNT_THRESHOLD = 3;
     private static int FAULT_LIMIT = 23;
 
-    private final SortedPointQueue queue = new SortedPointQueue();
+    final SortedPointQueue queue = new SortedPointQueue();
+    final NodeMap nodeMap;
+
     private final Set<Vec3i> unreachableFromSource = new HashSet<>(3);
     private final IPathingEntity subject;
     private final IInstanceSpace instanceSpace;
@@ -36,7 +38,6 @@ public class HydrazinePathFinder {
 
     private INodeCalculator pathPointCalculator;
     private IPathProcessor pathProcessor;
-    private NodeMap nodeMap;
     private IPath currentPath;
     private IPathingEntity.Capabilities capabilities;
     private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent;
@@ -286,7 +287,7 @@ public class HydrazinePathFinder {
 
         final Node source = this.current = this.source = pointAtSource();
         source.length(0);
-        source.orphan();
+        source.isolate();
         this.trimmedToCurrent = true;
 
         refinePassibility(source.key);
@@ -297,7 +298,6 @@ public class HydrazinePathFinder {
         this.queue.add(source);
         this.closest = null;
         this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
-        source.traversed(true);
     }
 
     protected final boolean refinePassibility(Vec3i sourcePoint) {
@@ -644,7 +644,6 @@ public class HydrazinePathFinder {
 
         IPath nextPath = null;
         boolean trimmedToSource = this.trimmedToCurrent;
-        this.current.traversed(true);
 
         while (!queue.isEmpty() && iterations-- > 0) {
             final Node source = this.current;
@@ -665,7 +664,7 @@ public class HydrazinePathFinder {
                     closest == null
                     || closest.orphaned()
                     || Node.squareDelta(current, this.target) < Node.squareDelta(closest, this.target)
-                ) && !current.traversed())
+                ))
                 this.closest = current;
 
             if (current == target) {
@@ -681,10 +680,8 @@ public class HydrazinePathFinder {
         }
 
         final Node closest = this.closest;
-        if (nextPath == null && closest != null && !queue.isEmpty()) {
+        if (nextPath == null && closest != null && !queue.isEmpty())
             nextPath = createPath(closest);
-            closest.traversed(true);
-        }
 
         return updatePath(nextPath);
     }
@@ -783,13 +780,14 @@ public class HydrazinePathFinder {
         return result;
     }
 
-    private boolean applyPointOptions(Node current, Node... pointOptions) {
+    boolean applyPointOptions(Node current, Node... pointOptions) {
         boolean found = false;
         for (Node alternative : pointOptions) {
             if (impassible(alternative) || alternative.visited() || Node.squareDelta(alternative, this.target) >= this.searchRangeSquared)
                 continue;
 
             found = true;
+            alternative.sterilize();
             this.queue.appendTo(alternative, current, this.target.key);
         }
         return found;
