@@ -40,7 +40,7 @@ public class HydrazinePathFinder {
     private IPathProcessor pathProcessor;
     private IPath currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent;
+    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent, bestEffort;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
     private int faultCount, nextGraphResetFailureCount;
@@ -88,7 +88,7 @@ public class HydrazinePathFinder {
     public final Vec3i trackingDestination() {
         if (this.destinationEntity != null && this.destinationPosition != null) {
             final Node pointAtDestination = edgeAtDestination();
-            if (impassible(pointAtDestination))
+            if (pointAtDestination == null)
                 return null;
             else
                 return pointAtDestination.key;
@@ -99,7 +99,7 @@ public class HydrazinePathFinder {
 
     public IPath trackPathTo(IDynamicMovableObject target) {
         this.destinationEntity = target;
-        return initiatePathTo(target.coordinates());
+        return initiatePathTo(target.coordinates(), true);
     }
 
     public IPath computePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
@@ -108,6 +108,7 @@ public class HydrazinePathFinder {
 
     private IPath computePathTo(double x, double y, double z) {
         this.destinationEntity = null;
+        this.bestEffort = false;
 
         initializeOperation();
         if (tooFarTo(x, y, z))
@@ -125,9 +126,19 @@ public class HydrazinePathFinder {
         return initiatePathTo(coordinates.x, coordinates.y, coordinates.z);
     }
 
+    public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates, boolean bestEffort) {
+        return initiatePathTo(coordinates.x, coordinates.y, coordinates.z, bestEffort);
+    }
+
     public IPath initiatePathTo(double x, double y, double z) {
+        return initiatePathTo(x, y, z, true);
+    }
+
+    public IPath initiatePathTo(double x, double y, double z, boolean bestEffort) {
+        this.bestEffort = bestEffort;
+
         initializeOperation();
-        if (tooFarTo(x, y, z))
+        if (!bestEffort && tooFarTo(x, y, z))
             return null;
 
         final boolean initiate = updateDestination(x, y, z) && this.queue.isEmpty();
@@ -380,28 +391,37 @@ public class HydrazinePathFinder {
         this.searchRangeSquared = pathSearchRange*pathSearchRange;
     }
 
-    private void setTargetFor(Node source) {
+    private boolean setTargetFor(Node source) {
         final Vec3d
                 destinationPosition = this.destinationPosition;
 
-        int distance = Node.MAX_PATH_DISTANCE;
-        this.target = edgeAtDestination();
-        while (distance > 0 && !source.target(this.target.key)) {
-            final Vec3d
-                v = new Vec3d(destinationPosition),
-                init = new Vec3d(source.key);
+        if (null == (this.target = edgeAtDestination()))
+            return false;
+        else if (this.bestEffort) {
+            int distance = Node.MAX_PATH_DISTANCE;
+            while (distance > 0 && !source.target(this.target.key)) {
+                final Vec3d
+                        v = new Vec3d(destinationPosition),
+                        init = new Vec3d(source.key);
 
-            distance--;
+                distance--;
 
-            v.sub(init);
-            v.normalize();
-            v.mul(distance);
-            v.add(init);
-            this.target = edgeAtTarget(v.x, v.y, v.z);
-        }
+                v.sub(init);
+                v.normalize();
+                v.mul(distance);
+                v.add(init);
+                this.target = edgeAtTarget(v.x, v.y, v.z);
+            }
 
-        if (distance == 0)
-            source.target((this.target = this.source).key);
+            if (distance == 0)
+                return source.target((this.target = this.source).key);
+            else
+                return true;
+        } else if (source.target(this.target.key))
+            return true;
+
+        this.target = null;
+        return false;
     }
 
     private void resetGraph() {
@@ -485,9 +505,23 @@ public class HydrazinePathFinder {
                 ny = floor(y),
                 nz = floor(z);
 
-        Node node = this.nodeMap.cachedPointAt(nx, ny, nz);
-        if (node.passibility() == Passibility.impassible && !this.capabilities.cautious())
-            node.passibility(Passibility.dangerous);
+        final Node node;
+
+        if (this.bestEffort) {
+            node = this.nodeMap.cachedPointAt(nx, ny, nz);
+            if (node.passibility() == Passibility.impassible)
+                node.passibility(Passibility.dangerous);
+        } else {
+            node = this.nodeMap.cachedPassiblePointNear(nx, ny, nz);
+            if (impassible(node))
+                return null;
+
+            final Vec3d dl = new Vec3d(node.coordinates());
+            dl.sub(destinationPosition);
+            if (dl.mg2() > 1)
+                return null;
+        }
+
         return node;
     }
 
@@ -642,6 +676,9 @@ public class HydrazinePathFinder {
             else
                 resetTriage();
 
+        if (this.target == null)
+            return null;
+
         IPath nextPath = null;
         boolean trimmedToSource = this.trimmedToCurrent;
 
@@ -675,6 +712,10 @@ public class HydrazinePathFinder {
                 }
 
                 resetTriage();
+                if (this.target == null) {
+                    nextPath = null;
+                    break;
+                }
             } else
                 processNode(current);
         }

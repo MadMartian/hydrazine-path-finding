@@ -458,4 +458,50 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         pathFinder.applyPointOptions(parent, enigma);
         assertEquals(1, pathFinder.queue.roots().size());
     }
+
+    @Test
+    public void strictlyReachable() {
+        cautious(false);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        final IPath path = pathFinder.initiatePathTo(0, 10, 4, false);
+
+        assertNull(path);
+    }
+
+    @Test
+    public void bestEffort() {
+        cautious(false);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        final IPath path = pathFinder.initiatePathTo(0, 10, 4, true);
+
+        assertNotNull(path);
+    }
+
+    @Test
+    public void bestDistanceEffort() {
+        cautious(false);
+        when(pathingEntity.searchRange()).thenReturn(1000F);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        final IPath path = pathFinder.initiatePathTo(0, 0, 400, true);
+
+        assertNotNull(path);
+    }
+
+    @Test
+    public void tooFar() {
+        cautious(false);
+        when(pathingEntity.searchRange()).thenReturn(1000F);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        final IPath path = pathFinder.initiatePathTo(0, 0, 400, false);
+
+        assertNull(path);
+    }
 }
