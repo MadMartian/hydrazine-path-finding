@@ -15,6 +15,17 @@ import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
 import static com.extollit.num.FastMath.ceil;
 import static com.extollit.num.FastMath.floor;
 
+/**
+ * This is the primary path-finding object and root instance for the library.  There is precisely one instance of this
+ * class for each and every entity that requires path-finding.  As such it is a good idea to maintain an instance
+ * of this class in a member field of the associated pathing entity.
+ *
+ * This algorithm is iterative, callers call an update method each tick to progressively compute a path as the entity
+ * traverses along it ultimately distributing computation across time.
+ *
+ * To use this class, first initiate path-finding using one of the initiation methods, then call {@link #updatePathFor(IPathingEntity)}
+ * each tick to iterate on the path until it is completed.  To abort path-finding call {@link #reset()}
+ */
 public class HydrazinePathFinder {
     private static final AxisAlignedBBox FULL_BOUNDS = new AxisAlignedBBox(0, 0, 0, 1, 1, 1);
 
@@ -47,6 +58,11 @@ public class HydrazinePathFinder {
     private float searchRangeSquared, passiblePointPathTimeLimit, nextGraphCacheReset, actualSize;
     private Random random = new Random();
 
+    /**
+     * Configures the path-finding library.  All instances of this class derive configuration from here
+     *
+     * @param configModel source of the configuration to apply to all instances of this class
+     */
     public static void configureFrom(IConfigModel configModel) {
         FAULT_COUNT_THRESHOLD = configModel.faultCountThreshold();
         FAULT_LIMIT = configModel.faultLimit();
@@ -57,6 +73,12 @@ public class HydrazinePathFinder {
         GroundNodeCalculator.configureFrom(configModel);
     }
 
+    /**
+     * Create a new instance of the path-finder for a given entity and world
+     *
+     * @param entity the entity that uses this object for path-finding operations
+     * @param instanceSpace the instance space that the entity is contained within and should path-find in
+     */
     public HydrazinePathFinder(IPathingEntity entity, IInstanceSpace instanceSpace) {
         this(entity, instanceSpace, AreaOcclusionProviderFactory.INSTANCE);
     }
@@ -72,10 +94,20 @@ public class HydrazinePathFinder {
         resetFaultTimings();
     }
 
+    /**
+     * Apply a random number generator to this object, it is used for various fuzzy-logic operations during path-finding
+     *
+     * @param random a custom random number generator instance to apply to this path-finder
+     */
     public void setRandomNumberGenerator(Random random) {
         this.random = random;
     }
 
+    /**
+     * Applies a scheduling priority to this path-finder (and associated entity)
+     *
+     * @param schedulingPriority priority to use for path-finding with this object's bound entity
+     */
     public void schedulingPriority(SchedulingPriority schedulingPriority) {
         schedulingPriority(schedulingPriority.initComputeIterations, schedulingPriority.periodicComputeIterations);
     }
@@ -85,6 +117,13 @@ public class HydrazinePathFinder {
         this.periodicComputeIterations = periodicComputeIterations;
     }
 
+    /**
+     * If the last operation called on this path-finder was to track path-finding to some other entity then this will
+     * provide the current destination the pathing entity is trying to reach, which will be within close proximity of the
+     * tracked entity.
+     *
+     * @return an approximate (rounded) position near the destination entity being tracked, null if this is not tracking an entity destination
+     */
     public final Vec3i trackingDestination() {
         if (this.destinationEntity != null && this.destinationPosition != null) {
             final Node pointAtDestination = edgeAtDestination();
@@ -95,18 +134,56 @@ public class HydrazinePathFinder {
         } else
             return null;
     }
+
+    /**
+     * Current immediate path-finding target of the pathing entity.  This is not necessarily the final destination of
+     * the path, it can also be an intermediary step toward the final destination as well.
+     *
+     * @return the current target destination, can be null if there is no target available.
+     */
     public final Vec3i currentTarget() { return this.target == null ? null : this.target.key; }
 
+    /**
+     * Begin path-finding to a destination entity and update the path as necessary as the destination entity changes
+     * it's location.  This state is retained until a call to one of the other path-finding initiation methods
+     *
+     * @param target destination / target entity to track and path-find to
+     * @return the best path available toward the destination, the complete path to the destination, or null if a path
+     *          cannot be computed at all from the current location
+     * @see #updatePathFor(IPathingEntity)
+     */
     public IPath trackPathTo(IDynamicMovableObject target) {
         this.destinationEntity = target;
         return initiatePathTo(target.coordinates(), true);
     }
 
+    /**
+     * Completely computes a path to the specified location.  This is the traditional A* search algorithm, which
+     * trades-off performance for accuracy.
+     *
+     * NOTE: This method can be significantly more expensive than the others since it does not return until all search
+     * options have been exhausted.
+     *
+     * @param coordinates the target destination to path-find to
+     * @return the complete path to the destination, or null if the destination is unreachable from the current location
+     */
     public IPath computePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
         return computePathTo(coordinates.x, coordinates.y, coordinates.z);
     }
 
-    private IPath computePathTo(double x, double y, double z) {
+    /**
+     * Completely computes a path to the specified location.  This is the traditional A* search algorithm, which
+     * trades-off performance for accuracy.
+     *
+     * NOTE: This method can be significantly more expensive than the others since it does not return until all search
+     * options have been exhausted.
+     *
+     * @param x x-coordinate of the destination
+     * @param y y-coordinate of the destination
+     * @param z z-coordinate of the destination
+     * @return the complete path to the destination, or null if the destination is unreachable from the current location
+     */
+    public IPath computePathTo(double x, double y, double z) {
         this.destinationEntity = null;
         this.bestEffort = false;
 
@@ -122,18 +199,72 @@ public class HydrazinePathFinder {
         return triage(Integer.MAX_VALUE);
     }
 
+    /**
+     * Starts path-finding to the specified destination using the best-effort algorithm.
+     *
+     * After an initial call to this method, the caller should make subsequent calls to
+     * {@link #updatePathFor(IPathingEntity)} until path-finding is completed or exhausted.
+     *
+     * @param coordinates the coordinates to start path-finding toward
+     * @return the best path available toward the destination, the complete path to the destination, or null if a path
+     *          cannot be computed at all from the current location
+     * @see #initiatePathTo(double, double, double, boolean)
+     */
     public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
         return initiatePathTo(coordinates.x, coordinates.y, coordinates.z);
     }
 
+    /**
+     * Starts path-finding to the specified destination using either best-effort or not.
+     * Best-effort means that the algorithm will try it's best to get as close as possible to the target
+     * destination even if it is unreachable.
+     *
+     * After an initial call to this method, the caller should make subsequent calls to
+     * {@link #updatePathFor(IPathingEntity)} until path-finding is completed or exhausted.
+     *
+     * @param coordinates the coordinates to start path-finding toward
+     * @param bestEffort whether to use the best-effort algorithm to the destination, if false then this method is more likely to return immediately
+     * @return the best path available toward the destination, the complete path to the destination, or if the best-effort
+     *         algorithm is not used then this is more likely to return immediately with null if it is determined the
+     *         destination is unreachable.
+     */
     public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates, boolean bestEffort) {
         return initiatePathTo(coordinates.x, coordinates.y, coordinates.z, bestEffort);
     }
 
+    /**
+     * Starts path-finding to the specified destination using the best-effort algorithm.
+     *
+     * After an initial call to this method, the caller should make subsequent calls to
+     * {@link #updatePathFor(IPathingEntity)} until path-finding is completed or exhausted.
+     *
+     * @param x x-coordinate of the destination
+     * @param y y-coordinate of the destination
+     * @param z z-coordinate of the destination
+     * @return the best path available toward the destination, the complete path to the destination, or null if a path
+     *          cannot be computed at all from the current location
+     * @see #initiatePathTo(double, double, double, boolean)
+     */
     public IPath initiatePathTo(double x, double y, double z) {
         return initiatePathTo(x, y, z, true);
     }
 
+    /**
+     * Starts path-finding to the specified destination using either best-effort or not.
+     * Best-effort means that the algorithm will try it's best to get as close as possible to the target
+     * destination even if it is unreachable.
+     *
+     * After an initial call to this method, the caller should make subsequent calls to
+     * {@link #updatePathFor(IPathingEntity)} until path-finding is completed or exhausted.
+     *
+     * @param x x-coordinate of the destination
+     * @param y y-coordinate of the destination
+     * @param z z-coordinate of the destination
+     * @param bestEffort whether to use the best-effort algorithm to the destination, if false then this method is more likely to return immediately
+     * @return the best path available toward the destination, the complete path to the destination, or if the best-effort
+     *         algorithm is not used then this is more likely to return immediately with null if it is determined the
+     *         destination is unreachable.
+     */
     public IPath initiatePathTo(double x, double y, double z, boolean bestEffort) {
         this.bestEffort = bestEffort;
 
@@ -161,6 +292,14 @@ public class HydrazinePathFinder {
         resetFaultTimings();
     }
 
+    /**
+     * After a path-finding operation has been initiated by one of the initiation methods, sub-sequent calls to this
+     * method are used to refine path-finding and continue path-finding to the destination requested when the initiation
+     * method was called.  This method also drives the entity along its path.
+     *
+     * @param pathingEntity the pathing entity that will receive movement commands along the path
+     * @return the next and updated / refined path or null if the destination is unreachable
+     */
     public IPath updatePathFor(IPathingEntity pathingEntity) {
         final IPath path = update();
         if (path == null)
@@ -184,18 +323,46 @@ public class HydrazinePathFinder {
             return null;
     }
 
+    /**
+     * Optionally apply a graph node filter to this object which will be applied to all path-points computed by this path-finder.
+     * This allows a caller to modify the passibility of points as they are computed.  For example, vampires are
+     * vulnerable to sunlight, so a filter used here could mark all sunlit points as {@link Passibility#dangerous}.
+     *
+     * @param filter a caller-supplied callback for altering node passibility
+     * @return this
+     */
     public HydrazinePathFinder withGraphNodeFilter(IGraphNodeFilter filter) {
         this.nodeMap.filter(filter);
         return this;
     }
+
+    /**
+     * Retrieve the current graph node filter (if one was set)
+     *
+     * @return current graph node filter, null if not set
+     */
     public IGraphNodeFilter graphNodeFilter() {
         return this.nodeMap.filter();
     }
 
+    /**
+     * Apply a path processor to this object which will be applied to all computed paths by this path-finder.
+     * This allows a caller to modify computed paths before they are returned to the caller, typically this would
+     * involve trimming a path shorter if desired.
+     *
+     * @param trimmer a callback used to modify paths computed by this engine
+     * @return this
+     */
     public HydrazinePathFinder withPathProcessor(IPathProcessor trimmer) {
         this.pathProcessor = trimmer;
         return this;
     }
+
+    /**
+     * Retrieve the current path processor (if one was set)
+     *
+     * @return current path processor, null if not set
+     */
     public IPathProcessor pathProcessor() {
         return this.pathProcessor;
     }
@@ -612,6 +779,11 @@ public class HydrazinePathFinder {
             this.trimmedToCurrent = false;
     }
 
+    /**
+     * Reset this path-finder to a state suitable for initiating path-finding to some other destination.  This will also
+     * purge all previously cached data and reset fault timings.  Call this to recover used memory and abort path-finding,
+     * this would be most suitable if the entity is going to stop path-finding and rest for awhile.
+     */
     public void reset() {
         this.currentPath = null;
         this.queue.clear();
@@ -864,6 +1036,11 @@ public class HydrazinePathFinder {
         return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(target);
     }
 
+    /**
+     * The pathing entity this object is associated with
+     *
+     * @return pathing entity
+     */
     public IPathingEntity subject() {
         return this.subject;
     }
