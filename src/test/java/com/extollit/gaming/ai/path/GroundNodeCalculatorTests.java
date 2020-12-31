@@ -383,8 +383,8 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         when(capabilities.fireResistant()).thenReturn(true);
 
         final Passibility
-                firePassibility = AbstractNodeCalculator.clearance(Element.fire.mask, super.capabilities),
-                waterPassibility = AbstractNodeCalculator.clearance(Element.water.mask, super.capabilities);
+                firePassibility = PassibilityHelpers.clearance(Element.fire.mask, super.capabilities),
+                waterPassibility = PassibilityHelpers.clearance(Element.water.mask, super.capabilities);
 
         assertEquals(Passibility.risky, firePassibility);
         assertEquals(Passibility.dangerous, waterPassibility);
@@ -395,10 +395,52 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         when(capabilities.fireResistant()).thenReturn(false);
 
         final Passibility
-                firePassibility = AbstractNodeCalculator.clearance(Element.fire.mask, super.capabilities),
-                waterPassibility = AbstractNodeCalculator.clearance(Element.water.mask, super.capabilities);
+                firePassibility = PassibilityHelpers.clearance(Element.fire.mask, super.capabilities),
+                waterPassibility = PassibilityHelpers.clearance(Element.water.mask, super.capabilities);
 
         assertEquals(Passibility.dangerous, firePassibility);
         assertEquals(Passibility.risky, waterPassibility);
+    }
+
+    @Test
+    public void openClosedDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        solid(1, -1, 0);
+        door(1, 0, 0, false);
+        door(1, 1, 0, false);
+
+        final Node actual = calculator.passibleNodeNear(new Vec3i(1, 0, 0), ORIGIN, super.flagSampler);
+
+        assertEquals(Passibility.passible, actual.passibility());
+        assertEquals(0, actual.key.y);  // Regression: entities were jumping at 2-block-high doors
+    }
+
+    @Test
+    public void avoidOpenDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(true);
+
+        solid(1, -1, 0);
+        door(1, 0, 0, true);
+        door(1, 1, 0, true);
+
+        final Node actual = calculator.passibleNodeNear(new Vec3i(1, 0, 0), ORIGIN, super.flagSampler);
+
+        assertEquals(Passibility.impassible, actual.passibility());
+    }
+
+    @Test
+    public void avoidClosedDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(true);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        solid(1, -1, 0);
+        door(1, 0, 0, false);
+        door(1, 1, 0, false);
+
+        final Node actual = calculator.passibleNodeNear(new Vec3i(1, 0, 0), ORIGIN, super.flagSampler);
+
+        assertEquals(Passibility.impassible, actual.passibility());
     }
 }

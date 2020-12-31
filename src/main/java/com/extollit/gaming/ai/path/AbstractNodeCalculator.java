@@ -69,30 +69,7 @@ abstract class AbstractNodeCalculator implements INodeCalculator {
     }
 
     private final Passibility clearance(byte flags) {
-        return clearance(flags, this.capabilities);
-    }
-
-    static final Passibility clearance(byte flags, IPathingEntity.Capabilities capabilities) {
-        if (Element.earth.in(flags))
-            if (Logic.ladder.in(flags))
-                return Passibility.passible;
-            else if (Logic.fuzzy.in(flags))
-                return Passibility.risky;
-            else
-                return Passibility.impassible;
-        else if (Element.water.in(flags)) {
-            if (capabilities.fireResistant())
-                return Passibility.dangerous;
-            else if (capabilities.aquatic() && capabilities.swimmer())
-                return Passibility.passible;
-            else
-                return Passibility.risky;
-        } else if (Element.fire.in(flags))
-            return capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
-        else if (capabilities.aquatic())
-            return Passibility.risky;
-        else
-            return Passibility.passible;
+        return PassibilityHelpers.clearance(flags, this.capabilities);
     }
 
     protected final float topOffsetAt(FlagSampler sampler, int x, int y, int z) {

@@ -6,18 +6,43 @@ import java.text.MessageFormat;
 
 class PassibilityHelpers {
     static boolean impedesMovement(byte flags, IPathingEntity.Capabilities capabilities) {
-        return (Element.earth.in(flags) && !(Logic.doorway.in(flags) && capabilities.opensDoors()) && !Logic.ladder.in(flags))
-                || (Element.air.in(flags) && Logic.doorway.in(flags) && capabilities.avoidsDoorways());
+        return (Element.earth.in(flags) && !passibleDoorway(flags, capabilities) && !Logic.ladder.in(flags))
+                || (Element.air.in(flags) && impassibleDoorway(flags, capabilities));
+    }
+
+    static Passibility clearance(byte flags, IPathingEntity.Capabilities capabilities) {
+        if (Element.earth.in(flags))
+            if (Logic.ladder.in(flags) || passibleDoorway(flags, capabilities))
+                return Passibility.passible;
+            else if (Logic.fuzzy.in(flags))
+                return Passibility.risky;
+            else
+                return Passibility.impassible;
+        else if (Element.water.in(flags)) {
+            if (capabilities.fireResistant())
+                return Passibility.dangerous;
+            else if (capabilities.aquatic() && capabilities.swimmer())
+                return Passibility.passible;
+            else
+                return Passibility.risky;
+        } else if (Element.fire.in(flags))
+            return capabilities.fireResistant() ? Passibility.risky : Passibility.dangerous;
+        else if (impassibleDoorway(flags, capabilities))
+            return Passibility.impassible;
+        else if (capabilities.aquatic())
+            return Passibility.risky;
+        else
+            return Passibility.passible;
     }
 
     static Passibility passibilityFrom(byte flags, IPathingEntity.Capabilities capabilities) {
-        if (Logic.doorway.in(flags) && capabilities.avoidsDoorways())
+        if (impassibleDoorway(flags, capabilities))
             return Passibility.impassible;
 
         final Element kind = Element.of(flags);
         switch (kind) {
             case earth:
-                if (Logic.ladder.in(flags) || (Logic.doorway.in(flags) && capabilities.opensDoors()))
+                if (Logic.ladder.in(flags) || (passibleDoorway(flags, capabilities)))
                     return Passibility.passible;
                 else
                     return Passibility.impassible;
@@ -56,5 +81,13 @@ class PassibilityHelpers {
             return Gravitation.airborne;
 
         return Gravitation.grounded;
+    }
+
+    private static boolean passibleDoorway(byte flags, IPathingEntity.Capabilities capabilities) {
+        return Logic.doorway.in(flags) && capabilities.opensDoors() && !capabilities.avoidsDoorways();
+    }
+
+    private static boolean impassibleDoorway(byte flags, IPathingEntity.Capabilities capabilities) {
+        return Logic.doorway.in(flags) && capabilities.avoidsDoorways();
     }
 }

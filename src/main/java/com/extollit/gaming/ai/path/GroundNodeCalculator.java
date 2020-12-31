@@ -74,7 +74,8 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 );
 
                 byte flags = flagSampler.flagsAt(x, y, z);
-                if (impedesMovement(flags, capabilities)) {
+                final boolean impedesMovement;
+                if (impedesMovement = impedesMovement(flags, capabilities)) {
                     final float partialDisparity = partY - topOffsetAt(flags, x, y++, z);
                     flags = flagSampler.flagsAt(x, y, z);
 
@@ -99,8 +100,14 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, ys = y, z, partY);
 
                 boolean swimable = false;
-                for (int j = 0; unstable(flags) && !(swimable = swimable(flags)) && j <= MAX_SURVIVE_FALL_DISTANCE; j++)
-                    flags = flagSampler.flagsAt(x, --y, z);
+                {
+                    boolean condition = !impedesMovement || unstable(flags);
+                    for (int j = 0;
+                         condition && !(swimable = swimable(flags)) && j <= MAX_SURVIVE_FALL_DISTANCE;
+                         j++, condition = unstable(flags)
+                            )
+                        flags = flagSampler.flagsAt(x, --y, z);
+                }
 
                 if (swimable) {
                     final int cesaLimit = y + CESA_LIMIT;
