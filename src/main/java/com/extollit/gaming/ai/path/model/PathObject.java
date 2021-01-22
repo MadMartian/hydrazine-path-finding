@@ -132,33 +132,9 @@ public final class PathObject implements IPath {
                 fy = 1;
             }
 
-            int adjacentIndex;
-            double minDistanceSquared = Double.MAX_VALUE;
-
-            {
-                final com.extollit.linalg.immutable.Vec3d currentPosition = subject.coordinates();
-                final float width = subject.width();
-                final float offset = pointToPositionOffset(width);
-                final Vec3d d = new Vec3d(currentPosition);
-                final int end = unlevelIndex + 1;
-
-                for (int i = adjacentIndex = this.adjacentIndex; i < this.length && i < end; ++i) {
-                    final Node node = this.nodes[i];
-                    final Vec3i pp = node.key;
-                    d.sub(pp);
-                    d.sub(offset, 0, offset);
-                    d.y *= fy;
-
-                    final double distanceSquared = d.mg2();
-
-                    if (distanceSquared < minDistanceSquared) {
-                        adjacentIndex = i;
-                        minDistanceSquared = distanceSquared;
-                    }
-
-                    d.set(currentPosition);
-                }
-            }
+            final int adjacentIndex0 = this.adjacentIndex;
+            final double minDistanceSquared = updateNearestAdjacentIndex(subject, unlevelIndex, fy);
+            final int adjacentIndex = this.adjacentIndex;
 
             int targetIndex = this.i;
             if (minDistanceSquared <= PATHPOINT_SNAP_MARGIN_SQ) {
@@ -172,7 +148,7 @@ public final class PathObject implements IPath {
             } else if (minDistanceSquared > 0.5 || targetIndex < this.taxiUntil)
                 targetIndex = adjacentIndex;
 
-            mutated = adjacentIndex > this.adjacentIndex;
+            mutated = adjacentIndex > adjacentIndex0;
             this.adjacentIndex = adjacentIndex;
             this.i = Math.max(adjacentIndex, targetIndex);
 
@@ -195,6 +171,35 @@ public final class PathObject implements IPath {
                     this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
             }
         }
+    }
+
+    private double updateNearestAdjacentIndex(IPathingEntity subject, int unlevelIndex, float fy) {
+        double minDistanceSquared = Double.MAX_VALUE;
+        int nextAdjacentIndex;
+        final com.extollit.linalg.immutable.Vec3d currentPosition = subject.coordinates();
+        final float width = subject.width();
+        final float offset = pointToPositionOffset(width);
+        final Vec3d d = new Vec3d(currentPosition);
+        final int end = unlevelIndex + 1;
+
+        for (int i = nextAdjacentIndex = this.adjacentIndex; i < this.length && i < end; ++i) {
+            final Node node = this.nodes[i];
+            final Vec3i pp = node.key;
+            d.sub(pp);
+            d.sub(offset, 0, offset);
+            d.y *= fy;
+
+            final double distanceSquared = d.mg2();
+
+            if (distanceSquared < minDistanceSquared) {
+                nextAdjacentIndex = i;
+                minDistanceSquared = distanceSquared;
+            }
+
+            d.set(currentPosition);
+        }
+        this.adjacentIndex = nextAdjacentIndex;
+        return minDistanceSquared;
     }
 
     private void moveSubjectTo(IPathingEntity subject, INode pathPoint) {
