@@ -13,6 +13,7 @@ import java.util.Random;
 import static com.extollit.num.FastMath.*;
 
 public final class PathObject implements IPath {
+    private static final double PATHPOINT_SNAP_MARGIN_SQ = 0.25;
     private static FloatRange DIRECT_LINE_TIME_LIMIT = new FloatRange(1, 2);
 
     final Node[] nodes;
@@ -160,7 +161,7 @@ public final class PathObject implements IPath {
             }
 
             int targetIndex = this.i;
-            if (minDistanceSquared <= 0.25) {
+            if (minDistanceSquared <= PATHPOINT_SNAP_MARGIN_SQ) {
                 int advanceTargetIndex;
 
                 targetIndex = adjacentIndex;
@@ -186,7 +187,7 @@ public final class PathObject implements IPath {
 
             final INode node = done() ? last() : current();
             if (node != null)
-                subject.moveTo(positionFor(subject, node.coordinates()), node.passibility(), node.gravitation());
+                moveSubjectTo(subject, node);
         } finally {
             if (mutated || this.lastMutationTime < 0) {
                 this.lastMutationTime = subject.age() * this.speed;
@@ -194,6 +195,14 @@ public final class PathObject implements IPath {
                     this.nextDirectLineTimeout = DIRECT_LINE_TIME_LIMIT.next(this.random);
             }
         }
+    }
+
+    private void moveSubjectTo(IPathingEntity subject, INode pathPoint) {
+        final Vec3d d = new Vec3d(subject.coordinates());
+        final com.extollit.linalg.immutable.Vec3d position = positionFor(subject, pathPoint.coordinates());
+        d.sub(position);
+        if (d.mg2() > PATHPOINT_SNAP_MARGIN_SQ)
+            subject.moveTo(position, pathPoint.passibility(), pathPoint.gravitation());
     }
 
     @Override
