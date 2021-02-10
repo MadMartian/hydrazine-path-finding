@@ -21,6 +21,23 @@ public interface IPathingEntity extends IDynamicMovableObject {
     int age();
 
     /**
+     * Whether this pathing entity is bound to some external force or third party that frequently accelerates it
+     * independent of path-finding.  For example, if this pathing entity is a sheep and it is being hauled by a player
+     * with a rope, then this property should return true and this pathing entity would be considered "bound".  Another
+     * example is if a pathing entity is grabbed by a monster such as a yeti or a gorilla that carries or even throws
+     * the pathing entity a rather large distance.
+     *
+     * This property influences path-finding by regularly checking if the pathing entity's current target is still
+     * relevant by comparing its position relative to the current target and the ultimate destination.  The dot product
+     * is used on these vectors to determine whether a new A* graph and target should be computed iff this pathing entity
+     * is bound.
+     *
+     * @return True to indicate that this pathing entity is bound by external forces, in most cases entities are not
+     * "bound" and thus this property should return false.
+     */
+    boolean bound();
+
+    /**
      * The maximum path-finding range for the entity.  Although the current engine is limited to computing paths no more
      * than 32 blocks in length, if this value is greater than that then the engine will attempt to compute a path toward
      * the destination and refine periodically.

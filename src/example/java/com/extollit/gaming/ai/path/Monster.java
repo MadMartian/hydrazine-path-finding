@@ -6,7 +6,7 @@ import com.extollit.gaming.ai.path.model.Passibility;
 import com.extollit.linalg.immutable.Vec3d;
 
 public class Monster implements IPathingEntity, IPathingEntity.Capabilities {
-    public boolean fireResistant, cautious, climber, swimmer, aquatic, avian, aquaphobic, avoidsDoorways, opensDoors;
+    public boolean fireResistant, cautious, climber, swimmer, aquatic, avian, aquaphobic, avoidsDoorways, opensDoors, bound;
 
     private final com.extollit.linalg.mutable.Vec3d position = new com.extollit.linalg.mutable.Vec3d(0, 0, 0);
 
@@ -15,6 +15,11 @@ public class Monster implements IPathingEntity, IPathingEntity.Capabilities {
     @Override
     public int age() {
         return this.age;
+    }
+
+    @Override
+    public boolean bound() {
+        return this.bound;
     }
 
     @Override

@@ -51,7 +51,7 @@ public class HydrazinePathFinder {
     private IPathProcessor pathProcessor;
     private IPath currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent, bestEffort;
+    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent, bestEffort, bound;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
     private int faultCount, nextGraphResetFailureCount;
@@ -274,7 +274,7 @@ public class HydrazinePathFinder {
 
         final boolean initiate = updateDestination(x, y, z) && this.queue.isEmpty();
 
-        if (!graphTimeout() && (initiate || reachedTarget() || triageTimeout() || destinationDeviatedFromTarget()))
+        if (!graphTimeout() && (initiate || reachedTarget() || triageTimeout() || deviationToTargetUnacceptable(this.subject)))
             resetTriage();
 
         return triage(this.initComputeIterations);
@@ -301,7 +301,7 @@ public class HydrazinePathFinder {
      * @return the next and updated / refined path or null if the destination is unreachable
      */
     public IPath updatePathFor(IPathingEntity pathingEntity) {
-        final IPath path = update();
+        final IPath path = update(pathingEntity);
         if (path == null)
             return null;
 
@@ -367,7 +367,7 @@ public class HydrazinePathFinder {
         return this.pathProcessor;
     }
 
-    protected IPath update() {
+    protected IPath update(IPathingEntity pathingEntity) {
         if (this.destinationEntity != null)
             updateDestination(this.destinationEntity.coordinates());
 
@@ -382,16 +382,17 @@ public class HydrazinePathFinder {
             return null;
         }
 
-        if (triageTimeout() || destinationDeviatedFromTarget())
+        if (triageTimeout() || deviationToTargetUnacceptable(pathingEntity))
             resetTriage();
 
         return triage(this.periodicComputeIterations);
     }
 
-    private boolean destinationDeviatedFromTarget() {
+    private boolean deviationToTargetUnacceptable(IPathingEntity pathingEntity) {
+        final Vec3d destinationPosition = this.destinationPosition;
         final com.extollit.linalg.mutable.Vec3d
                 dt = new com.extollit.linalg.mutable.Vec3d(this.targetPosition),
-                dd = new com.extollit.linalg.mutable.Vec3d(this.destinationPosition);
+                dd = new com.extollit.linalg.mutable.Vec3d(destinationPosition);
 
         final Vec3i source = this.source.key;
         dt.sub(source);
@@ -403,7 +404,24 @@ public class HydrazinePathFinder {
         dt.normalize();
         dd.normalize();
 
-        return dt.dot(dd) < DOT_THRESHOLD;
+        if (dt.dot(dd) < DOT_THRESHOLD)
+            return true;
+
+        if (this.bound && PathObject.active(this.currentPath))
+        {
+            dt.set(this.currentPath.current().coordinates());
+            dd.x = destinationPosition.x;
+            dd.y = destinationPosition.y;
+            dd.z = destinationPosition.z;
+
+            final com.extollit.linalg.immutable.Vec3d pos = pathingEntity.coordinates();
+            dt.sub(pos);
+            dd.sub(pos);
+
+            return dt.dot(dd) < 0;
+        }
+
+        return false;
     }
 
     private boolean triageTimeout() {
@@ -537,7 +555,8 @@ public class HydrazinePathFinder {
     }
 
     private void applySubject() {
-        final IPathingEntity.Capabilities capabilities = this.capabilities = this.subject.capabilities();
+        final IPathingEntity subject = this.subject;
+        final IPathingEntity.Capabilities capabilities = this.capabilities = subject.capabilities();
         final boolean
             flying = capabilities.avian(),
             aqua = capabilities.swimmer() && capabilities.aquatic();
@@ -550,10 +569,11 @@ public class HydrazinePathFinder {
             this.aqua = aqua;
         }
 
-        this.actualSize = subject.width();
-        this.pathPointCalculator.applySubject(this.subject);
-        final float pathSearchRange = this.subject.searchRange();
+        this.actualSize = this.subject.width();
+        this.pathPointCalculator.applySubject(subject);
+        final float pathSearchRange = subject.searchRange();
         this.searchRangeSquared = pathSearchRange*pathSearchRange;
+        this.bound = subject.bound();
     }
 
     private boolean setTargetFor(Node source) {

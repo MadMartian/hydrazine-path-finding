@@ -256,7 +256,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(1, 9, -1);
 
         when(destinationEntity.coordinates()).thenReturn(new Vec3d(1, 10, -1));
-        pathObject = pathFinder.update();
+        pathObject = pathFinder.update(pathingEntity);
 
         assertNotNull(pathObject);
         last = pathObject.last();
@@ -380,13 +380,13 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         verify(pathingEntity).moveTo(new Vec3d(0.5, 0, 3.5), Passibility.passible, Gravitation.grounded);
         pos(0.5, 0, 1.5);
 
-        IPath path2 = pathFinder.update();
+        IPath path2 = pathFinder.update(pathingEntity);
 
         assertSame(path, path2);
 
         when(pathingEntity.age()).thenReturn(100);
 
-        path2 = pathFinder.update();
+        path2 = pathFinder.update(pathingEntity);
 
         assertNotSame(path, path2);
         path = path2;
@@ -394,7 +394,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         path.update(pathingEntity);
         when(pathingEntity.age()).thenReturn(200);
 
-        path2 = pathFinder.update();
+        path2 = pathFinder.update(pathingEntity);
         assertTrue(path.sameAs(path2));
         path2.update(pathingEntity);
 

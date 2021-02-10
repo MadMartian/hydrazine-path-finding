@@ -1,6 +1,7 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
+import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.tuple.Pair;
 import org.junit.Test;
@@ -504,6 +505,70 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         final IPath path = pathFinder.initiatePathTo(0, 0, 400, false);
 
         assertNull(path);
+    }
+
+    private void setupBoundTests() {
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        when(destinationEntity.coordinates()).thenReturn(new Vec3d(0, 0, 20));
+        final IPath path = pathFinder.trackPathTo(destinationEntity);
+
+        advance(pathingEntity, path);
+        path.update(pathingEntity);
+
+        when(destinationEntity.coordinates()).thenReturn(new Vec3d(0, 0, 30));
+    }
+
+    @Test
+    public void boundControl() {
+        when(pathingEntity.bound()).thenReturn(true);
+        setupBoundTests();
+        pos(0, 0, 2);
+
+        final IPath path = pathFinder.updatePathFor(pathingEntity);
+
+        // This is a round-about way to detect that resetTriage was NOT called
+        assertPath(
+            path,
+
+            new Vec3i(0, 0, 0),
+            new Vec3i(0, 0, 1),
+            new Vec3i(0, 0, 2),
+            new Vec3i(0, 0, 3),
+            new Vec3i(0, 0, 4)
+        );
+    }
+
+    @Test
+    public void boundReset() {
+        when(pathingEntity.bound()).thenReturn(true);
+        setupBoundTests();
+        pos(0, 0, 5);
+
+        final IPath path = pathFinder.updatePathFor(pathingEntity);
+
+        // This is a round-about way to detect that resetTriage WAS called
+        assertPath(path, new Vec3i(0, 0, 5), new Vec3i(0, 0, 6));
+    }
+
+    @Test
+    public void unboundControl() {
+        setupBoundTests();
+        pos(0, 0, 5);
+
+        final IPath path = pathFinder.updatePathFor(pathingEntity);
+
+        // This is a round-about way to detect that resetTriage WAS called
+        assertPath(
+                path,
+
+                new Vec3i(0, 0, 0),
+                new Vec3i(0, 0, 1),
+                new Vec3i(0, 0, 2),
+                new Vec3i(0, 0, 3),
+                new Vec3i(0, 0, 4)
+        );
     }
 
     @Test
