@@ -10,7 +10,7 @@ import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.Random;
 
-import static com.extollit.num.FastMath.*;
+import static java.lang.Math.*;
 
 public final class PathObject implements IPath {
     private static final double PATHPOINT_SNAP_MARGIN_SQ = 0.25;
@@ -178,7 +178,7 @@ public final class PathObject implements IPath {
         int nextAdjacentIndex;
         final com.extollit.linalg.immutable.Vec3d currentPosition = subject.coordinates();
         final float width = subject.width();
-        final float offset = pointToPositionOffset(width);
+        final double offset = pointToPositionOffset(width);
         final Vec3d d = new Vec3d(currentPosition);
         final int end = unlevelIndex + 1;
 
@@ -221,7 +221,7 @@ public final class PathObject implements IPath {
     }
 
     public static com.extollit.linalg.immutable.Vec3d positionFor(IPathingEntity subject, Vec3i point) {
-        final float offset = pointToPositionOffset(subject.width());
+        final double offset = pointToPositionOffset(subject.width());
         return new com.extollit.linalg.immutable.Vec3d(
                 point.x + offset,
                 point.y,
@@ -229,8 +229,8 @@ public final class PathObject implements IPath {
         );
     }
 
-    private static float pointToPositionOffset(final float subjectWidth) {
-        final float dw = (float)(ceil(subjectWidth)) / 2;
+    private static double pointToPositionOffset(final float subjectWidth) {
+        final double dw = ceil(subjectWidth) / 2;
         return dw - floor(dw);
     }
 
@@ -385,7 +385,7 @@ public final class PathObject implements IPath {
     }
 
     private int unlevelIndex(int from, com.extollit.linalg.immutable.Vec3d position) {
-        final int y0 = floor(position.y);
+        final int y0 = (int)floor(position.y);
         final Node [] nodes = this.nodes;
         int levelIndex = length();
 
@@ -450,7 +450,7 @@ public final class PathObject implements IPath {
     }
 
     public void adjustPathPosition(IPath formerPath, final IPathingEntity pathingEntity) {
-        final float pointOffset = pointToPositionOffset(pathingEntity.width());
+        final double pointOffset = pointToPositionOffset(pathingEntity.width());
         final int length = this.length;
         final Node []
             nodes = this.nodes;

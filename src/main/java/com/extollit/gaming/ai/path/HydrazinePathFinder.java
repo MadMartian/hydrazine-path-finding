@@ -12,8 +12,7 @@ import java.util.Random;
 import java.util.Set;
 
 import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
-import static com.extollit.num.FastMath.ceil;
-import static com.extollit.num.FastMath.floor;
+import static java.lang.Math.*;
 
 /**
  * This is the primary path-finding object and root instance for the library.  There is precisely one instance of this
@@ -454,11 +453,13 @@ public class HydrazinePathFinder {
                 destinationPosition = this.destinationPosition;
 
         updateFieldWindow(
-                floor(sourcePosition.x),
-                floor(sourcePosition.z),
+                (int)floor(sourcePosition.x),
+                (int)floor(sourcePosition.z),
 
-                floor(destinationPosition.x),
-                floor(destinationPosition.z), true
+                (int)floor(destinationPosition.x),
+                (int)floor(destinationPosition.z),
+
+                true
         );
 
         applySubject();
@@ -651,9 +652,9 @@ public class HydrazinePathFinder {
 
         final IDynamicMovableObject destinationEntity = this.destinationEntity;
         final float entityWidth = this.subject.width();
-        int entitySize = ceil(
+        int entitySize = (int)ceil(
                 destinationEntity != null ?
-                        Math.max(entityWidth, destinationEntity.width()) :
+                        max(entityWidth, destinationEntity.width()) :
                         entityWidth
         );
 
@@ -668,9 +669,9 @@ public class HydrazinePathFinder {
 
     private Node edgeAtTarget(final double x, final double y, final double z) {
         final int
-                nx = floor(x),
-                ny = floor(y),
-                nz = floor(z);
+                nx = (int)floor(x),
+                ny = (int)floor(y),
+                nz = (int)floor(z);
 
         final Node node;
 
@@ -703,9 +704,9 @@ public class HydrazinePathFinder {
     private Node pointAtSource() {
         final Vec3d sourcePosition = this.sourcePosition;
         final int
-                x = floor(sourcePosition.x),
-                y = floor(sourcePosition.y),
-                z = floor(sourcePosition.z);
+                x = (int)floor(sourcePosition.x),
+                y = (int)floor(sourcePosition.y),
+                z = (int)floor(sourcePosition.z);
 
         Node candidate = cachedPassiblePointNear(x, y, z);
         if (impassible(candidate))
@@ -744,9 +745,9 @@ public class HydrazinePathFinder {
 
     private static boolean differs(final double x, final double y, final double z, Vec3d other) {
         return
-            floor(other.x) != floor(x) ||
-            floor(other.y) != floor(y) ||
-            floor(other.z) != floor(z);
+            (int)floor(other.x) != (int)floor(x) ||
+            (int)floor(other.y) != (int)floor(y) ||
+            (int)floor(other.z) != (int)floor(z);
     }
 
     private boolean reachedTarget() {
@@ -768,8 +769,8 @@ public class HydrazinePathFinder {
             this.sourcePosition = new Vec3d(coordinates.x, coordinates.y, coordinates.z);
 
         final int
-            x = floor(coordinates.x),
-            z = floor(coordinates.z);
+            x = (int)floor(coordinates.x),
+            z = (int)floor(coordinates.z);
 
         updateFieldWindow(x, z, x, z, false);
 
@@ -1070,9 +1071,8 @@ public class HydrazinePathFinder {
         updateSourcePosition();
 
         final int
-                x = floor(sourcePosition.x),
-                y = floor(sourcePosition.y),
-                z = floor(sourcePosition.z);
+                x = (int)floor(sourcePosition.x),
+                z = (int)floor(sourcePosition.z);
 
         applySubject();
         updateFieldWindow(x, z, tx, tz, false);
