@@ -1,7 +1,11 @@
 package com.extollit.gaming.ai.path.model;
 
+import com.extollit.gaming.ai.path.persistence.*;
 import com.extollit.linalg.immutable.Vec3i;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.Objects;
@@ -319,5 +323,54 @@ public class Node implements INode {
         result = 31 * result + (key.y >> 4);
         result = 31 * result + (key.z >> 4);
         return result;
+    }
+
+    public static final class ReaderWriter implements PartialObjectWriter<Node>, PartialObjectReader<Node>, LinkableWriter<Node, Node>, LinkableReader<Node, Node> {
+        public static final ReaderWriter INSTANCE = new ReaderWriter();
+
+        private ReaderWriter() {}
+
+        @Override
+        public void readLinkages(Node node, ReferableObjectInput<Node> in) throws IOException {
+            if (in.readBoolean())
+                node.previous = in.readRef();
+
+            byte count = in.readByte();
+            if (count-- > 0) {
+                final NodeLinkedList children = node.children = new NodeLinkedList(in.readRef());
+                while (count-- > 0)
+                    children.add(in.readRef());
+            }
+        }
+
+        @Override
+        public void writeLinkages(Node node, ReferableObjectOutput<Node> out) throws IOException {
+            final Node previous = node.previous;
+            out.writeBoolean(previous != null);
+            if (previous != null)
+                out.writeRef(previous);
+
+            if (node.children == null)
+                out.writeByte(0);
+            else {
+                out.writeByte(node.children.size());
+                for (Node child : node.children)
+                    out.writeRef(child);
+            }
+        }
+
+        @Override
+        public Node readPartialObject(ObjectInput in) throws IOException {
+            final Vec3i key = Vec3iReaderWriter.INSTANCE.readPartialObject(in);
+            final Node node = new Node(key);
+            node.word = in.readInt();
+            return node;
+        }
+
+        @Override
+        public void writePartialObject(Node node, ObjectOutput out) throws IOException {
+            Vec3iReaderWriter.INSTANCE.writePartialObject(node.key, out);
+            out.writeInt(node.word);
+        }
     }
 }
