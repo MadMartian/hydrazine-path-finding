@@ -1,11 +1,16 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
+import com.extollit.gaming.ai.path.persistence.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -24,7 +29,7 @@ import static java.lang.Math.*;
  * To use this class, first initiate path-finding using one of the initiation methods, then call {@link #updatePathFor(IPathingEntity)}
  * each tick to iterate on the path until it is completed.  To abort path-finding call {@link #reset()}
  */
-public class HydrazinePathFinder {
+public class HydrazinePathFinder implements Externalizable {
     private static final AxisAlignedBBox FULL_BOUNDS = new AxisAlignedBBox(0, 0, 0, 1, 1, 1);
 
     private static double DOT_THRESHOLD = 0.6;
@@ -1129,5 +1134,138 @@ public class HydrazinePathFinder {
 
         final Node point = this.nodeMap.cachedPassiblePointNear(tx, ty, tz);
         return new PassibilityResult(point.passibility(), point.key);
+    }
+    
+    private static final class NodeBindingsReaderWriter implements LinkableReader<HydrazinePathFinder, Node>, LinkableWriter<HydrazinePathFinder, Node> {
+        public static final NodeBindingsReaderWriter INSTANCE = new NodeBindingsReaderWriter();
+        
+        private NodeBindingsReaderWriter() {}
+
+        @Override
+        public void readLinkages(HydrazinePathFinder object, ReferableObjectInput<Node> in) throws IOException {
+            object.current = in.readRef();
+            object.source = in.readRef();
+            object.target = in.readRef();
+            object.closest = in.readRef();
+        }
+
+        @Override
+        public void writeLinkages(HydrazinePathFinder object, ReferableObjectOutput<Node> out) throws IOException {
+            out.writeRef(object.current);
+            out.writeRef(object.source);
+            out.writeRef(object.target);
+            out.writeRef(object.closest);
+        }
+    }
+
+    private static final class PathReaderWriter implements LinkableReader<HydrazinePathFinder, Node>, LinkableWriter<HydrazinePathFinder, Node> {
+        public static final PathReaderWriter INSTANCE = new PathReaderWriter();
+
+        private PathReaderWriter() {}
+
+        @Override
+        public void readLinkages(HydrazinePathFinder pathFinder, ReferableObjectInput<Node> in) throws IOException {
+            switch (PathType.values()[in.readByte()]) {
+                case complete: {
+                    final PathObject pathObject = PathObject.ReaderWriter.INSTANCE.readPartialObject(in);
+                    PathObject.ReaderWriter.INSTANCE.readLinkages(pathObject, in);
+                    pathFinder.currentPath = pathObject;
+                    break;
+                }
+
+                case incomplete: {
+                    pathFinder.currentPath = new IncompletePath(in.readRef());
+                    break;
+                }
+
+                case none:
+                    pathFinder.currentPath = null;
+                    break;
+            }
+        }
+
+        @Override
+        public void writeLinkages(HydrazinePathFinder object, ReferableObjectOutput<Node> out) throws IOException {
+            if (object.currentPath instanceof PathObject) {
+                out.writeByte(PathType.complete.ordinal());
+                final PathObject pathObject = (PathObject) object.currentPath;
+                PathObject.ReaderWriter.INSTANCE.writePartialObject(pathObject, out);
+                PathObject.ReaderWriter.INSTANCE.writeLinkages(pathObject, out);
+            } else if (object.currentPath instanceof IncompletePath) {
+                out.writeByte(PathType.incomplete.ordinal());
+                out.writeRef((Node) object.currentPath.current());
+            } else if (object.currentPath == null)
+                out.writeByte(PathType.none.ordinal());
+            else
+                throw new IOException("Unhandled type: " + object.currentPath.getClass());
+        }
+    }
+    
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
+
+        out.writeByte(this.unreachableFromSource.size());
+        for (Vec3i coords : this.unreachableFromSource)
+            Vec3iReaderWriter.INSTANCE.writePartialObject(coords, out);
+        
+        MutableVec3dReaderWriter.INSTANCE.writePartialObject(this.sourcePosition, out);
+        MutableVec3dReaderWriter.INSTANCE.writePartialObject(this.destinationPosition, out);
+        DummyDynamicMovableObject.ReaderWriter.INSTANCE.writePartialObject(this.destinationEntity, out);
+
+        out.writeBoolean(this.flying);
+        out.writeBoolean(this.aqua);
+        out.writeBoolean(this.pathPointCalculatorChanged);
+        out.writeBoolean(this.trimmedToCurrent);
+        out.writeBoolean(this.targetingStrategy == PathOptions.TargetingStrategy.bestEffort);
+        
+        out.writeInt(this.initComputeIterations);
+        out.writeInt(this.periodicComputeIterations);
+        out.writeInt(this.faultCount);
+        out.writeInt(this.nextGraphResetFailureCount);
+        
+        out.writeFloat(this.searchRangeSquared);
+        out.writeFloat(this.passiblePointPathTimeLimit);
+        out.writeFloat(this.nextGraphCacheReset);
+        out.writeFloat(this.actualSize);
+
+        nodeMap.writeTo(out, identities);
+        identities.writeLinks(queue, queue, out);
+        identities.writeLinks(NodeBindingsReaderWriter.INSTANCE, this, out);
+        identities.writeLinks(PathReaderWriter.INSTANCE, this, out);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException {
+        final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
+
+        byte count = in.readByte();
+        while (count-- > 0)
+            this.unreachableFromSource.add(Vec3iReaderWriter.INSTANCE.readPartialObject(in));
+
+        this.sourcePosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+        this.destinationPosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+        this.destinationEntity = DummyDynamicMovableObject.ReaderWriter.INSTANCE.readPartialObject(in);
+
+        this.flying = in.readBoolean();
+        this.aqua = in.readBoolean();
+        this.pathPointCalculatorChanged = in.readBoolean();
+        this.trimmedToCurrent = in.readBoolean();
+        this.targetingStrategy = in.readBoolean() ? PathOptions.TargetingStrategy.bestEffort : PathOptions.TargetingStrategy.none;
+
+        this.initComputeIterations = in.readInt();
+        this.periodicComputeIterations = in.readInt();
+        this.faultCount = in.readInt();
+        this.nextGraphResetFailureCount = in.readInt();
+
+        this.searchRangeSquared = in.readFloat();
+        this.passiblePointPathTimeLimit = in.readFloat();
+        this.nextGraphCacheReset = in.readFloat();
+        this.actualSize = in.readFloat();
+
+        nodeMap.readFrom(in, identities);
+        identities.readLinks(queue, queue, in);
+        identities.readLinks(NodeBindingsReaderWriter.INSTANCE, this, in);
+        identities.readLinks(PathReaderWriter.INSTANCE, this, in);
     }
 }

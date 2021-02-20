@@ -1,8 +1,12 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.collect.SparseSpatialMap;
+import com.extollit.gaming.ai.path.persistence.*;
 import com.extollit.linalg.immutable.Vec3i;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 
 public final class NodeMap {
@@ -221,5 +225,39 @@ public final class NodeMap {
     @Override
     public int hashCode() {
         return it.hashCode();
+    }
+
+    private final class MapReaderWriter extends Vec3iReaderWriter implements LinkableReader<Vec3i, Node>, LinkableWriter<Vec3i, Node> {
+        @Override
+        public void readLinkages(Vec3i object, ReferableObjectInput<Node> in) throws IOException {
+            it.put(object, in.readRef());
+        }
+
+        @Override
+        public void writeLinkages(Vec3i object, ReferableObjectOutput<Node> out) throws IOException {
+            out.writeRef(it.get(object));
+        }
+    }
+
+    public void writeTo(ObjectOutput out, IdentityMapper<Node, Node.ReaderWriter> nodeIdentityMap) throws IOException {
+        out.writeInt(this.cx0);
+        out.writeInt(this.cz0);
+        out.writeInt(this.cxN);
+        out.writeInt(this.czN);
+
+        final SparseSpatialMap<Node> it = this.it;
+        nodeIdentityMap.writeAll(Node.ReaderWriter.INSTANCE, it.values(), out);
+        nodeIdentityMap.writeWith(new MapReaderWriter(), it.keySet(), out);
+    }
+
+    public void readFrom(ObjectInput in, IdentityMapper<Node, Node.ReaderWriter> nodeIdentityMap) throws IOException {
+        this.cx0 = in.readInt();
+        this.cz0 = in.readInt();
+        this.cxN = in.readInt();
+        this.czN = in.readInt();
+
+        final Iterable<Node> nodes = nodeIdentityMap.readAll(in);
+        nodeIdentityMap.readLinks(Node.ReaderWriter.INSTANCE, nodes, in);
+        nodeIdentityMap.readWith(new MapReaderWriter(), in);
     }
 }

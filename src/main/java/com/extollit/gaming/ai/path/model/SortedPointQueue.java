@@ -1,12 +1,17 @@
 package com.extollit.gaming.ai.path.model;
 
+import com.extollit.gaming.ai.path.persistence.LinkableReader;
+import com.extollit.gaming.ai.path.persistence.LinkableWriter;
+import com.extollit.gaming.ai.path.persistence.ReferableObjectInput;
+import com.extollit.gaming.ai.path.persistence.ReferableObjectOutput;
 import com.extollit.linalg.immutable.Vec3i;
 
+import java.io.IOException;
 import java.util.*;
 
 import static com.extollit.gaming.ai.path.model.Node.squareDelta;
 
-public final class SortedPointQueue {
+public final class SortedPointQueue implements LinkableReader<SortedPointQueue, Node>, LinkableWriter<SortedPointQueue, Node> {
     private static final float CULL_THRESHOLD = 0.1f;
 
     private final ArrayList<Node> list = new ArrayList<>(8);
@@ -315,5 +320,21 @@ public final class SortedPointQueue {
     @Override
     public int hashCode() {
         return list.hashCode();
+    }
+
+    @Override
+    public void readLinkages(SortedPointQueue object, ReferableObjectInput<Node> in) throws IOException {
+        final ArrayList<Node> list = object.list;
+        int count = in.readInt();
+        while (count-- > 0)
+            list.add(in.readRef());
+    }
+
+    @Override
+    public void writeLinkages(SortedPointQueue object, ReferableObjectOutput<Node> out) throws IOException {
+        final ArrayList<Node> list = object.list;
+        out.writeInt(list.size());
+        for (Node node : list)
+            out.writeRef(node);
     }
 }

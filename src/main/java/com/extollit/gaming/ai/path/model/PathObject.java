@@ -1,10 +1,14 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.gaming.ai.path.IConfigModel;
+import com.extollit.gaming.ai.path.persistence.*;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -500,5 +504,50 @@ public final class PathObject implements IPath {
                 return true;
 
         return false;
+    }
+    
+    public static final class ReaderWriter implements PartialObjectWriter<PathObject>, PartialObjectReader<PathObject>, LinkableWriter<PathObject, Node>, LinkableReader<PathObject, Node> {
+        public static final ReaderWriter INSTANCE = new ReaderWriter();
+
+        private ReaderWriter() {}
+
+        @Override
+        public void readLinkages(PathObject path, ReferableObjectInput<Node> in) throws IOException {
+            final Node[] nodes = path.nodes;
+            for (int c = 0; c < nodes.length; ++c)
+                nodes[c] = in.readRef();
+        }
+
+        @Override
+        public void writeLinkages(PathObject path, ReferableObjectOutput<Node> out) throws IOException {
+            out.writeShort(path.nodes.length);
+            for (Node node : path.nodes)
+                out.writeRef(node);
+        }
+
+        @Override
+        public PathObject readPartialObject(ObjectInput in) throws IOException {
+            final short count = in.readShort();
+            final PathObject path = new PathObject(in.readFloat(), new Node[count]);
+            path.i = in.readInt();
+            path.taxiUntil = in.readInt();
+            path.adjacentIndex = in.readInt();
+            path.length = in.readInt();
+            path.nextDirectLineTimeout = in.readFloat();
+            path.lastMutationTime = in.readFloat();
+            return path;
+        }
+
+        @Override
+        public void writePartialObject(PathObject path, ObjectOutput out) throws IOException {
+            out.writeShort(path.nodes.length);
+            out.writeFloat(path.speed);
+            out.writeInt(path.i);
+            out.writeInt(path.taxiUntil);
+            out.writeInt(path.adjacentIndex);
+            out.writeInt(path.length);
+            out.writeFloat(path.nextDirectLineTimeout);
+            out.writeFloat(path.lastMutationTime);
+        }
     }
 }
