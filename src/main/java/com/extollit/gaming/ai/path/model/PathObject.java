@@ -514,6 +514,9 @@ public final class PathObject implements IPath {
         @Override
         public void readLinkages(PathObject path, ReferableObjectInput<Node> in) throws IOException {
             final Node[] nodes = path.nodes;
+            if (nodes.length != in.readShort())
+                throw new IOException("Stream corruption detected");
+
             for (int c = 0; c < nodes.length; ++c)
                 nodes[c] = in.readRef();
         }

@@ -1,7 +1,5 @@
 package com.extollit.gaming.ai.path.persistence;
 
-import com.extollit.collect.CollectionsExt;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -17,25 +15,32 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
         this.readerWriter = readerWriter;
     }
 
-    public <A, W extends LinkableWriter<A, T>> Iterable<T> writeAll(Iterable<T> iterable, ObjectOutput out) throws IOException {
-        final Set<T> set = CollectionsExt.toSet(iterable);
-        if (set.size() > Short.MAX_VALUE)
+    public void initialize(LinkableWriter<T, T> writer, Collection<T> iterable, ObjectOutput out) throws IOException {
+        final List<T> map = this.map;
+        if (!map.isEmpty())
+            throw new IllegalStateException("Already initialized");
+
+        final RW readerWriter = this.readerWriter;
+        final ReferenceRecorder<T> recorder = new ReferenceRecorder<T>();
+        final Map<T, Short> reverseMap = this.reverseMap;
+
+        Collection<T> source = iterable;
+        do {
+            for (T object : source) {
+                register(object);
+                writer.writeLinkages(object, recorder);
+            }
+            source = recorder.popRecorded(reverseMap.keySet());
+        } while (!source.isEmpty());
+
+        if (map.size() > Short.MAX_VALUE)
             throw new IOException("Too many objects");
 
-        clear();
-        out.writeShort(set.size());
-        final RW readerWriter = this.readerWriter;
-        for (T object : set) {
-            register(object);
+        out.writeShort(map.size());
+        for (T object : map)
             readerWriter.writePartialObject(object, out);
-        }
 
-        return set;
-    }
-
-    public void writeAll(LinkableWriter<T, T> writer, Iterable<T> iterable, ObjectOutput out) throws IOException {
-        final Iterable<T> converted = writeAll(iterable, out);
-        writeLinksInternal(writer, converted, out);
+        writeLinksInternal(writer, map, out);
     }
 
     public Iterable<T> readAll(ObjectInput in) throws IOException {
@@ -52,9 +57,12 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
     }
 
     public <A, W extends PartialObjectWriter<A> & LinkableWriter<A, T>> void writeWith(W writer, Iterable<A> source, ObjectOutput out) throws IOException {
-        final List<A> list = CollectionsExt.toList(source);
+        final List<A> list = new LinkedList<>();
+        for (A elem : source)
+            list.add(elem);
+
         out.writeInt(list.size());
-        final Output refOut = new Output(out);
+        final ReferenceWriter refOut = new ReferenceWriter(out);
         for (A object : list) {
             writer.writePartialObject(object, out);
             writer.writeLinkages(object, refOut);
@@ -64,25 +72,19 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
     }
 
     private <A, W extends LinkableWriter<A, T>> void writeLinksInternal(W writer, Iterable<A> source, ObjectOutput out) throws IOException {
-        final Output refOut = new Output(out);
+        final ReferenceWriter refOut = new ReferenceWriter(out);
         for (A object : source)
             writer.writeLinkages(object, refOut);
     }
 
     public <A, W extends LinkableWriter<A, T>> void writeLinks(W writer, A object, ObjectOutput out) throws IOException {
-        writer.writeLinkages(object, new Output(out));
-    }
-
-    public <A, W extends LinkableWriter<A, T>> void writeLinks(W writer, Iterable<A> source, ObjectOutput out) throws IOException {
-        final List<A> list = CollectionsExt.toList(source);
-        out.writeInt(list.size());
-        writeLinksInternal(writer, source, out);
+        writer.writeLinkages(object, new ReferenceWriter(out));
     }
 
     public <A, R extends PartialObjectReader<A> & LinkableReader<A, T>> List<A> readWith(R reader, ObjectInput in) throws IOException {
         int count = in.readInt();
         List<A> results = new ArrayList<>(count);
-        final Input refIn = new Input(in);
+        final ReferenceReader refIn = new ReferenceReader(in);
         while (count-- > 0) {
             final A object = reader.readPartialObject(in);
             results.add(object);
@@ -95,11 +97,11 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
     }
 
     public <A, R extends LinkableReader<A, T>> void readLinks(R reader, A object, ObjectInput in) throws IOException {
-        reader.readLinkages(object, new Input(in));
+        reader.readLinkages(object, new ReferenceReader(in));
     }
 
     public <A, R extends LinkableReader<A, T>> void readLinks(R reader, Iterable<A> results, ObjectInput in) throws IOException {
-        final Input refIn = new Input(in);
+        final ReferenceReader refIn = new ReferenceReader(in);
         for (A object : results)
             reader.readLinkages(object, refIn);
     }
@@ -109,8 +111,11 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
         if (map.size() >= Short.MAX_VALUE)
             throw new IOException("Too many objects");
 
-        this.reverseMap.put(object, (short) map.size());
-        map.add(object);
+        final Map<T, Short> reverseMap = this.reverseMap;
+        if (!reverseMap.containsKey(object)) {
+            reverseMap.put(object, (short) map.size());
+            map.add(object);
+        }
     }
 
     public void clear() {
@@ -118,10 +123,76 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
         map.clear();
     }
 
-    private final class Output implements ReferableObjectOutput<T> {
+    private static final class ReferenceRecorder<T> implements ReferableObjectOutput<T> {
+        private final Set<T> recorded = new HashSet<>();
+
+        public final Set<T> popRecorded(Collection<T> pop) {
+            final Set<T> recorded = this.recorded;
+            recorded.removeAll(pop);
+            return Collections.unmodifiableSet(recorded);
+        }
+
+        @Override
+        public void writeRef(T object) throws IOException {
+            this.recorded.add(object);
+        }
+
+        @Override
+        public void writeObject(Object obj) throws IOException {}
+
+        @Override
+        public void write(int b) throws IOException {}
+
+        @Override
+        public void write(byte[] b) throws IOException {}
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {}
+
+        @Override
+        public void writeBoolean(boolean v) throws IOException {}
+
+        @Override
+        public void writeByte(int v) throws IOException {}
+
+        @Override
+        public void writeShort(int v) throws IOException {}
+
+        @Override
+        public void writeChar(int v) throws IOException {}
+
+        @Override
+        public void writeInt(int v) throws IOException {}
+
+        @Override
+        public void writeLong(long v) throws IOException {}
+
+        @Override
+        public void writeFloat(float v) throws IOException {}
+
+        @Override
+        public void writeDouble(double v) throws IOException {}
+
+        @Override
+        public void writeBytes(String s) throws IOException {}
+
+        @Override
+        public void writeChars(String s) throws IOException {}
+
+        @Override
+        public void writeUTF(String s) throws IOException {}
+
+        @Override
+        public void flush() throws IOException {}
+
+        @Override
+        public void close() throws IOException {}
+    }
+
+    private final class ReferenceWriter implements ReferableObjectOutput<T> {
         private final ObjectOutput delegate;
 
-        public Output(ObjectOutput delegate) {
+        public ReferenceWriter(ObjectOutput delegate) {
             this.delegate = delegate;
         }
 
@@ -220,10 +291,10 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
         }
     }
 
-    private final class Input implements ReferableObjectInput<T> {
+    private final class ReferenceReader implements ReferableObjectInput<T> {
         private final ObjectInput delegate;
 
-        private Input(ObjectInput delegate) {
+        private ReferenceReader(ObjectInput delegate) {
             this.delegate = delegate;
         }
 

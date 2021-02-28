@@ -246,7 +246,7 @@ public final class NodeMap {
         out.writeInt(this.czN);
 
         final SparseSpatialMap<Node> it = this.it;
-        nodeIdentityMap.writeAll(Node.ReaderWriter.INSTANCE, it.values(), out);
+        nodeIdentityMap.initialize(Node.ReaderWriter.INSTANCE, it.values(), out);
         nodeIdentityMap.writeWith(new MapReaderWriter(), it.keySet(), out);
     }
 
