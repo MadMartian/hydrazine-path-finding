@@ -7,26 +7,26 @@ import java.io.*;
 
 public class Persistence {
     private static final String TAG = "HPOD";
-    private static final byte VERSION = 1;
+    private static final byte VERSION = 2;
 
     public static void persist(HydrazinePathFinder pathFinder, ObjectOutput out) throws IOException {
         out.writeUTF(TAG);
         out.writeByte(VERSION);
 
         DummyPathingEntity.ReaderWriter.INSTANCE.writePartialObject(pathFinder.subject(), out);
-        pathFinder.writeExternal(out);
+        pathFinder.writeVersioned(VERSION, out);
     }
 
     public static HydrazinePathFinder restore(ObjectInput in, IInstanceSpace instanceSpace) throws IOException {
         if (!TAG.equals(in.readUTF()))
             throw new IOException("Not a valid " + TAG + " file");
         final byte ver = in.readByte();
-        if (VERSION != ver)
+        if (ver > VERSION)
             throw new IOException("Unsupported version: " + ver);
 
         final DummyPathingEntity pathingEntity = DummyPathingEntity.ReaderWriter.INSTANCE.readPartialObject(in);
         final HydrazinePathFinder pathFinder = new HydrazinePathFinder(pathingEntity, instanceSpace);
-        pathFinder.readExternal(in);
+        pathFinder.readVersioned(ver, in);
         return pathFinder;
     }
 

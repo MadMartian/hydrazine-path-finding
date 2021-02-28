@@ -7,7 +7,6 @@ import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -29,7 +28,7 @@ import static java.lang.Math.*;
  * To use this class, first initiate path-finding using one of the initiation methods, then call {@link #updatePathFor(IPathingEntity)}
  * each tick to iterate on the path until it is completed.  To abort path-finding call {@link #reset()}
  */
-public class HydrazinePathFinder implements Externalizable {
+public class HydrazinePathFinder implements IVersionedReadable, IVersionedWriteable {
     private static final AxisAlignedBBox FULL_BOUNDS = new AxisAlignedBBox(0, 0, 0, 1, 1, 1);
 
     private static double DOT_THRESHOLD = 0.6;
@@ -1159,16 +1158,18 @@ public class HydrazinePathFinder implements Externalizable {
     }
 
     private static final class PathReaderWriter implements LinkableReader<HydrazinePathFinder, Node>, LinkableWriter<HydrazinePathFinder, Node> {
-        public static final PathReaderWriter INSTANCE = new PathReaderWriter();
+        private final PathObject.Reader pathObjectReader;
 
-        private PathReaderWriter() {}
+        public PathReaderWriter(byte version) {
+            this.pathObjectReader = PathObject.Reader.forVersion(version);
+        }
 
         @Override
         public void readLinkages(HydrazinePathFinder pathFinder, ReferableObjectInput<Node> in) throws IOException {
             switch (PathType.values()[in.readByte()]) {
                 case complete: {
-                    final PathObject pathObject = PathObject.ReaderWriter.INSTANCE.readPartialObject(in);
-                    PathObject.ReaderWriter.INSTANCE.readLinkages(pathObject, in);
+                    final PathObject pathObject = this.pathObjectReader.readPartialObject(in);
+                    this.pathObjectReader.readLinkages(pathObject, in);
                     pathFinder.currentPath = pathObject;
                     break;
                 }
@@ -1189,8 +1190,8 @@ public class HydrazinePathFinder implements Externalizable {
             if (object.currentPath instanceof PathObject) {
                 out.writeByte(PathType.complete.ordinal());
                 final PathObject pathObject = (PathObject) object.currentPath;
-                PathObject.ReaderWriter.INSTANCE.writePartialObject(pathObject, out);
-                PathObject.ReaderWriter.INSTANCE.writeLinkages(pathObject, out);
+                PathObject.Writer.INSTANCE.writePartialObject(pathObject, out);
+                PathObject.Writer.INSTANCE.writeLinkages(pathObject, out);
             } else if (object.currentPath instanceof IncompletePath) {
                 out.writeByte(PathType.incomplete.ordinal());
                 out.writeRef((Node) object.currentPath.current());
@@ -1202,7 +1203,7 @@ public class HydrazinePathFinder implements Externalizable {
     }
     
     @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
+    public void writeVersioned(byte version, ObjectOutput out) throws IOException {
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         out.writeByte(this.unreachableFromSource.size());
@@ -1210,6 +1211,7 @@ public class HydrazinePathFinder implements Externalizable {
             Vec3iReaderWriter.INSTANCE.writePartialObject(coords, out);
         
         MutableVec3dReaderWriter.INSTANCE.writePartialObject(this.sourcePosition, out);
+        Vec3dReaderWriter.INSTANCE.writePartialObject(this.targetPosition, out);
         MutableVec3dReaderWriter.INSTANCE.writePartialObject(this.destinationPosition, out);
         DummyDynamicMovableObject.ReaderWriter.INSTANCE.writePartialObject(this.destinationEntity, out);
 
@@ -1232,11 +1234,11 @@ public class HydrazinePathFinder implements Externalizable {
         nodeMap.writeTo(out, identities);
         identities.writeLinks(queue, queue, out);
         identities.writeLinks(NodeBindingsReaderWriter.INSTANCE, this, out);
-        identities.writeLinks(PathReaderWriter.INSTANCE, this, out);
+        identities.writeLinks(new PathReaderWriter(version), this, out);
     }
 
     @Override
-    public void readExternal(ObjectInput in) throws IOException {
+    public void readVersioned(byte version, ObjectInput in) throws IOException {
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         byte count = in.readByte();
@@ -1244,7 +1246,13 @@ public class HydrazinePathFinder implements Externalizable {
             this.unreachableFromSource.add(Vec3iReaderWriter.INSTANCE.readPartialObject(in));
 
         this.sourcePosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
-        this.destinationPosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+        if (version > 1)
+            this.targetPosition = Vec3dReaderWriter.INSTANCE.readPartialObject(in);
+
+        com.extollit.linalg.mutable.Vec3d destinationPosition = this.destinationPosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+        if (version <= 1)
+            this.targetPosition = destinationPosition == null ? null : new com.extollit.linalg.immutable.Vec3d(destinationPosition);
+
         this.destinationEntity = DummyDynamicMovableObject.ReaderWriter.INSTANCE.readPartialObject(in);
 
         this.flying = in.readBoolean();
@@ -1266,6 +1274,6 @@ public class HydrazinePathFinder implements Externalizable {
         nodeMap.readFrom(in, identities);
         identities.readLinks(queue, queue, in);
         identities.readLinks(NodeBindingsReaderWriter.INSTANCE, this, in);
-        identities.readLinks(PathReaderWriter.INSTANCE, this, in);
+        identities.readLinks(new PathReaderWriter(version), this, in);
     }
 }

@@ -506,10 +506,30 @@ public final class PathObject implements IPath {
         return false;
     }
     
-    public static final class ReaderWriter implements PartialObjectWriter<PathObject>, PartialObjectReader<PathObject>, LinkableWriter<PathObject, Node>, LinkableReader<PathObject, Node> {
-        public static final ReaderWriter INSTANCE = new ReaderWriter();
+    public static class Reader implements PartialObjectReader<PathObject>, LinkableReader<PathObject, Node> {
+        private static final class V1 extends Reader {
+            @Override
+            public PathObject readPartialObject(ObjectInput in) throws IOException {
+                final short count = in.readShort();
+                final PathObject path = new PathObject(in.readFloat(), new Node[count]);
+                path.i = in.readInt();
+                path.taxiUntil = in.readInt();
+                path.adjacentIndex = in.readInt();
+                path.length = in.readInt();
+                path.nextDirectLineTimeout = in.readFloat();
+                path.lastMutationTime = in.readFloat();
+                return path;
+            }
+        }
 
-        private ReaderWriter() {}
+        private Reader() {}
+
+        public static Reader forVersion(byte version) {
+            if (version == 1)
+                return new V1();
+            else
+                return new Reader();
+        }
 
         @Override
         public void readLinkages(PathObject path, ReferableObjectInput<Node> in) throws IOException {
@@ -522,6 +542,25 @@ public final class PathObject implements IPath {
         }
 
         @Override
+        public PathObject readPartialObject(ObjectInput in) throws IOException {
+            final short count = in.readShort();
+            final PathObject path = new PathObject(in.readFloat(), new Node[count]);
+            path.i = in.readShort();
+            path.taxiUntil = in.readShort();
+            path.adjacentIndex = in.readShort();
+            path.length = in.readShort();
+            path.nextDirectLineTimeout = in.readFloat();
+            path.lastMutationTime = in.readFloat();
+            return path;
+        }
+    }
+
+    public static final class Writer implements PartialObjectWriter<PathObject>, LinkableWriter<PathObject, Node> {
+        public static final Writer INSTANCE = new Writer();
+
+        private Writer() {}
+
+        @Override
         public void writeLinkages(PathObject path, ReferableObjectOutput<Node> out) throws IOException {
             out.writeShort(path.nodes.length);
             for (Node node : path.nodes)
@@ -529,26 +568,13 @@ public final class PathObject implements IPath {
         }
 
         @Override
-        public PathObject readPartialObject(ObjectInput in) throws IOException {
-            final short count = in.readShort();
-            final PathObject path = new PathObject(in.readFloat(), new Node[count]);
-            path.i = in.readInt();
-            path.taxiUntil = in.readInt();
-            path.adjacentIndex = in.readInt();
-            path.length = in.readInt();
-            path.nextDirectLineTimeout = in.readFloat();
-            path.lastMutationTime = in.readFloat();
-            return path;
-        }
-
-        @Override
         public void writePartialObject(PathObject path, ObjectOutput out) throws IOException {
             out.writeShort(path.nodes.length);
             out.writeFloat(path.speed);
-            out.writeInt(path.i);
-            out.writeInt(path.taxiUntil);
-            out.writeInt(path.adjacentIndex);
-            out.writeInt(path.length);
+            out.writeShort(path.i);
+            out.writeShort(path.taxiUntil);
+            out.writeShort(path.adjacentIndex);
+            out.writeShort(path.length);
             out.writeFloat(path.nextDirectLineTimeout);
             out.writeFloat(path.lastMutationTime);
         }
