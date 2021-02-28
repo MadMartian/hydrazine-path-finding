@@ -393,10 +393,6 @@ public class HydrazinePathFinder {
                 dt = new com.extollit.linalg.mutable.Vec3d(this.targetPosition),
                 dd = new com.extollit.linalg.mutable.Vec3d(this.destinationPosition);
 
-        dd.x = floor(dd.x);
-        dd.y = ceil(dd.y);
-        dd.z = floor(dd.z);
-
         final Vec3i source = this.source.key;
         dt.sub(source);
         dd.sub(source);
