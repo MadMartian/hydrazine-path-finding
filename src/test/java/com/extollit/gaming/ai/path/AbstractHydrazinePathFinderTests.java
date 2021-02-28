@@ -72,6 +72,12 @@ public abstract class AbstractHydrazinePathFinderTests {
         pos((IDynamicMovableObject)pathingEntity, x, y, z);
     }
 
+    protected void advance(IPathingEntity mockedPathing, IPath path) {
+        final INode node = path.current();
+        final Vec3i coordinates = node.coordinates();
+        pos(coordinates.x + 0.5, coordinates.y + 0.1, coordinates.z + 0.5);
+    }
+
     protected void solid(final int x, final int y, final int z) {
         when(occlusionProvider.elementAt(x, y, z)).thenReturn(Element.earth.mask);
         when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(TestingBlocks.stone);

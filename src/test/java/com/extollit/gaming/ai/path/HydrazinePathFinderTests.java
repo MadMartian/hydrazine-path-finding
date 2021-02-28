@@ -2,6 +2,7 @@ package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3i;
+import com.extollit.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -503,5 +504,62 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         final IPath path = pathFinder.initiatePathTo(0, 0, 400, false);
 
         assertNull(path);
+    }
+
+    @Test
+    public void indecision() {
+        cautious(false);
+        defaultGround();
+
+        pos(0, 8, 1);
+        solid(0, 7, 1);
+        solid(0, 7, 0);
+        solid(1, 7, 0);
+        solid(1, 6, 0);
+        solid(0, 6, 1);
+        solid(0, 5, 1);
+        solid(1, 5, 1);
+        solid(1, 4, 1);
+        solid(1, 4, 2);
+        solid(1, 3, 2);
+        solid(2, 3, 2);
+        solid(2, 2, 2);
+        solid(2, 2, 1);
+        solid(2, 1, 1);
+        solid(2, 1, 0);
+        solid(2, 0, 0);
+        solid(3, 0, 0);
+
+        final Pair.Sealed<Passibility, Vec3i> pair = pathFinder.passibilityNear(3, 8, 0);
+        assertEquals(new Vec3i(3, 1, 0), pair.right);
+
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        IPath path = pathFinder.initiatePathTo(3, 8, 0);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+
+        assertEquals(new Vec3i(3, 0, -1), path.last().coordinates());
     }
 }

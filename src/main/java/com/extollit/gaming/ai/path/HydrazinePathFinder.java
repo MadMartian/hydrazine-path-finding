@@ -44,6 +44,7 @@ public class HydrazinePathFinder {
     private final IInstanceSpace instanceSpace;
 
     private com.extollit.linalg.mutable.Vec3d sourcePosition, destinationPosition;
+    private com.extollit.linalg.immutable.Vec3d targetPosition;
     private IDynamicMovableObject destinationEntity;
 
     private INodeCalculator pathPointCalculator;
@@ -389,8 +390,8 @@ public class HydrazinePathFinder {
 
     private boolean destinationDeviatedFromTarget() {
         final com.extollit.linalg.mutable.Vec3d
-                dt = new com.extollit.linalg.mutable.Vec3d(this.target.key),
-                dd = new com.extollit.linalg.mutable.Vec3d(destinationPosition);
+                dt = new com.extollit.linalg.mutable.Vec3d(this.targetPosition),
+                dd = new com.extollit.linalg.mutable.Vec3d(this.destinationPosition);
 
         dd.x = floor(dd.x);
         dd.y = ceil(dd.y);
@@ -562,6 +563,8 @@ public class HydrazinePathFinder {
     private boolean setTargetFor(Node source) {
         final Vec3d
                 destinationPosition = this.destinationPosition;
+
+        this.targetPosition = destinationPosition != null ? new com.extollit.linalg.immutable.Vec3d(destinationPosition) : null;
 
         if (null == (this.target = edgeAtDestination()))
             return false;
@@ -798,6 +801,7 @@ public class HydrazinePathFinder {
         this.sourcePosition =
         this.destinationPosition = null;
         this.destinationEntity = null;
+        this.targetPosition = null;
 
         resetFaultTimings();
     }
