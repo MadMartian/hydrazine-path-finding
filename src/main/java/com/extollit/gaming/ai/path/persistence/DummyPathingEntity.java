@@ -19,7 +19,7 @@ public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabi
         public DummyPathingEntity readPartialObject(ObjectInput in) throws IOException {
             final DummyPathingEntity entity = new DummyPathingEntity();
 
-            entity.coordinates = Vec3dReaderWriter.INSTANCE.readPartialObject(in);
+            entity.coordinates = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
             entity.age = in.readInt();
             entity.searchRange = in.readFloat();
             entity.width = in.readFloat();
@@ -61,7 +61,7 @@ public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabi
     
     private int age;
     private float searchRange, width, height, speed;
-    private Vec3d coordinates;
+    private com.extollit.linalg.mutable.Vec3d coordinates;
     private boolean fireResistant, cautious, climber, swimmer, aquatic, avian, aquaphobic, avoidsDoorways, opensDoors, bound;
 
     @Override
@@ -85,11 +85,14 @@ public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabi
     }
 
     @Override
-    public void moveTo(Vec3d position, Passibility passibility, Gravitation gravitation) {}
+    public void moveTo(Vec3d position, Passibility passibility, Gravitation gravitation) {
+        final com.extollit.linalg.mutable.Vec3d coords = this.coordinates;
+        coords.set(position);
+    }
 
     @Override
     public Vec3d coordinates() {
-        return this.coordinates;
+        return new Vec3d(this.coordinates);
     }
 
     @Override
