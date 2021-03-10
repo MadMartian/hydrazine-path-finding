@@ -78,6 +78,11 @@ public abstract class AbstractHydrazinePathFinderTests {
         pos(coordinates.x + 0.5, coordinates.y + 0.1, coordinates.z + 0.5);
     }
 
+    protected void lava(final int x, final int y, final int z) {
+        when(occlusionProvider.elementAt(x, y, z)).thenReturn(Element.fire.mask);
+        when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(TestingBlocks.lava);
+    }
+
     protected void solid(final int x, final int y, final int z) {
         when(occlusionProvider.elementAt(x, y, z)).thenReturn(Element.earth.mask);
         when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(TestingBlocks.stone);

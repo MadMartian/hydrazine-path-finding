@@ -64,8 +64,14 @@ class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalcu
                 else
                     passibility = passibility.between(passibilityFrom(flags, capabilities));
 
+                final float partY0 = topOffsetAt(
+                        flagSampler,
+                        x - d.x,
+                        y0 - d.y - 1,
+                        z - d.z
+                );
                 final float partY = topOffsetAt(flagsBeneath, x, yb, z);
-                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, y0, z, partY);
+                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, y0, z, Math.min(partY, partY0));
 
                 if (y0 > minY) {
                     minY = y0;

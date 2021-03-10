@@ -298,6 +298,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         final IPath path = pathFinder.initiatePathTo(2, 1, 2);
 
+        assertNotNull(path);
         assertPath(
                 path,
 

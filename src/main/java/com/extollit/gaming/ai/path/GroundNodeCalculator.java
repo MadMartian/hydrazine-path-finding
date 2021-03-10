@@ -67,7 +67,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                     ) {
                 int y = y0;
 
-                float partY = topOffsetAt(
+                final float partY0 = topOffsetAt(
                         flagSampler,
                         x - d.x,
                         y - d.y - 1,
@@ -77,7 +77,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 byte flags = flagSampler.flagsAt(x, y, z);
                 final boolean impedesMovement;
                 if (impedesMovement = impedesMovement(flags, capabilities)) {
-                    final float partialDisparity = partY - topOffsetAt(flags, x, y++, z);
+                    final float partialDisparity = partY0 - topOffsetAt(flags, x, y++, z);
                     flags = flagSampler.flagsAt(x, y, z);
 
                     if (partialDisparity < 0 || impedesMovement(flags, capabilities)) {
@@ -92,13 +92,13 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                             while (climbsLadders && Logic.climbable(flags));
                         }
 
-                        if (impedesMovement(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (impedesMovement(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY < 0))
+                        if (impedesMovement(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (impedesMovement(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY0 < 0))
                             return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
                     }
                 }
-                partY = topOffsetAt(flagSampler, x, y - 1, z);
+                float partY = topOffsetAt(flagSampler, x, y - 1, z);
                 final int ys;
-                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, ys = y, z, partY);
+                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, ys = y, z, Math.min(partY, partY0));
 
                 boolean swimable = false;
                 {
@@ -129,7 +129,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 }
 
                 partY = topOffsetAt(flags, x, y++, z);
-                passibility = verticalClearanceAt(flagSampler, ys - y, flagSampler.flagsAt(x, y, z), passibility, d, x, y, z, partY);
+                passibility = verticalClearanceAt(flagSampler, ys - y, flagSampler.flagsAt(x, y, z), passibility, d, x, y, z, Math.min(partY, partY0));
 
                 if (y > minY) {
                     minY = y;
