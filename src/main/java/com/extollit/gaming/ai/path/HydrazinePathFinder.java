@@ -1219,7 +1219,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         out.writeBoolean(this.aqua);
         out.writeBoolean(this.pathPointCalculatorChanged);
         out.writeBoolean(this.trimmedToCurrent);
-        out.writeBoolean(this.targetingStrategy == PathOptions.TargetingStrategy.bestEffort);
+        out.writeByte(this.targetingStrategy.ordinal());
         
         out.writeInt(this.initComputeIterations);
         out.writeInt(this.periodicComputeIterations);
@@ -1259,7 +1259,10 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         this.aqua = in.readBoolean();
         this.pathPointCalculatorChanged = in.readBoolean();
         this.trimmedToCurrent = in.readBoolean();
-        this.targetingStrategy = in.readBoolean() ? PathOptions.TargetingStrategy.bestEffort : PathOptions.TargetingStrategy.none;
+        if (version > 1)
+            this.targetingStrategy = PathOptions.TargetingStrategy.values()[in.readByte()];
+        else
+            this.targetingStrategy = in.readBoolean() ? PathOptions.TargetingStrategy.bestEffort : PathOptions.TargetingStrategy.none;
 
         this.initComputeIterations = in.readInt();
         this.periodicComputeIterations = in.readInt();
