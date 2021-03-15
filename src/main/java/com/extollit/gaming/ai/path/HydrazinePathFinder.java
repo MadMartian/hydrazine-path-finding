@@ -51,7 +51,8 @@ public class HydrazinePathFinder {
     private IPathProcessor pathProcessor;
     private IPath currentPath;
     private IPathingEntity.Capabilities capabilities;
-    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent, bestEffort, bound;
+    private boolean flying, aqua, pathPointCalculatorChanged, trimmedToCurrent, bound;
+    private PathOptions.TargetingStrategy targetingStrategy;
     private Node current, source, target, closest;
     private int initComputeIterations, periodicComputeIterations;
     private int faultCount, nextGraphResetFailureCount;
@@ -154,7 +155,7 @@ public class HydrazinePathFinder {
      */
     public IPath trackPathTo(IDynamicMovableObject target) {
         this.destinationEntity = target;
-        return initiatePathTo(target.coordinates(), true);
+        return initiatePathTo(target.coordinates(), PathOptions.BEST_EFFORT);
     }
 
     /**
@@ -185,7 +186,7 @@ public class HydrazinePathFinder {
      */
     public IPath computePathTo(double x, double y, double z) {
         this.destinationEntity = null;
-        this.bestEffort = false;
+        this.targetingStrategy = PathOptions.TargetingStrategy.none;
 
         initializeOperation();
         if (tooFarTo(x, y, z))
@@ -208,7 +209,7 @@ public class HydrazinePathFinder {
      * @param coordinates the coordinates to start path-finding toward
      * @return the best path available toward the destination, the complete path to the destination, or null if a path
      *          cannot be computed at all from the current location
-     * @see #initiatePathTo(double, double, double, boolean)
+     * @see #initiatePathTo(double, double, double, PathOptions)
      */
     public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates) {
         return initiatePathTo(coordinates.x, coordinates.y, coordinates.z);
@@ -223,13 +224,12 @@ public class HydrazinePathFinder {
      * {@link #updatePathFor(IPathingEntity)} until path-finding is completed or exhausted.
      *
      * @param coordinates the coordinates to start path-finding toward
-     * @param bestEffort whether to use the best-effort algorithm to the destination, if false then this method is more likely to return immediately
-     * @return the best path available toward the destination, the complete path to the destination, or if the best-effort
-     *         algorithm is not used then this is more likely to return immediately with null if it is determined the
-     *         destination is unreachable.
+     * @param pathOptions Options for setting-up the path-finding approach (independent of pathing entity capabilities)
+     * @return the best path available toward the destination, the complete path to the destination, or null if the
+     *          destination was unreachable with the given path options
      */
-    public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates, boolean bestEffort) {
-        return initiatePathTo(coordinates.x, coordinates.y, coordinates.z, bestEffort);
+    public IPath initiatePathTo(com.extollit.linalg.immutable.Vec3d coordinates, PathOptions pathOptions) {
+        return initiatePathTo(coordinates.x, coordinates.y, coordinates.z, pathOptions);
     }
 
     /**
@@ -243,10 +243,10 @@ public class HydrazinePathFinder {
      * @param z z-coordinate of the destination
      * @return the best path available toward the destination, the complete path to the destination, or null if a path
      *          cannot be computed at all from the current location
-     * @see #initiatePathTo(double, double, double, boolean)
+     * @see #initiatePathTo(double, double, double, PathOptions)
      */
     public IPath initiatePathTo(double x, double y, double z) {
-        return initiatePathTo(x, y, z, true);
+        return initiatePathTo(x, y, z, PathOptions.BEST_EFFORT);
     }
 
     /**
@@ -260,16 +260,15 @@ public class HydrazinePathFinder {
      * @param x x-coordinate of the destination
      * @param y y-coordinate of the destination
      * @param z z-coordinate of the destination
-     * @param bestEffort whether to use the best-effort algorithm to the destination, if false then this method is more likely to return immediately
-     * @return the best path available toward the destination, the complete path to the destination, or if the best-effort
-     *         algorithm is not used then this is more likely to return immediately with null if it is determined the
-     *         destination is unreachable.
+     * @param pathOptions Options for setting-up the path-finding approach (independent of pathing entity capabilities)
+     * @return the best path available toward the destination, the complete path to the destination, or null if the
+     *          destination was unreachable with the given path options
      */
-    public IPath initiatePathTo(double x, double y, double z, boolean bestEffort) {
-        this.bestEffort = bestEffort;
+    public IPath initiatePathTo(double x, double y, double z, PathOptions pathOptions) {
+        this.targetingStrategy = pathOptions.targetingStrategy();
 
         initializeOperation();
-        if (!bestEffort && tooFarTo(x, y, z))
+        if (this.targetingStrategy == PathOptions.TargetingStrategy.none && tooFarTo(x, y, z))
             return null;
 
         final boolean initiate = updateDestination(x, y, z) && this.queue.isEmpty();
@@ -284,6 +283,10 @@ public class HydrazinePathFinder {
         final float rangeSquared = this.searchRangeSquared;
         final com.extollit.linalg.immutable.Vec3d sourcePos = new com.extollit.linalg.immutable.Vec3d(this.sourcePosition);
         return sourcePos.subOf(x, y, z).mg2() > rangeSquared;
+    }
+
+    private boolean tooFarTo(Vec3i target) {
+        return tooFarTo(target.x, target.y, target.z);
     }
 
     private void initializeOperation() {
@@ -584,7 +587,7 @@ public class HydrazinePathFinder {
 
         if (null == (this.target = edgeAtDestination()))
             return false;
-        else if (this.bestEffort) {
+        else if (this.targetingStrategy == PathOptions.TargetingStrategy.bestEffort) {
             int distance = Node.MAX_PATH_DISTANCE;
             while (distance > 0 && !source.target(this.target.key)) {
                 final Vec3d
@@ -694,19 +697,35 @@ public class HydrazinePathFinder {
 
         final Node node;
 
-        if (this.bestEffort) {
-            node = this.nodeMap.cachedPointAt(nx, ny, nz);
-            if (node.passibility() == Passibility.impassible)
-                node.passibility(Passibility.dangerous);
-        } else {
-            node = this.nodeMap.cachedPassiblePointNear(nx, ny, nz);
-            if (impassible(node))
-                return null;
+        switch (this.targetingStrategy) {
+            case none:
+                node = this.nodeMap.cachedPointAt(nx, ny, nz);
+                if (impassible(node))
+                    return null;
 
-            final Vec3d dl = new Vec3d(node.coordinates());
-            dl.sub(destinationPosition);
-            if (dl.mg2() > 1)
-                return null;
+                final Vec3d dl = new Vec3d(node.coordinates());
+                dl.sub(destinationPosition);
+                if (dl.mg2() > 1)
+                    return null;
+
+                break;
+
+            case bestEffort:
+                node = this.nodeMap.cachedPointAt(nx, ny, nz);
+                if (node.passibility() == Passibility.impassible)
+                    node.passibility(Passibility.dangerous);
+
+                break;
+
+            case gravitySnap:
+                node = this.nodeMap.cachedPassiblePointNear(nx, ny, nz);
+                if (impassible(node) || tooFarTo(node.key))
+                    return null;
+
+                break;
+
+            default:
+                throw new UnsupportedOperationException("Unrecognized targeting strategy: " + this.targetingStrategy);
         }
 
         return node;

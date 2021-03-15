@@ -11,6 +11,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
     private static int
             MAX_SAFE_FALL_DISTANCE = 4,
             MAX_SURVIVE_FALL_DISTANCE = 20,
+            MAX_FALL_SEARCH = 1024,
             CESA_LIMIT = 16;
 
     public GroundNodeCalculator(IInstanceSpace instanceSpace) {
@@ -102,8 +103,9 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 boolean swimable = false;
                 {
                     boolean condition = !impedesMovement || unstable(flags);
-                    for (int j = 0;
-                         condition && !(swimable = swimable(flags)) && j <= MAX_SURVIVE_FALL_DISTANCE;
+                    for (int j = 0,
+                            jN = origin == null ? MAX_FALL_SEARCH : MAX_SURVIVE_FALL_DISTANCE;
+                         condition && !(swimable = swimable(flags)) && j <= jN;
                          j++, condition = unstable(flags)
                             )
                         flags = flagSampler.flagsAt(x, --y, z);
@@ -143,7 +145,8 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
         if (hasOrigin && !passibility.impassible(capabilities))
             passibility = originHeadClearance(flagSampler, passibility, origin, minY, minPartY);
 
-        passibility = fallingSafety(passibility, y0, minY);
+        if (origin != null)
+            passibility = fallingSafety(passibility, y0, minY);
 
         if (passibility.impassible(capabilities))
             passibility = Passibility.impassible;

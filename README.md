@@ -14,6 +14,32 @@ Then the primary entry-point for using the engine is `com.extollit.gaming.ai.pat
         path = pathFinder.updatePathFor(myEntity);
     } while (game.running());
     
+### Selecting a Destination
+For some approaches including random entity wandering (e.g. animals wandering around randomly) it is very uncommon for a
+caller to select a target wander destination that is reachable (because this in-turn depends on path-finding, so you have
+a chicken and egg paradox).  To remedy these situations one can make use of the `TargetingStrategy.gravitySnap`
+strategy or the `TargetingStrategy.bestEffort` strategy located in `com.extollit.gaming.ai.path.PathOptions` (see the 
+inline documentation there for details) as a means of responding to destinations that the path-finder cannot immediately 
+confirm as reachable (e.g. a block up in the middle of the air).
+
+Targeting strategies are defined using the `com.extollit.gaming.ai.path.PathOptions` object and passed to one of the 
+`com.extollit.gaming.ai.path.HydrazinePathFinder` methods whose prototype takes such an object.  `PathOptions` also 
+employs a builder pattern for method-chaining convenience:
+
+    final HydrazinePathFinder pathFinder = new HydrazinePathFinder(myEntity, myWorld);
+    final PathOptions pathOptions = new PathOptions()
+        .targetingStrategy(PathOptions.TargetingStrategy.gravitySnap)
+
+    final IPath path = pathFinder.initiatePathTo(4, 4.2, 8.1, pathOptions);
+
+    if (path != null)
+    do {
+        path = pathFinder.updatePathFor(myEntity);
+    } while (game.running());
+    
+It's a good idea to maintain static instances of `PathOptions` objects for performance reasons rather than construct a 
+new instance for each path-finding operation.
+
 ### Path-finding Scheduling
 There are three different ways to refine how much computing resources are allocated to a particular entity's path-finding
 object through what is called a scheduling priority, namely `low`, `high` and `extreme`.  The higher the scheduling priority

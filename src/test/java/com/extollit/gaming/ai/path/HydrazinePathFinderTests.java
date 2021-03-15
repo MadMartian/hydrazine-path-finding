@@ -467,7 +467,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 10, 4, false);
+        final IPath path = pathFinder.initiatePathTo(0, 10, 4, PathOptions.NONE);
 
         assertNull(path);
     }
@@ -478,7 +478,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 10, 4, true);
+        final IPath path = pathFinder.initiatePathTo(0, 10, 4, PathOptions.BEST_EFFORT);
 
         assertNotNull(path);
     }
@@ -490,7 +490,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 0, 400, true);
+        final IPath path = pathFinder.initiatePathTo(0, 0, 400, PathOptions.BEST_EFFORT);
 
         assertNotNull(path);
     }
@@ -502,7 +502,32 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 0, 400, false);
+        final IPath path = pathFinder.initiatePathTo(0, 0, 400, PathOptions.NONE);
+
+        assertNull(path);
+    }
+
+    @Test
+    public void nearestPassible() {
+        cautious(true);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        IPath path = pathFinder.initiatePathTo(0, 50, 4, new PathOptions().targetingStrategy(PathOptions.TargetingStrategy.gravitySnap));
+
+        assertNotNull(path);
+        path = pathFinder.updatePathFor(pathingEntity);
+
+        assertEquals(new Vec3i(0, 0, 4), path.last().coordinates());
+    }
+
+    @Test
+    public void nearestPassibleTooFar() {
+        cautious(true);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        IPath path = pathFinder.initiatePathTo(0, 50, 500, new PathOptions().targetingStrategy(PathOptions.TargetingStrategy.gravitySnap));
 
         assertNull(path);
     }
@@ -610,21 +635,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         advance(pathingEntity, path);
         path = pathFinder.updatePathFor(pathingEntity);
         advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
-        path = pathFinder.updatePathFor(pathingEntity);
-        advance(pathingEntity, path);
 
-        assertEquals(new Vec3i(3, 0, -1), path.last().coordinates());
+        assertEquals(new Vec3i(3, 1, 0), path.last().coordinates());
     }
 }
