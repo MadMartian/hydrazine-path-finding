@@ -1,5 +1,9 @@
 # Hydrazine Path Finding Engine
-This is a rather basic A* path-finding engine inspired by a certain blocky sandbox game that everyone has played before.
+This is a rather ~~basic~~ sophisticated, incrementally-progressive, single-threaded A* path-finding engine inspired by a certain blocky sandbox game that everyone has played before.  Due to its progressive and incremental A* approach this engine trades-off accuracy for significant boosts in path-finding performance by distributing A* graph computation across time and then rotating the graph on an as-needed basis as the subject entity physically traverses through path points derived from it.  
+
+The tradeoff between accuracy and performance in this engine's algorithm is acceptable.  The inaccuracy means entities take slightly longer to arrive at their destinations, but this is actually more natural.  In the real world, creatures and people make mistakes finding their way from point A to point X.  Furthermore, it isn't even possible to instantly compute a perfect path from point A to point X through complex environments (this is precisely why maze puzzles are such a hit!).  Therefore this algorithm provides us with a much higher-performance and natural path-finding experience for computer-controlled entities.
+
+Although this engine focuses on trading-off accuracy for performance, inaccurate path-finding is not always desirable.  This engine provides three APIs for computing paths of varying degree of accuracy at the expense of performance.  There is also a fourth API for computing 100% accurate traditional A* paths for such edge-cases that require them.  With these APIs a developer can take advantage of some of the other non-progressive performance benefits this engine offers without being forced to forego accurate path-finding.
 
 ## How to use this Engine
 The engine works by leveraging interfaces wired-up to your game's implementation using the [dependency inversion principle](https://en.wikipedia.org/wiki/Dependency_inversion_principle) (see the types beneath the `model` package).
