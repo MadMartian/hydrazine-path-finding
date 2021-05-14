@@ -5,6 +5,13 @@ The tradeoff between accuracy and performance in this engine's algorithm is acce
 
 Although this engine focuses on trading-off accuracy for performance, inaccurate path-finding is not always desirable.  This engine provides three APIs for computing paths of varying degree of accuracy at the expense of performance.  There is also a fourth API for computing 100% accurate traditional A* paths for such edge-cases that require them.  With these APIs a developer can take advantage of some of the other non-progressive performance benefits this engine offers without being forced to forego accurate path-finding.
 
+## Featured in Mad Martian Mod
+This engine was inspired by improving performance in another blocky sandbox game everyone is familiar with.  _Mad Martian Mod_ uses this engine and enjoys ~1000x boost in path-finding performance.
+
+Check-out [Mad Martian Mod](https://gauss.extollit.com/minecraft/), download the launcher, play the mod, and see _Hydrazine_ in action.
+
+There are also other projects that use Hydrazine Path-finding engine including the [Minestom](https://github.com/Minestom/Minestom) project, it has a large and active community.  You should definitely (literally?) check out this project if you're interested in customized server implementations.
+
 ## How to use this Engine
 The engine works by leveraging interfaces wired-up to your game's implementation using the [dependency inversion principle](https://en.wikipedia.org/wiki/Dependency_inversion_principle) (see the types beneath the `model` package).
 Then the primary entry-point for using the engine is `com.extollit.gaming.ai.path.HydrazinePathFinder`.  Here's a very basic example that assumes all the relevant interfaces tied to `myWorld` and `myEntity` have been implemented:
