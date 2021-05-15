@@ -2,10 +2,13 @@ package com.extollit.gaming.ai.path.model;
 
 import com.extollit.collect.Option;
 
+import java.util.Collections;
 import java.util.Iterator;
 
 public final class IncompletePath implements IPath {
     final INode node;
+
+    private boolean truncated;
 
     public IncompletePath(INode node) {
         if (node == null)
@@ -16,15 +19,20 @@ public final class IncompletePath implements IPath {
 
     @Override
     public void truncateTo(int length) {
-        throw new ArrayIndexOutOfBoundsException("Cannot truncate incomplete paths");
+        if (length == 0)
+            this.truncated = true;
+        else if (length > 1)
+            throw new ArrayIndexOutOfBoundsException("Cannot truncate incomplete paths");
     }
 
     @Override
-    public void untruncate() {}
+    public void untruncate() {
+        this.truncated = false;
+    }
 
     @Override
     public int length() {
-        return 1;
+        return this.truncated ? 0 : 1;
     }
 
     @Override
@@ -49,7 +57,7 @@ public final class IncompletePath implements IPath {
 
     @Override
     public boolean done() {
-        return false;
+        return this.truncated;
     }
 
     @Override
@@ -62,11 +70,13 @@ public final class IncompletePath implements IPath {
 
     @Override
     public boolean sameAs(IPath other) {
-        if (other instanceof IncompletePath)
-            return ((IncompletePath)other).node.coordinates().equals(this.node.coordinates());
+        if (other instanceof IncompletePath) {
+            final IncompletePath otherIncomplete = (IncompletePath) other;
+            return otherIncomplete.truncated && this.truncated || !otherIncomplete.truncated && !this.truncated && otherIncomplete.node.coordinates().equals(this.node.coordinates());
+        }
 
         Iterator<INode> i = other.iterator();
-        return (!i.hasNext() || this.node.coordinates().equals(i.next().coordinates())) && !i.hasNext();
+        return !i.hasNext() && this.truncated || (!i.hasNext() || this.node.coordinates().equals(i.next().coordinates())) && !i.hasNext();
     }
 
     @Override
@@ -82,9 +92,9 @@ public final class IncompletePath implements IPath {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        IncompletePath iNodes = (IncompletePath) o;
+        IncompletePath other = (IncompletePath) o;
 
-        return node.equals(iNodes.node);
+        return truncated == other.truncated && node.equals(other.node);
     }
 
     @Override
@@ -99,6 +109,6 @@ public final class IncompletePath implements IPath {
 
     @Override
     public Iterator<INode> iterator() {
-        return Option.<INode>of(this.node).iterator();
+        return truncated ? Collections.<INode>emptyIterator() : Option.<INode>of(this.node).iterator();
     }
 }
