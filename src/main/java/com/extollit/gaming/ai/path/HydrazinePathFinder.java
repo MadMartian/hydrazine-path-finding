@@ -300,8 +300,11 @@ public class HydrazinePathFinder {
      * method are used to refine path-finding and continue path-finding to the destination requested when the initiation
      * method was called.  This method also drives the entity along its path.
      *
+     * NOTE: If the pathing entity has already reached the destination and no further path-finding is necessary then the
+     * returned path will be a completed path object (not null).
+     *
      * @param pathingEntity the pathing entity that will receive movement commands along the path
-     * @return the next and updated / refined path or null if the destination is unreachable
+     * @return the next and updated / refined path or null if the destination is unreachable.
      */
     public IPath updatePathFor(IPathingEntity pathingEntity) {
         final IPath path = update(pathingEntity);
@@ -319,6 +322,8 @@ public class HydrazinePathFinder {
             final Vec3d dd = new Vec3d(this.destinationPosition);
             dd.sub(last.coordinates());
             if (dd.mg2() < 1)
+                return path;
+            else if (last == edgeAtDestination())
                 return null;
             else
                 return new IncompletePath(last);
@@ -380,15 +385,22 @@ public class HydrazinePathFinder {
         updateSourcePosition();
         graphTimeout();
 
-        if (this.faultCount >= FAULT_LIMIT || reachedTarget()) {
+        if (this.faultCount >= FAULT_LIMIT) {
             resetTriage();
             return null;
+        } else if (reachedTarget()) {
+            resetTriage();
+            return completedPath();
         }
 
         if (triageTimeout() || deviationToTargetUnacceptable(pathingEntity))
             resetTriage();
 
         return triage(this.periodicComputeIterations);
+    }
+
+    private IncompletePath completedPath() {
+        return new IncompletePath(this.current, true);
     }
 
     private boolean deviationToTargetUnacceptable(IPathingEntity pathingEntity) {

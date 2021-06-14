@@ -11,10 +11,14 @@ public final class IncompletePath implements IPath {
     private boolean truncated;
 
     public IncompletePath(INode node) {
+        this(node, false);
+    }
+    public IncompletePath(INode node, boolean truncated) {
         if (node == null)
             throw new NullPointerException();
 
         this.node = node;
+        this.truncated = truncated;
     }
 
     @Override
