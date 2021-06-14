@@ -7,7 +7,7 @@ import java.io.*;
 
 public class Persistence {
     private static final String TAG = "HPOD";
-    private static final byte VERSION = 2;
+    private static final byte VERSION = 3;
 
     public static void persist(HydrazinePathFinder pathFinder, ObjectOutput out) throws IOException {
         out.writeUTF(TAG);

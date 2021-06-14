@@ -1136,16 +1136,21 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     }
     
     private static final class NodeBindingsReaderWriter implements LinkableReader<HydrazinePathFinder, Node>, LinkableWriter<HydrazinePathFinder, Node> {
-        public static final NodeBindingsReaderWriter INSTANCE = new NodeBindingsReaderWriter();
-        
-        private NodeBindingsReaderWriter() {}
+        private final int version;
+
+        public NodeBindingsReaderWriter(int version) {
+            this.version = version;
+        }
 
         @Override
         public void readLinkages(HydrazinePathFinder object, ReferableObjectInput<Node> in) throws IOException {
             object.current = in.readRef();
             object.source = in.readRef();
             object.target = in.readRef();
-            object.closest = in.readRef();
+            if (this.version <= 2 || in.readBoolean())
+                object.closest = in.readRef();
+            else
+                object.closest = null;
         }
 
         @Override
@@ -1153,7 +1158,14 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
             out.writeRef(object.current);
             out.writeRef(object.source);
             out.writeRef(object.target);
-            out.writeRef(object.closest);
+            if (this.version <= 2)
+                out.writeRef(object.closest);
+            else {
+                final boolean present = object.closest != null;
+                out.writeBoolean(present);
+                if (present)
+                    out.writeRef(object.closest);
+            }
         }
     }
 
@@ -1233,7 +1245,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
 
         nodeMap.writeTo(out, identities);
         identities.writeLinks(queue, queue, out);
-        identities.writeLinks(NodeBindingsReaderWriter.INSTANCE, this, out);
+        identities.writeLinks(new NodeBindingsReaderWriter(version), this, out);
         identities.writeLinks(new PathReaderWriter(version), this, out);
     }
 
@@ -1276,7 +1288,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
 
         nodeMap.readFrom(in, identities);
         identities.readLinks(queue, queue, in);
-        identities.readLinks(NodeBindingsReaderWriter.INSTANCE, this, in);
+        identities.readLinks(new NodeBindingsReaderWriter(version), this, in);
         identities.readLinks(new PathReaderWriter(version), this, in);
     }
 }
