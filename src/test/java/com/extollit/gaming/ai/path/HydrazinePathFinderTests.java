@@ -327,6 +327,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     @Test
     public void volatileDoorway() {
         when(super.capabilities.avoidsDoorways()).thenReturn(false);
+        when(super.capabilities.opensDoors()).thenReturn(false);
 
         solid(0, -1, -1);
         solid(0, -1, 0);
@@ -593,5 +594,107 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
                 new Vec3i(0, 0, 3),
                 new Vec3i(0, 0, 4)
         );
+    }
+
+    @Test
+    public void closedDoorCapabilitiesControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(false);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, false);
+        door(0, 1, 1, false);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertNull(path);
+    }
+
+    @Test
+    public void openDoorCapabilitiesControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(false);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, true);
+        door(0, 1, 1, true);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertNotNull(path);
+    }
+
+    @Test
+    public void doorControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, false);
+        door(0, 1, 1, false);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+    }
+
+    @Test
+    public void openDoorControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, true);
+        door(0, 1, 1, true);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+    }
+
+    @Test
+    public void intractableDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        intractableDoor(0, 0, 1, false);
+        intractableDoor(0, 1, 1, false);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertNull(path);
+    }
+
+    @Test
+    public void openIntractableDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        intractableDoor(0, 0, 1, true);
+        intractableDoor(0, 1, 1, true);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
     }
 }

@@ -2,8 +2,7 @@ package com.extollit.gaming.ai.path.model;
 
 import org.junit.Before;
 
-import static com.extollit.gaming.ai.path.TestingBlocks.air;
-import static com.extollit.gaming.ai.path.TestingBlocks.fenceGate;
+import static com.extollit.gaming.ai.path.TestingBlocks.*;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.when;
@@ -43,5 +42,10 @@ public class AbstractOcclusionFieldTesting extends AbstractOcclusionProviderTest
     protected void fenceGate(boolean open, final int x, final int y, final int z) {
         blockAt(x, y, z, fenceGate);
         fenceGate.open = open;
+    }
+
+    protected void ironDoor(boolean open, final int x, final int y, final int z) {
+        blockAt(x, y, z, ironDoor);
+        ironDoor.open = open;
     }
 }

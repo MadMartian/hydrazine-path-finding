@@ -590,7 +590,7 @@ public class OcclusionField implements IOcclusionProvider {
                     ||
                 downFenceOrDoorLike && centerFenceOrDoorLike &&
                     (
-                        Logic.doorway.in(downFlags) && (downBlock.isFenceLike() && downBlock.isDoor() && (Element.earth.in(downFlags) || !(centerBlock.isDoor() && centerBlock.isFenceLike())))
+                        Logic.doorway.in(downFlags) && (downBlock.isFenceLike() && downBlock.isDoor() && (Element.doorClosedLike(downFlags) || !(centerBlock.isDoor() && centerBlock.isFenceLike())))
                             ||
                         Logic.doorway.in(centerFlags) && !(downBlock.isFenceLike() && downBlock.isDoor())
                     )
@@ -818,7 +818,11 @@ public class OcclusionField implements IOcclusionProvider {
         final boolean doorway = block.isDoor();
 
         if (doorway)
-            flags |= (instance.blockObjectAt(x, y, z).isImpeding() ? Element.earth : Element.air).mask;
+            flags |= (
+                instance.blockObjectAt(x, y, z).isImpeding()
+                    ? block.isIntractable() ? Element.fire : Element.earth
+                    : Element.air
+            ).mask;
         else if (!block.isImpeding())
             if (block.isLiquid())
                 if (block.isIncinerating())

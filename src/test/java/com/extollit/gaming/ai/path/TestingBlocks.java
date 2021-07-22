@@ -16,6 +16,8 @@ public class TestingBlocks {
 
     public static final Door
             door = new Door();
+    public static final IntractableDoor
+            ironDoor = new IntractableDoor();
     public static final FenceGate
             fenceGate = new FenceGate();
 
@@ -32,6 +34,11 @@ public class TestingBlocks {
 
         @Override
         public boolean isDoor() {
+            return false;
+        }
+
+        @Override
+        public boolean isIntractable() {
             return false;
         }
 
@@ -140,6 +147,12 @@ public class TestingBlocks {
     }
 
     public static final class Door extends AbstractDoor {}
+    public static final class IntractableDoor extends AbstractDoor {
+        @Override
+        public boolean isIntractable() {
+            return true;
+        }
+    }
 
     public static final class Ladder extends AbstractBlockDescription {
         @Override

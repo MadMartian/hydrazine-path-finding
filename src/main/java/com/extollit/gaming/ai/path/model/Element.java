@@ -96,4 +96,6 @@ public enum Element {
     public byte to(byte flags) {
         return (byte)((flags & ~MASK) | this.mask);
     }
+
+    static boolean doorClosedLike(byte flags) { return (flags & (earth.mask | fire.mask)) != 0; }
 }

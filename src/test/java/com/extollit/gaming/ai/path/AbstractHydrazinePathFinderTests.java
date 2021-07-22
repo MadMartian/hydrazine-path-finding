@@ -132,6 +132,15 @@ public abstract class AbstractHydrazinePathFinderTests {
         when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(TestingBlocks.door);
     }
 
+    protected void intractableDoor(final int x, final int y, final int z, boolean open) {
+        byte mask = Logic.doorway.mask;
+        if (!open)
+            mask = Element.fire.to(mask);
+
+        when(occlusionProvider.elementAt(x, y, z)).thenReturn(mask);
+        when(instanceSpace.blockObjectAt(x, y, z)).thenReturn(TestingBlocks.door);
+    }
+
     protected void latFence(final int x, final int y, final int z) {
         fence(new AxisAlignedBBox(0, 0, 0.45f, 1, 1.5f, 0.55f), x, y, z);
     }

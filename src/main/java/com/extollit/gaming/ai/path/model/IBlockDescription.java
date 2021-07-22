@@ -41,6 +41,18 @@ public interface IBlockDescription {
     boolean isDoor();
 
     /**
+     * Whether an NPC may influence the passibility of this block or if the block is "intractable" and cannot be
+     * influenced by any AI.
+     *
+     * This applies typically to doors, some doors an NPC may open while other types of doors an NPC may not open.
+     * This flag is global and applies to all types of pathing subjects for a particular block description.
+     *
+     * @return true if NPCs should not attempt to path through this block if it is impeding and it is flagged as a
+     * door.
+     */
+    boolean isIntractable();
+
+    /**
      * Does this block impede movement in at least one direction?
      *
      * This is used to determine if a block impacts passibility at all and has at least some collision bounds that
