@@ -5,4 +5,5 @@ import java.io.ObjectOutput;
 
 public interface ReferableObjectOutput<T> extends ObjectOutput {
     void writeRef(T object) throws IOException;
+    void writeNullableRef(T object) throws IOException;
 }

@@ -361,7 +361,7 @@ public class Node implements INode {
 
         @Override
         public Node readPartialObject(ObjectInput in) throws IOException {
-            final Vec3i key = Vec3iReaderWriter.INSTANCE.readPartialObject(in);
+            final Vec3i key = Vec3iReaderWriter.INSTANCEz.readPartialObject(in);
             final Node node = new Node(key);
             node.word = in.readInt();
             return node;
@@ -369,7 +369,7 @@ public class Node implements INode {
 
         @Override
         public void writePartialObject(Node node, ObjectOutput out) throws IOException {
-            Vec3iReaderWriter.INSTANCE.writePartialObject(node.key, out);
+            Vec3iReaderWriter.INSTANCEz.writePartialObject(node.key, out);
             out.writeInt(node.word);
         }
     }

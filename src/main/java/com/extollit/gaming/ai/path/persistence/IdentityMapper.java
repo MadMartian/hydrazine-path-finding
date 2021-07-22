@@ -138,6 +138,12 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
         }
 
         @Override
+        public void writeNullableRef(T object) throws IOException {
+            if (object != null)
+                writeRef(object);
+        }
+
+        @Override
         public void writeObject(Object obj) throws IOException {}
 
         @Override
@@ -289,6 +295,14 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
             else
                 delegate.writeShort(id);
         }
+
+        @Override
+        public void writeNullableRef(T object) throws IOException {
+            final boolean nonNull = object != null;
+            writeBoolean(nonNull);
+            if (nonNull)
+                writeRef(object);
+        }
     }
 
     private final class ReferenceReader implements ReferableObjectInput<T> {
@@ -415,6 +429,14 @@ public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObject
                 throw new IOException("Invalid object reference received in stream: " + id);
 
             return map.get(id);
+        }
+
+        @Override
+        public T readNullableRef() throws IOException {
+            if (delegate.readBoolean())
+                return readRef();
+            else
+                return null;
         }
     }
 }

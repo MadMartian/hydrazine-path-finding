@@ -7,14 +7,16 @@ import java.io.*;
 
 public class Persistence {
     private static final String TAG = "HPOD";
-    private static final byte VERSION = 3;
+    private static final byte VERSION = 4;
 
     public static void persist(HydrazinePathFinder pathFinder, ObjectOutput out) throws IOException {
+        final Persistence.ReaderWriters readerWriters = Persistence.ReaderWriters.forVersion(VERSION);
+
         out.writeUTF(TAG);
         out.writeByte(VERSION);
 
-        DummyPathingEntity.ReaderWriter.INSTANCE.writePartialObject(pathFinder.subject(), out);
-        pathFinder.writeVersioned(VERSION, out);
+        readerWriters.dpe.writePartialObject(pathFinder.subject(), out);
+        pathFinder.writeVersioned(VERSION, readerWriters, out);
     }
 
     public static HydrazinePathFinder restore(ObjectInput in, IInstanceSpace instanceSpace) throws IOException {
@@ -24,9 +26,11 @@ public class Persistence {
         if (ver > VERSION)
             throw new IOException("Unsupported version: " + ver);
 
-        final DummyPathingEntity pathingEntity = DummyPathingEntity.ReaderWriter.INSTANCE.readPartialObject(in);
+        final Persistence.ReaderWriters readerWriters = Persistence.ReaderWriters.forVersion(ver);
+
+        final DummyPathingEntity pathingEntity = readerWriters.dpe.readPartialObject(in);
         final HydrazinePathFinder pathFinder = new HydrazinePathFinder(pathingEntity, instanceSpace);
-        pathFinder.readVersioned(ver, in);
+        pathFinder.readVersioned(ver, readerWriters, in);
         return pathFinder;
     }
 
@@ -55,5 +59,32 @@ public class Persistence {
 
     public static HydrazinePathFinder restore(InputStream in, IInstanceSpace instanceSpace) throws IOException {
         return restore((ObjectInput) new ObjectInputStream(in), instanceSpace);
+    }
+
+    public static final class ReaderWriters {
+        public static final ReaderWriters
+                legacy = new ReaderWriters(Vec3dReaderWriter.INSTANCEz, MutableVec3dReaderWriter.INSTANCEz, Vec3iReaderWriter.INSTANCEz),
+                v4 = new ReaderWriters(NullableVec3dReaderWriter.INSTANCE, NullableMutableVec3dReaderWriter.INSTANCE, NullableVec3iReaderWriter.INSTANCE);
+
+        public final Vec3dReaderWriter v3d;
+        public final MutableVec3dReaderWriter mv3d;
+        public final Vec3iReaderWriter v3i;
+        public final DummyDynamicMovableObject.ReaderWriter ddmo;
+        public final DummyPathingEntity.ReaderWriter dpe;
+
+        public ReaderWriters(Vec3dReaderWriter v3d, MutableVec3dReaderWriter mv3d, Vec3iReaderWriter v3i) {
+            this.v3d = v3d;
+            this.mv3d = mv3d;
+            this.v3i = v3i;
+            this.ddmo = new DummyDynamicMovableObject.ReaderWriter(v3d);
+            this.dpe = new DummyPathingEntity.ReaderWriter(mv3d, v3d);
+        }
+
+        public static ReaderWriters forVersion(byte version) {
+            if (version < 4)
+                return legacy;
+            else
+                return v4;
+        }
     }
 }

@@ -7,7 +7,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 public class Vec3dReaderWriter implements PartialObjectReader<Vec3d>, PartialObjectWriter<Vec3d> {
-    public static final Vec3dReaderWriter INSTANCE = new Vec3dReaderWriter();
+    public static final Vec3dReaderWriter INSTANCEz = new Vec3dReaderWriter();
+
+    protected Vec3dReaderWriter() {}
 
     @Override
     public Vec3d readPartialObject(ObjectInput in) throws IOException {

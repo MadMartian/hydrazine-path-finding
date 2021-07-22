@@ -11,15 +11,19 @@ import java.io.ObjectOutput;
 
 public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabilities {
     public static final class ReaderWriter implements PartialObjectWriter<IPathingEntity>, PartialObjectReader<DummyPathingEntity> {
-        public static final ReaderWriter INSTANCE = new ReaderWriter();
+        private final MutableVec3dReaderWriter mutableVec3dReaderWriter;
+        private final Vec3dReaderWriter vec3dReaderWriter;
 
-        private ReaderWriter () {}
+        public ReaderWriter(MutableVec3dReaderWriter mutableVec3dReaderWriter, Vec3dReaderWriter vec3dReaderWriter) {
+            this.mutableVec3dReaderWriter = mutableVec3dReaderWriter;
+            this.vec3dReaderWriter = vec3dReaderWriter;
+        }
 
         @Override
         public DummyPathingEntity readPartialObject(ObjectInput in) throws IOException {
             final DummyPathingEntity entity = new DummyPathingEntity();
 
-            entity.coordinates = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+            entity.coordinates = this.mutableVec3dReaderWriter.readPartialObject(in);
             entity.age = in.readInt();
             entity.searchRange = in.readFloat();
             entity.width = in.readFloat();
@@ -40,7 +44,7 @@ public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabi
 
         @Override
         public void writePartialObject(IPathingEntity entity, ObjectOutput out) throws IOException {
-            Vec3dReaderWriter.INSTANCE.writePartialObject(entity.coordinates(), out);
+            this.vec3dReaderWriter.writePartialObject(entity.coordinates(), out);
             out.writeInt(entity.age());
             out.writeFloat(entity.searchRange());
             out.writeFloat(entity.width());

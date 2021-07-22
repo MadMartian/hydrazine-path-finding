@@ -9,9 +9,11 @@ import java.io.ObjectOutput;
 
 public final class DummyDynamicMovableObject implements IDynamicMovableObject {
     public static final class ReaderWriter implements PartialObjectWriter<IDynamicMovableObject>, PartialObjectReader<DummyDynamicMovableObject> {
-        public static final ReaderWriter INSTANCE = new ReaderWriter();
+        private final Vec3dReaderWriter vec3dReaderWriter;
 
-        private ReaderWriter() {}
+        public ReaderWriter(Vec3dReaderWriter vec3dReaderWriter) {
+            this.vec3dReaderWriter = vec3dReaderWriter;
+        }
 
         @Override
         public DummyDynamicMovableObject readPartialObject(ObjectInput in) throws IOException {
@@ -19,7 +21,7 @@ public final class DummyDynamicMovableObject implements IDynamicMovableObject {
                 return null;
 
             final DummyDynamicMovableObject dummyDynamicMovableObject = new DummyDynamicMovableObject();
-            dummyDynamicMovableObject.coordinates = Vec3dReaderWriter.INSTANCE.readPartialObject(in);
+            dummyDynamicMovableObject.coordinates = this.vec3dReaderWriter.readPartialObject(in);
             dummyDynamicMovableObject.width = in.readFloat();
             dummyDynamicMovableObject.height = in.readFloat();
             return dummyDynamicMovableObject;
@@ -31,7 +33,7 @@ public final class DummyDynamicMovableObject implements IDynamicMovableObject {
             if (targetEntity == null)
                 return;
 
-            Vec3dReaderWriter.INSTANCE.writePartialObject(targetEntity.coordinates(), out);
+            this.vec3dReaderWriter.writePartialObject(targetEntity.coordinates(), out);
             out.writeFloat(targetEntity.width());
             out.writeFloat(targetEntity.height());
         }

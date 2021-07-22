@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.IInstanceSpace;
 import com.extollit.gaming.ai.path.model.IPath;
 import com.extollit.gaming.ai.path.model.IPathingEntity;
 import com.extollit.gaming.ai.path.model.PathObject;
@@ -8,7 +7,6 @@ import com.extollit.gaming.ai.path.persistence.Persistence;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
@@ -17,10 +15,7 @@ import static com.extollit.gaming.ai.path.model.PathObjectUtil.assertPath;
 import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class HPODIntegrationTests {
-    private @Mock IInstanceSpace instanceSpace;
-    private @Mock IPathingEntity pathingEntity;
-
+public class HPODIntegrationTests extends AbstractHydrazinePathFinderTests {
     private final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 
     @Test
@@ -51,5 +46,12 @@ public class HPODIntegrationTests {
 
         path = pathFinder.updatePathFor(subject);
         assertNull(path);
+    }
+
+    @Test
+    public void controlEmpty() throws IOException {
+        final HydrazinePathFinder pathFinder = Persistence.restore(contextClassLoader.getResourceAsStream("empty.hpod"), instanceSpace);
+
+        assertNull(pathFinder.currentTarget());
     }
 }

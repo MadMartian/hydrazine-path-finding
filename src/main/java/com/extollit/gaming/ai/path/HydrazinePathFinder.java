@@ -1144,28 +1144,31 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
 
         @Override
         public void readLinkages(HydrazinePathFinder object, ReferableObjectInput<Node> in) throws IOException {
-            object.current = in.readRef();
-            object.source = in.readRef();
-            object.target = in.readRef();
-            if (this.version <= 2 || in.readBoolean())
-                object.closest = in.readRef();
-            else
-                object.closest = null;
+            if (this.version <= 3) {
+                object.current = in.readRef();
+                object.source = in.readRef();
+                object.target = in.readRef();
+                if (this.version <= 2)
+                    object.closest = in.readRef();
+                else
+                    object.closest = in.readNullableRef();
+            } else {
+                object.current = in.readNullableRef();
+                object.source = in.readNullableRef();
+                object.target = in.readNullableRef();
+                object.closest = in.readNullableRef();
+            }
         }
 
         @Override
         public void writeLinkages(HydrazinePathFinder object, ReferableObjectOutput<Node> out) throws IOException {
-            out.writeRef(object.current);
-            out.writeRef(object.source);
-            out.writeRef(object.target);
+            out.writeNullableRef(object.current);
+            out.writeNullableRef(object.source);
+            out.writeNullableRef(object.target);
             if (this.version <= 2)
                 out.writeRef(object.closest);
-            else {
-                final boolean present = object.closest != null;
-                out.writeBoolean(present);
-                if (present)
-                    out.writeRef(object.closest);
-            }
+            else
+                out.writeNullableRef(object.closest);
         }
     }
 
@@ -1215,17 +1218,17 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     }
     
     @Override
-    public void writeVersioned(byte version, ObjectOutput out) throws IOException {
+    public void writeVersioned(byte version, Persistence.ReaderWriters readerWriters, ObjectOutput out) throws IOException {
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         out.writeByte(this.unreachableFromSource.size());
         for (Vec3i coords : this.unreachableFromSource)
-            Vec3iReaderWriter.INSTANCE.writePartialObject(coords, out);
-        
-        MutableVec3dReaderWriter.INSTANCE.writePartialObject(this.sourcePosition, out);
-        Vec3dReaderWriter.INSTANCE.writePartialObject(this.targetPosition, out);
-        MutableVec3dReaderWriter.INSTANCE.writePartialObject(this.destinationPosition, out);
-        DummyDynamicMovableObject.ReaderWriter.INSTANCE.writePartialObject(this.destinationEntity, out);
+            readerWriters.v3i.writePartialObject(coords, out);
+
+        readerWriters.mv3d.writePartialObject(this.sourcePosition, out);
+        readerWriters.v3d.writePartialObject(this.targetPosition, out);
+        readerWriters.mv3d.writePartialObject(this.destinationPosition, out);
+        readerWriters.ddmo.writePartialObject(this.destinationEntity, out);
 
         out.writeBoolean(this.flying);
         out.writeBoolean(this.aqua);
@@ -1250,22 +1253,22 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     }
 
     @Override
-    public void readVersioned(byte version, ObjectInput in) throws IOException {
+    public void readVersioned(byte version, Persistence.ReaderWriters readerWriters, ObjectInput in) throws IOException {
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         byte count = in.readByte();
         while (count-- > 0)
-            this.unreachableFromSource.add(Vec3iReaderWriter.INSTANCE.readPartialObject(in));
+            this.unreachableFromSource.add(readerWriters.v3i.readPartialObject(in));
 
-        this.sourcePosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+        this.sourcePosition = readerWriters.mv3d.readPartialObject(in);
         if (version > 1)
-            this.targetPosition = Vec3dReaderWriter.INSTANCE.readPartialObject(in);
+            this.targetPosition = readerWriters.v3d.readPartialObject(in);
 
-        com.extollit.linalg.mutable.Vec3d destinationPosition = this.destinationPosition = MutableVec3dReaderWriter.INSTANCE.readPartialObject(in);
+        com.extollit.linalg.mutable.Vec3d destinationPosition = this.destinationPosition = readerWriters.mv3d.readPartialObject(in);
         if (version <= 1)
             this.targetPosition = destinationPosition == null ? null : new com.extollit.linalg.immutable.Vec3d(destinationPosition);
 
-        this.destinationEntity = DummyDynamicMovableObject.ReaderWriter.INSTANCE.readPartialObject(in);
+        this.destinationEntity = readerWriters.ddmo.readPartialObject(in);
 
         this.flying = in.readBoolean();
         this.aqua = in.readBoolean();

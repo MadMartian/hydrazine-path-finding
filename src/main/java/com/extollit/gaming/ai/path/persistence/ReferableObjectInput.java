@@ -5,4 +5,5 @@ import java.io.ObjectInput;
 
 public interface ReferableObjectInput<T> extends ObjectInput {
     T readRef() throws IOException;
+    T readNullableRef() throws IOException;
 }
