@@ -54,4 +54,24 @@ public class HPODIntegrationTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(pathFinder.currentTarget());
     }
+
+    @Test
+    public void fenceCornerStuck() throws IOException {
+        final HydrazinePathFinder pathFinder = Persistence.restore(contextClassLoader.getResourceAsStream("fence-corner-stuck.hpod"), instanceSpace);
+        final IPathingEntity subject = pathFinder.subject();
+
+        IPath path = null;
+
+        cornerFenceSouthEast(-7, 4, 11);
+        latFence(-6, 4, 11);
+        longFence(-7, 4, 12);
+        for (int z = -10; z < 13; ++ z)
+            for (int x = -8; x < -5; ++x)
+                solid(x, 3, z);
+
+        path = pathFinder.updatePathFor(subject);
+        path = pathFinder.updatePathFor(subject);
+
+        assertPath(path, new Vec3i(-7, 4, 11), new Vec3i(-8, 4, 11), new Vec3i(-8, 4, 12));
+    }
 }
