@@ -1,10 +1,11 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.CollectionsExt;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNull;
@@ -44,7 +45,20 @@ public class PathObjectUtil {
         assertArrayEquals(coordinates, otherCoords);
     }
 
+    public static List<INode> listify(IPath path) {
+        final List<INode> result = new LinkedList<>();
+        for (INode node : path)
+            result.add(node);
+
+        return result;
+    }
+
     private static INode[] nodesFrom(IPath path) {
-        return CollectionsExt.toList(path).toArray(new INode[path.length()]);
+        final INode[] result = new INode[path.length()];
+        int c = 0;
+        for (INode node : path)
+            result[c++] = node;
+
+        return result;
     }
 }

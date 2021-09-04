@@ -1,7 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.Option;
-
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -113,6 +111,6 @@ public final class IncompletePath implements IPath {
 
     @Override
     public Iterator<INode> iterator() {
-        return truncated ? Collections.<INode>emptyIterator() : Option.<INode>of(this.node).iterator();
+        return truncated ? Collections.<INode>emptyIterator() : Collections.singletonList(this.node).iterator();
     }
 }

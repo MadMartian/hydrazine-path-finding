@@ -3,7 +3,6 @@ package com.extollit.gaming.ai.path;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
-import com.extollit.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -457,8 +456,8 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(2, 0, 0);
         solid(3, 0, 0);
 
-        final Pair.Sealed<Passibility, Vec3i> pair = pathFinder.passibilityNear(3, 8, 0);
-        assertEquals(new Vec3i(3, 1, 0), pair.right);
+        final PassibilityResult result = pathFinder.passibilityNear(3, 8, 0);
+        assertEquals(new Vec3i(3, 1, 0), result.pos);
 
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
