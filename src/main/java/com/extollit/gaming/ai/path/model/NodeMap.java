@@ -1,7 +1,7 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.collect.SparseSpatialMap;
-import com.extollit.linalg.immutable.IntAxisAlignedBox;
+import com.extollit.gaming.ai.path.persistence.*;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.util.Collection;
@@ -114,7 +114,7 @@ public final class NodeMap {
     }
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
-        for (Node p : this.it.cullOutside(new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN)))
+        for (Node p : this.it.cullOutside(new Vec3i(x0, Integer.MIN_VALUE, z0), new Vec3i(xN, Integer.MAX_VALUE, zN)))
             p.rollback();
     }
 

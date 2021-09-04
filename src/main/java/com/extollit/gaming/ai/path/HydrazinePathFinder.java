@@ -5,7 +5,6 @@ import com.extollit.linalg.immutable.AxisAlignedBBox;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
-import com.extollit.tuple.Pair;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -1118,7 +1117,7 @@ public class HydrazinePathFinder {
         return this.subject.age() * this.capabilities.speed();
     }
 
-    public Pair.Sealed<Passibility, Vec3i> passibilityNear(int tx, int ty, int tz) {
+    public PassibilityResult passibilityNear(int tx, int ty, int tz) {
         updateSourcePosition();
 
         final int
@@ -1129,6 +1128,6 @@ public class HydrazinePathFinder {
         updateFieldWindow(x, z, tx, tz, false);
 
         final Node point = this.nodeMap.cachedPassiblePointNear(tx, ty, tz);
-        return Pair.Sealed.of(point.passibility(), point.key);
+        return new PassibilityResult(point.passibility(), point.key);
     }
 }

@@ -1,7 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.CollectionsExt;
-
 import java.util.Iterator;
 
 public final class NodeLinkedList implements Iterable<Node> {
@@ -118,6 +116,18 @@ public final class NodeLinkedList implements Iterable<Node> {
 
     @Override
     public String toString() {
-        return CollectionsExt.toList(this).toString();
+        final StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        boolean first = true;
+        for (Node element : this) {
+            if (first)
+                first = false;
+            else
+                sb.append(", ");
+
+            sb.append(element);
+        }
+        sb.append(']');
+        return sb.toString();
     }
 }

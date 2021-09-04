@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.CollectionsExt;
 import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.extollit.gaming.ai.path.model.PathObjectUtil.listify;
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.pathObject;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
@@ -206,7 +206,7 @@ public class PathObjectTests {
         assertEquals(5, pathObject.length());
         assertEquals(
                 Arrays.asList(pathObject.nodes),
-                CollectionsExt.toList(pathObject)
+                listify(pathObject)
         );
     }
 
