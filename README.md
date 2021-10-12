@@ -52,10 +52,11 @@ It's a good idea to maintain static instances of `PathOptions` objects for perfo
 new instance for each path-finding operation.
 
 ### Path-finding Scheduling
-There are three different ways to refine how much computing resources are allocated to a particular entity's path-finding
-object through what is called a scheduling priority, namely `low`, `high` and `extreme`.  The higher the scheduling priority
-the more fluid the path-finding operation at the expense of CPU utilization.  It is conventional to set this priority 
-according to the type of pathing entity upon construction time, although the priority can be changed at any time:
+There are four different ways to refine how much computing resources are allocated to a particular entity's path-finding
+object through what is called a scheduling priority, namely `low`, `medium`, high` and `extreme`.  The higher the
+scheduling priority the more fluid the path-finding operation at the expense of CPU utilization.  It is conventional to
+set this priority according to the type of pathing entity upon construction time, although the priority can be changed 
+at any time:
 
     // For animals
     final HydrazinePathFinder animalPathFinder = new HydrazinePathFinder(myCow, myWorld);
@@ -68,6 +69,9 @@ according to the type of pathing entity upon construction time, although the pri
     // For intelligent assassin-like entities
     final HydrazinePathFinder maestroPathFinder = new HydrazinePathFinder(myMaestro, myWorld);
     maestroPathFinder.schedulingPriority(SchedulingPriority.extreme)
+
+If you do not explicitly configure a path-finder with a scheduling priority then the default setting of `medium` is 
+used.
 
 ### Compute Path (Non-Incremental)
 For use-cases where it is most intuitive to compute a complete path from source position to destination all at once as

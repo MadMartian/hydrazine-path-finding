@@ -89,7 +89,7 @@ public class HydrazinePathFinder {
         this.nodeMap = new NodeMap(instanceSpace, occlusionProviderFactory);
 
         applySubject();
-        schedulingPriority(SchedulingPriority.low);
+        schedulingPriority(SchedulingPriority.medium);
 
         resetFaultTimings();
     }
