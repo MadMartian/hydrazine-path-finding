@@ -15,6 +15,16 @@ public final class NodeLinkedList implements Iterable<Node> {
         this.self = self;
     }
 
+    public int size() {
+        NodeLinkedList curr = this;
+        int count = 0;
+        do {
+            count++;
+            curr = curr.next;
+        } while (curr != null);
+        return count;
+    }
+
     private static class Iter implements Iterator<Node> {
         private NodeLinkedList head;
 

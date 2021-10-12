@@ -2,9 +2,14 @@ package com.extollit.gaming.ai.path.model;
 
 import com.extollit.gaming.ai.path.model.octree.Iteratee;
 import com.extollit.gaming.ai.path.model.octree.VoxelOctTreeMap;
+import com.extollit.gaming.ai.path.persistence.IdentityMapper;
 import com.extollit.linalg.immutable.IntAxisAlignedBox;
+import com.extollit.gaming.ai.path.persistence.*;
 import com.extollit.linalg.immutable.Vec3i;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,13 +150,13 @@ public final class NodeMap {
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
         this.it.cullOutside(
-                new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN),
-                new Iteratee<Node>() {
-                    @Override
-                    public void visit(Node element, int x, int y, int z) {
-                        element.rollback();
-                    }
+            new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN),
+            new Iteratee<Node>() {
+                @Override
+                public void visit(Node element, int x, int y, int z) {
+                    element.rollback();
                 }
+            }
         );
     }
 
@@ -259,5 +264,38 @@ public final class NodeMap {
     @Override
     public int hashCode() {
         return it.hashCode();
+    }
+
+    private final class MapReaderWriter extends Vec3iReaderWriter implements LinkableReader<Vec3i, Node>, LinkableWriter<Vec3i, Node> {
+        @Override
+        public void readLinkages(Vec3i object, ReferableObjectInput<Node> in) throws IOException {
+            it.put(object, in.readRef());
+        }
+
+        @Override
+        public void writeLinkages(Vec3i object, ReferableObjectOutput<Node> out) throws IOException {
+            out.writeRef(it.get(object));
+        }
+    }
+
+    public void writeTo(ObjectOutput out, IdentityMapper<Node, Node.ReaderWriter> nodeIdentityMap) throws IOException {
+        out.writeInt(this.cx0);
+        out.writeInt(this.cz0);
+        out.writeInt(this.cxN);
+        out.writeInt(this.czN);
+
+        nodeIdentityMap.initialize(Node.ReaderWriter.INSTANCE, all(), out);
+        nodeIdentityMap.writeWith(new com.extollit.gaming.ai.path.model.NodeMap.MapReaderWriter(), keys(), out);
+    }
+
+    public void readFrom(ObjectInput in, IdentityMapper<Node, Node.ReaderWriter> nodeIdentityMap) throws IOException {
+        this.cx0 = in.readInt();
+        this.cz0 = in.readInt();
+        this.cxN = in.readInt();
+        this.czN = in.readInt();
+
+        final Iterable<Node> nodes = nodeIdentityMap.readAll(in);
+        nodeIdentityMap.readLinks(Node.ReaderWriter.INSTANCE, nodes, in);
+        nodeIdentityMap.readWith(new com.extollit.gaming.ai.path.model.NodeMap.MapReaderWriter(), in);
     }
 }
