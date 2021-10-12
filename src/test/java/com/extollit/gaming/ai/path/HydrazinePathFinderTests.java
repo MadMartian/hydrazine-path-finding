@@ -1,6 +1,7 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
+import com.extollit.linalg.immutable.Vec3d;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -326,6 +327,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
     @Test
     public void volatileDoorway() {
         when(super.capabilities.avoidsDoorways()).thenReturn(false);
+        when(super.capabilities.opensDoors()).thenReturn(false);
 
         solid(0, -1, -1);
         solid(0, -1, 0);
@@ -465,7 +467,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 10, 4, false);
+        final IPath path = pathFinder.initiatePathTo(0, 10, 4, PathOptions.NONE);
 
         assertNull(path);
     }
@@ -476,7 +478,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 10, 4, true);
+        final IPath path = pathFinder.initiatePathTo(0, 10, 4, PathOptions.BEST_EFFORT);
 
         assertNotNull(path);
     }
@@ -488,7 +490,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 0, 400, true);
+        final IPath path = pathFinder.initiatePathTo(0, 0, 400, PathOptions.BEST_EFFORT);
 
         assertNotNull(path);
     }
@@ -500,8 +502,199 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         defaultGround();
         pathFinder.schedulingPriority(SchedulingPriority.low);
 
-        final IPath path = pathFinder.initiatePathTo(0, 0, 400, false);
+        final IPath path = pathFinder.initiatePathTo(0, 0, 400, PathOptions.NONE);
 
         assertNull(path);
+    }
+
+    @Test
+    public void nearestPassible() {
+        cautious(true);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        IPath path = pathFinder.initiatePathTo(0, 50, 4, new PathOptions().targetingStrategy(PathOptions.TargetingStrategy.gravitySnap));
+
+        assertNotNull(path);
+        path = pathFinder.updatePathFor(pathingEntity);
+
+        assertEquals(new Vec3i(0, 0, 4), path.last().coordinates());
+    }
+
+    @Test
+    public void nearestPassibleTooFar() {
+        cautious(true);
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        IPath path = pathFinder.initiatePathTo(0, 50, 500, new PathOptions().targetingStrategy(PathOptions.TargetingStrategy.gravitySnap));
+
+        assertNull(path);
+    }
+
+    private void setupBoundTests() {
+        defaultGround();
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        when(destinationEntity.coordinates()).thenReturn(new Vec3d(0, 0, 20));
+        final IPath path = pathFinder.trackPathTo(destinationEntity);
+
+        advance(pathingEntity, path);
+        path.update(pathingEntity);
+
+        when(destinationEntity.coordinates()).thenReturn(new Vec3d(0, 0, 30));
+    }
+
+    @Test
+    public void boundControl() {
+        when(pathingEntity.bound()).thenReturn(true);
+        setupBoundTests();
+        pos(0, 0, 2);
+
+        final IPath path = pathFinder.updatePathFor(pathingEntity);
+
+        // This is a round-about way to detect that resetTriage was NOT called
+        assertPath(
+            path,
+
+            new Vec3i(0, 0, 0),
+            new Vec3i(0, 0, 1),
+            new Vec3i(0, 0, 2),
+            new Vec3i(0, 0, 3),
+            new Vec3i(0, 0, 4)
+        );
+    }
+
+    @Test
+    public void boundReset() {
+        when(pathingEntity.bound()).thenReturn(true);
+        setupBoundTests();
+        pos(0, 0, 5);
+
+        final IPath path = pathFinder.updatePathFor(pathingEntity);
+
+        // This is a round-about way to detect that resetTriage WAS called
+        assertPath(path, new Vec3i(0, 0, 5), new Vec3i(0, 0, 6));
+    }
+
+    @Test
+    public void unboundControl() {
+        setupBoundTests();
+        pos(0, 0, 5);
+
+        final IPath path = pathFinder.updatePathFor(pathingEntity);
+
+        // This is a round-about way to detect that resetTriage WAS called
+        assertPath(
+                path,
+
+                new Vec3i(0, 0, 0),
+                new Vec3i(0, 0, 1),
+                new Vec3i(0, 0, 2),
+                new Vec3i(0, 0, 3),
+                new Vec3i(0, 0, 4)
+        );
+    }
+
+    @Test
+    public void closedDoorCapabilitiesControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(false);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, false);
+        door(0, 1, 1, false);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertNull(path);
+    }
+
+    @Test
+    public void openDoorCapabilitiesControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(false);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, true);
+        door(0, 1, 1, true);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertNotNull(path);
+    }
+
+    @Test
+    public void doorControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, false);
+        door(0, 1, 1, false);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+    }
+
+    @Test
+    public void openDoorControl() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        door(0, 0, 1, true);
+        door(0, 1, 1, true);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+    }
+
+    @Test
+    public void intractableDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        intractableDoor(0, 0, 1, false);
+        intractableDoor(0, 1, 1, false);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertNull(path);
+    }
+
+    @Test
+    public void openIntractableDoor() {
+        when(capabilities.avoidsDoorways()).thenReturn(false);
+        when(capabilities.opensDoors()).thenReturn(true);
+
+        pos(0, 0, 0);
+        solid(0, -1, 0);
+        solid(0, -1, 1);
+        intractableDoor(0, 0, 1, true);
+        intractableDoor(0, 1, 1, true);
+        solid(0, -1, 2);
+
+        IPath path = pathFinder.initiatePathTo(0, 0, 2);
+
+        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
     }
 }

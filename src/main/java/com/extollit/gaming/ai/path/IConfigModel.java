@@ -1,5 +1,6 @@
 package com.extollit.gaming.ai.path;
 
+import com.extollit.gaming.ai.path.model.IPathingEntity;
 import com.extollit.num.FloatRange;
 
 /**
@@ -57,7 +58,7 @@ public interface IConfigModel {
      *           \
      *            d
      *
-     * In the above example, the formula would be: (s -&gt; t) dot (s -&gt; d) < threshold
+     * In the above example, the formula would be: (s -&gt; t) dot (s -&gt; d) &lt; threshold
      *
      * @return the threshold value the dot product between the destination position and the current target with the
      *         initial source position must be less than for an A* triage reset to occur.
@@ -92,7 +93,7 @@ public interface IConfigModel {
      *
      * @return the pre-configured maximum fault count
      * @see #passiblePointTimeLimit()
-     * @see HydrazinePathFinder#update()
+     * @see HydrazinePathFinder#updatePathFor(IPathingEntity)
      * @see HydrazinePathFinder#initiatePathTo(double, double, double)
      * @see HydrazinePathFinder#reset()
      */

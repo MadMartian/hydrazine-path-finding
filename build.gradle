@@ -1,4 +1,5 @@
 repositories {
+    mavenLocal()
     maven {
         name = "central"
         url = "https://repo1.maven.org/maven2/"
@@ -7,13 +8,16 @@ repositories {
 }
 
 group 'com.extollit.gaming'
-version '1.5.5'
+description = "An iterative A* path-finding engine designed for blocky sandbox games having entities with differing path requirements"
+version '1.7.2-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'signing'
+apply plugin: 'maven'
 
 compileJava {
-    sourceCompatibility = '1.7'
-    targetCompatibility = '1.7'
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
 }
 
 sourceSets {
@@ -36,5 +40,69 @@ dependencies {
     testCompile group: "org.mockito", name: "mockito-core", version: "1.10.19"
     testCompile group: 'net.jqwik', name: 'jqwik', version: '1.3.0'
 
-    compile group: 'com.github.MadMartian', name: 'data-structures', version: '2.11'
+    compile group: 'com.extollit', name: 'data-structures', version: '2.14'
+}
+
+signing {
+    sign configurations.archives
+}
+
+task shipDoc(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+task shipSrc(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jar
+    archives shipSrc
+    archives shipDoc
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'RabbitMQ Manager'
+                packaging 'jar'
+                description 'Convenience class for facilitating some common RabbitMQ tasks.'
+                url 'https://github.com/weibeld/RabbitMQ-Manager'
+
+                scm {
+                    connection 'scm:git:git://github.com/weibeld/RabbitMQ-Manager.git'
+                    developerConnection 'scm:git:ssh://github.com/weibeld/RabbitMQ-Manager.git'
+                    url 'http://github.com/weibeld/RabbitMQ-Manager/tree/master'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'MadMartian'
+                        name 'Jonathan Neufeld'
+                        email 'support@extollit.com'
+                        organization 'extollIT Enterprises'
+                        organizationUrl 'http://www.extollit.com'
+                    }
+                }
+            }
+        }
+    }
 }

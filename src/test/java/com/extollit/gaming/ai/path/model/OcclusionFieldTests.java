@@ -568,4 +568,26 @@ public class OcclusionFieldTests extends AbstractOcclusionFieldTesting {
         final byte element = occlusionField.elementAt(2, 9, 6);
         assertTrue(Element.fire.in(element));
     }
+
+    @Test
+    public void openIntractableDoor() {
+        ironDoor(true, 5, 5, 5);
+        occlusionField.loadFrom(centerSpace, 0, 0, 0);
+
+        final byte flags = occlusionField.elementAt(5, 5, 5);
+
+        assertTrue(Element.air.in(flags));
+        assertTrue(Logic.doorway.in(flags));
+    }
+
+    @Test
+    public void closedIntractableDoor() {
+        ironDoor(false, 5, 5, 5);
+        occlusionField.loadFrom(centerSpace, 0, 0, 0);
+
+        final byte flags = occlusionField.elementAt(5, 5, 5);
+
+        assertTrue(Element.fire.in(flags));
+        assertTrue(Logic.doorway.in(flags));
+    }
 }

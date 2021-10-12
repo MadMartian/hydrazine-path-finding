@@ -1,9 +1,11 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.CollectionsExt;
 import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -85,7 +87,12 @@ public class NodeTests {
         subject.appendTo(newNode, 1, 3);
 
         assertTrue(this.root.infecund());
-        assertTrue(CollectionsExt.toList(newNode.children()).contains(subject));
+
+        final List<INode> result = new LinkedList<>();
+        for (INode node : newNode.children())
+            result.add(node);
+
+        assertTrue(result.contains(subject));
     }
 
     @Test

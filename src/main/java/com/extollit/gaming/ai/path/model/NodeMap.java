@@ -1,12 +1,13 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.CollectionsExt;
 import com.extollit.gaming.ai.path.model.octree.Iteratee;
 import com.extollit.gaming.ai.path.model.octree.VoxelOctTreeMap;
 import com.extollit.linalg.immutable.IntAxisAlignedBox;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 public final class NodeMap {
     private final VoxelOctTreeMap<Node> it = new VoxelOctTreeMap<>(Node.class);
@@ -121,18 +122,36 @@ public final class NodeMap {
     }
 
     public Collection<Node> all() {
-        return CollectionsExt.toList(this.it.iterator());
+        final List<Node> list = new LinkedList<>();
+        this.it.forEach(new Iteratee<Node>() {
+            @Override
+            public void visit(Node element, int x, int y, int z) {
+                list.add(element);
+            }
+        });
+        return list;
+    }
+
+    public Collection<Vec3i> keys() {
+        final List<Vec3i> list = new LinkedList<>();
+        this.it.forEach(new Iteratee<Node>() {
+            @Override
+            public void visit(Node element, int x, int y, int z) {
+                list.add(new Vec3i(x, y, z));
+            }
+        });
+        return list;
     }
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
         this.it.cullOutside(
-            new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN),
-            new Iteratee<Node>() {
-                @Override
-                public void visit(Node element, int x, int y, int z) {
-                    element.rollback();
+                new IntAxisAlignedBox(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN),
+                new Iteratee<Node>() {
+                    @Override
+                    public void visit(Node element, int x, int y, int z) {
+                        element.rollback();
+                    }
                 }
-            }
         );
     }
 
@@ -171,7 +190,7 @@ public final class NodeMap {
         Node point = point0;
 
         if (point == null)
-             point = passibleNodeNear(coords, origin);
+            point = passibleNodeNear(coords, origin);
         else if (point.volatile_()) {
             point = passibleNodeNear(coords, origin);
             if (point.key.equals(point0.key)) {

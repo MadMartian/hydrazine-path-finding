@@ -48,10 +48,11 @@ public enum Logic {
      *
      * - {@link Element#earth} - The door is closed
      * - {@link Element#air} - The door is open
-     * - {@link Element#fire} - Reserved for future use
+     * - {@link Element#fire} - The door is closed and it is intractable (cannot be opened by AI)
      * - {@link Element#water} - Reserved for future use
      *
      * @see IBlockDescription#isDoor()
+     * @see IBlockDescription#isIntractable()
      */
     doorway;
 

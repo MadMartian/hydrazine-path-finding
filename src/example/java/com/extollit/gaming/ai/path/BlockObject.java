@@ -1,12 +1,11 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.IBlockDescription;
 import com.extollit.gaming.ai.path.model.IBlockObject;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
 
 public class BlockObject implements IBlockObject {
     public AxisAlignedBBox bounds;
-    public boolean fenceLike, climbable, door, impeding, fullyBounded, liquid, incinerating;
+    public boolean fenceLike, climbable, door, impeding, fullyBounded, liquid, incinerating, dynamic;
 
     @Override
     public AxisAlignedBBox bounds() {
@@ -26,6 +25,11 @@ public class BlockObject implements IBlockObject {
     @Override
     public boolean isDoor() {
         return this.door;
+    }
+
+    @Override
+    public boolean isIntractable() {
+        return this.dynamic;
     }
 
     @Override

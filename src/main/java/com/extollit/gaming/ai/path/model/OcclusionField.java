@@ -1,7 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.VertexOffset;
-
 public class OcclusionField implements IOcclusionProvider {
     public enum AreaInit {
         north   (0, -1),
@@ -17,14 +15,17 @@ public class OcclusionField implements IOcclusionProvider {
         up      (1),
         down    (-1);
 
-        public final VertexOffset offset;
+        public final byte dx, dy, dz;
         public final short mask = (short)(1 << ordinal());
 
         AreaInit(int dx, int dz) {
-            this.offset = new VertexOffset(dx, 0, dz);
+            this.dx = (byte) dx;
+            this.dy = 0;
+            this.dz = (byte) dz;
         }
         AreaInit(int dy) {
-            this.offset = new VertexOffset(0, dy, 0);
+            this.dx = this.dz = 0;
+            this.dy = (byte) dy;
         }
 
         public boolean in(short flags) { return (flags & mask) != 0; }
@@ -590,7 +591,7 @@ public class OcclusionField implements IOcclusionProvider {
                     ||
                 downFenceOrDoorLike && centerFenceOrDoorLike &&
                     (
-                        Logic.doorway.in(downFlags) && (downBlock.isFenceLike() && downBlock.isDoor() && (Element.earth.in(downFlags) || !(centerBlock.isDoor() && centerBlock.isFenceLike())))
+                        Logic.doorway.in(downFlags) && (downBlock.isFenceLike() && downBlock.isDoor() && (Element.doorClosedLike(downFlags) || !(centerBlock.isDoor() && centerBlock.isFenceLike())))
                             ||
                         Logic.doorway.in(centerFlags) && !(downBlock.isFenceLike() && downBlock.isDoor())
                     )
@@ -818,7 +819,11 @@ public class OcclusionField implements IOcclusionProvider {
         final boolean doorway = block.isDoor();
 
         if (doorway)
-            flags |= (instance.blockObjectAt(x, y, z).isImpeding() ? Element.earth : Element.air).mask;
+            flags |= (
+                instance.blockObjectAt(x, y, z).isImpeding()
+                    ? block.isIntractable() ? Element.fire : Element.earth
+                    : Element.air
+            ).mask;
         else if (!block.isImpeding())
             if (block.isLiquid())
                 if (block.isIncinerating())

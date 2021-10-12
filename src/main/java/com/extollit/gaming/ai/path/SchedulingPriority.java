@@ -26,6 +26,12 @@ public enum SchedulingPriority {
     high    (12, 7),
 
     /**
+     * Indicates medium-priority scheduling, entities with engines configured for this rating will have slightly better
+     * accuracy than low priority, particularly during the beginning of a path traversal.
+     */
+    medium  (7, 3),
+
+    /**
      * Indicates low-priority scheduling, entities with engines configured for this rating complete path-finding later.
      * While the results of pathing for mobs with this scheduling priority can appear erratic or even stupid it is also
      * the least computationally expensive.  This scheduling priority is most suitable for mindless animals.

@@ -84,10 +84,10 @@ class PassibilityHelpers {
     }
 
     private static boolean passibleDoorway(byte flags, IPathingEntity.Capabilities capabilities) {
-        return Logic.doorway.in(flags) && capabilities.opensDoors() && !capabilities.avoidsDoorways();
+        return Logic.doorway.in(flags) && capabilities.opensDoors() && !capabilities.avoidsDoorways() && !Element.fire.in(flags);
     }
 
     private static boolean impassibleDoorway(byte flags, IPathingEntity.Capabilities capabilities) {
-        return Logic.doorway.in(flags) && capabilities.avoidsDoorways();
+        return Logic.doorway.in(flags) && (((!capabilities.opensDoors() && !Element.air.in(flags)) || capabilities.avoidsDoorways()) || Element.fire.in(flags));
     }
 }

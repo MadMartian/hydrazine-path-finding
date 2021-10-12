@@ -256,7 +256,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         solid(1, 9, -1);
 
         when(destinationEntity.coordinates()).thenReturn(new Vec3d(1, 10, -1));
-        pathObject = pathFinder.update();
+        pathObject = pathFinder.update(pathingEntity);
 
         assertNotNull(pathObject);
         last = pathObject.last();
@@ -298,6 +298,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
 
         final IPath path = pathFinder.initiatePathTo(2, 1, 2);
 
+        assertNotNull(path);
         assertPath(
                 path,
 
@@ -380,13 +381,13 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         verify(pathingEntity).moveTo(new Vec3d(0.5, 0, 3.5), Passibility.passible, Gravitation.grounded);
         pos(0.5, 0, 1.5);
 
-        IPath path2 = pathFinder.update();
+        IPath path2 = pathFinder.update(pathingEntity);
 
         assertSame(path, path2);
 
         when(pathingEntity.age()).thenReturn(100);
 
-        path2 = pathFinder.update();
+        path2 = pathFinder.update(pathingEntity);
 
         assertNotSame(path, path2);
         path = path2;
@@ -394,7 +395,7 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         path.update(pathingEntity);
         when(pathingEntity.age()).thenReturn(200);
 
-        path2 = pathFinder.update();
+        path2 = pathFinder.update(pathingEntity);
         assertTrue(path.sameAs(path2));
         path2.update(pathingEntity);
 
@@ -429,5 +430,76 @@ public class IntegrationTests extends AbstractHydrazinePathFinderTests {
         assertEquals(5, incompletes);
 
         verify(pathingEntity).moveTo(new Vec3d(1.5, 0, 7.5), Passibility.passible, Gravitation.grounded);
+    }
+
+    @Test
+    public void indecision() {
+        cautious(false);
+        defaultGround();
+
+        pos(0, 8, 1);
+        solid(0, 7, 1);
+        solid(0, 7, 0);
+        solid(1, 7, 0);
+        solid(1, 6, 0);
+        solid(0, 6, 1);
+        solid(0, 5, 1);
+        solid(1, 5, 1);
+        solid(1, 4, 1);
+        solid(1, 4, 2);
+        solid(1, 3, 2);
+        solid(2, 3, 2);
+        solid(2, 2, 2);
+        solid(2, 2, 1);
+        solid(2, 1, 1);
+        solid(2, 1, 0);
+        solid(2, 0, 0);
+        solid(3, 0, 0);
+
+        final PassibilityResult result = pathFinder.passibilityNear(3, 8, 0);
+        assertEquals(new Vec3i(3, 1, 0), result.pos);
+
+        pathFinder.schedulingPriority(SchedulingPriority.low);
+
+        IPath path = pathFinder.initiatePathTo(3, 8, 0);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+
+        assertEquals(new Vec3i(3, 1, 0), path.last().coordinates());
+    }
+
+    @Test
+    public void completedPath() {
+        defaultGround();
+        pos(0, 0, 0);
+
+        IPath path = pathFinder.initiatePathTo(1, 0, 0);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        assertNotNull(path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        assertNotNull(path);
+    }
+
+    @Test
+    public void unreachablePath() {
+        defaultGround();
+        pos(0, 0, 0);
+
+        IPath path = pathFinder.initiatePathTo(1, 5, 0, new PathOptions().targetingStrategy(PathOptions.TargetingStrategy.gravitySnap));
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        advance(pathingEntity, path);
+        path = pathFinder.updatePathFor(pathingEntity);
+        assertNull(path);
     }
 }

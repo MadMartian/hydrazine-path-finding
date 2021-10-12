@@ -5,7 +5,7 @@ package com.extollit.gaming.ai.path.model;
  * An implementor would typically modify their own class topology to support these contracts rather than introduce new types
  * for the sake of simplicity.
  *
- * Many of these functions use chunk coordinates, which are at intervals of 16 blocks (cx = x >> 4).
+ * Many of these functions use chunk coordinates, which are at intervals of 16 blocks (cx = x &gt;&gt; 4).
  *
  * @see IColumnarSpace
  * @see IBlockObject

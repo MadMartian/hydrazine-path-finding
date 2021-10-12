@@ -1,12 +1,12 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.ArrayIterable;
 import com.extollit.gaming.ai.path.IConfigModel;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
 
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -80,7 +80,7 @@ public final class PathObject implements IPath {
 
     @Override
     public Iterator<INode> iterator() {
-        return new ArrayIterable.Iter<INode>(this.nodes, this.length);
+        return Arrays.<INode>stream(this.nodes).limit(this.length).iterator();
     }
     @Override
     public final int length() { return this.length; }

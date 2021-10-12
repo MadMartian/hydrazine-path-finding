@@ -11,6 +11,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
     private static int
             MAX_SAFE_FALL_DISTANCE = 4,
             MAX_SURVIVE_FALL_DISTANCE = 20,
+            MAX_FALL_SEARCH = 1024,
             CESA_LIMIT = 16;
 
     public GroundNodeCalculator(IInstanceSpace instanceSpace) {
@@ -66,7 +67,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                     ) {
                 int y = y0;
 
-                float partY = topOffsetAt(
+                final float partY0 = topOffsetAt(
                         flagSampler,
                         x - d.x,
                         y - d.y - 1,
@@ -76,7 +77,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 byte flags = flagSampler.flagsAt(x, y, z);
                 final boolean impedesMovement;
                 if (impedesMovement = impedesMovement(flags, capabilities)) {
-                    final float partialDisparity = partY - topOffsetAt(flags, x, y++, z);
+                    final float partialDisparity = partY0 - topOffsetAt(flags, x, y++, z);
                     flags = flagSampler.flagsAt(x, y, z);
 
                     if (partialDisparity < 0 || impedesMovement(flags, capabilities)) {
@@ -91,19 +92,20 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                             while (climbsLadders && Logic.climbable(flags));
                         }
 
-                        if (impedesMovement(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (impedesMovement(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY < 0))
+                        if (impedesMovement(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (impedesMovement(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY0 < 0))
                             return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
                     }
                 }
-                partY = topOffsetAt(flagSampler, x, y - 1, z);
+                float partY = topOffsetAt(flagSampler, x, y - 1, z);
                 final int ys;
-                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, ys = y, z, partY);
+                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, ys = y, z, Math.min(partY, partY0));
 
                 boolean swimable = false;
                 {
                     boolean condition = !impedesMovement || unstable(flags);
-                    for (int j = 0;
-                         condition && !(swimable = swimable(flags)) && j <= MAX_SURVIVE_FALL_DISTANCE;
+                    for (int j = 0,
+                            jN = origin == null ? MAX_FALL_SEARCH : MAX_SURVIVE_FALL_DISTANCE;
+                         condition && !(swimable = swimable(flags)) && j <= jN;
                          j++, condition = unstable(flags)
                             )
                         flags = flagSampler.flagsAt(x, --y, z);
@@ -127,7 +129,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 }
 
                 partY = topOffsetAt(flags, x, y++, z);
-                passibility = verticalClearanceAt(flagSampler, ys - y, flagSampler.flagsAt(x, y, z), passibility, d, x, y, z, partY);
+                passibility = verticalClearanceAt(flagSampler, ys - y, flagSampler.flagsAt(x, y, z), passibility, d, x, y, z, Math.min(partY, partY0));
 
                 if (y > minY) {
                     minY = y;
@@ -143,7 +145,8 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
         if (hasOrigin && !passibility.impassible(capabilities))
             passibility = originHeadClearance(flagSampler, passibility, origin, minY, minPartY);
 
-        passibility = fallingSafety(passibility, y0, minY);
+        if (origin != null)
+            passibility = fallingSafety(passibility, y0, minY);
 
         if (passibility.impassible(capabilities))
             passibility = Passibility.impassible;
