@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public final class DummyDynamicMovableObject implements IDynamicMovableObject {
+final class DummyDynamicMovableObject implements IDynamicMovableObject {
     public static final class ReaderWriter implements PartialObjectWriter<IDynamicMovableObject>, PartialObjectReader<DummyDynamicMovableObject> {
         private final Vec3dReaderWriter vec3dReaderWriter;
 

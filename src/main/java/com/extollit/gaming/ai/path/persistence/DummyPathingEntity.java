@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabilities {
+class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabilities {
     public static final class ReaderWriter implements PartialObjectWriter<IPathingEntity>, PartialObjectReader<DummyPathingEntity> {
         private final MutableVec3dReaderWriter mutableVec3dReaderWriter;
         private final Vec3dReaderWriter vec3dReaderWriter;
