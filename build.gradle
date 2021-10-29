@@ -42,10 +42,6 @@ dependencies {
     compile group: 'com.extollit', name: 'data-structures', version: '2.14'
 }
 
-signing {
-    sign configurations.archives
-}
-
 task shipDoc(type: Jar) {
     classifier = 'javadoc'
     from javadoc
@@ -61,47 +57,6 @@ artifacts {
     archives shipDoc
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'RabbitMQ Manager'
-                packaging 'jar'
-                description 'Convenience class for facilitating some common RabbitMQ tasks.'
-                url 'https://github.com/weibeld/RabbitMQ-Manager'
-
-                scm {
-                    connection 'scm:git:git://github.com/weibeld/RabbitMQ-Manager.git'
-                    developerConnection 'scm:git:ssh://github.com/weibeld/RabbitMQ-Manager.git'
-                    url 'http://github.com/weibeld/RabbitMQ-Manager/tree/master'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'MadMartian'
-                        name 'Jonathan Neufeld'
-                        email 'support@extollit.com'
-                        organization 'extollIT Enterprises'
-                        organizationUrl 'http://www.extollit.com'
-                    }
-                }
-            }
-        }
-    }
-}
+if (project.hasProperty("ossrhUsername") && project.hasProperty("ossrhPassword") &&
+    project.hasProperty("signing.keyId") && project.hasProperty("signing.password") && project.hasProperty("signing.secretKeyRingFile"))
+    apply from: 'publishing.gradle'
