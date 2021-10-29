@@ -1,4 +1,4 @@
-package com.extollit.gaming.ai.path.persistence;
+package com.extollit.gaming.ai.path.persistence.internal;
 
 import com.extollit.gaming.ai.path.model.Gravitation;
 import com.extollit.gaming.ai.path.model.IPathingEntity;
@@ -9,7 +9,11 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabilities {
+/**
+ * Internal API, do not use this directly
+ * @see com.extollit.gaming.ai.path.persistence.Persistence
+ */
+public class DummyPathingEntity implements IPathingEntity, IPathingEntity.Capabilities {
     public static final class ReaderWriter implements PartialObjectWriter<IPathingEntity>, PartialObjectReader<DummyPathingEntity> {
         private final MutableVec3dReaderWriter mutableVec3dReaderWriter;
         private final Vec3dReaderWriter vec3dReaderWriter;

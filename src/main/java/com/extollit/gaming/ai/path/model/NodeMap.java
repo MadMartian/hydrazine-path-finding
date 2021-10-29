@@ -1,7 +1,7 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.collect.SparseSpatialMap;
-import com.extollit.gaming.ai.path.persistence.*;
+import com.extollit.gaming.ai.path.persistence.internal.*;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.io.IOException;

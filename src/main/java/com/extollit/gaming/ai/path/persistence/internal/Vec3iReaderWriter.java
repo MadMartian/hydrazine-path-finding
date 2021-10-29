@@ -1,4 +1,4 @@
-package com.extollit.gaming.ai.path.persistence;
+package com.extollit.gaming.ai.path.persistence.internal;
 
 import com.extollit.linalg.immutable.Vec3i;
 
@@ -6,6 +6,10 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+/**
+ * Internal API, do not use this directly
+ * @see com.extollit.gaming.ai.path.persistence.Persistence
+ */
 public class Vec3iReaderWriter implements PartialObjectReader<Vec3i>, PartialObjectWriter<Vec3i> {
     public static final Vec3iReaderWriter INSTANCEz = new Vec3iReaderWriter();
 

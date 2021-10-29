@@ -1,4 +1,4 @@
-package com.extollit.gaming.ai.path.persistence;
+package com.extollit.gaming.ai.path.persistence.internal;
 
 import com.extollit.gaming.ai.path.model.IDynamicMovableObject;
 import com.extollit.linalg.immutable.Vec3d;
@@ -11,7 +11,7 @@ final class DummyDynamicMovableObject implements IDynamicMovableObject {
     public static final class ReaderWriter implements PartialObjectWriter<IDynamicMovableObject>, PartialObjectReader<DummyDynamicMovableObject> {
         private final Vec3dReaderWriter vec3dReaderWriter;
 
-        public ReaderWriter(Vec3dReaderWriter vec3dReaderWriter) {
+        ReaderWriter(Vec3dReaderWriter vec3dReaderWriter) {
             this.vec3dReaderWriter = vec3dReaderWriter;
         }
 

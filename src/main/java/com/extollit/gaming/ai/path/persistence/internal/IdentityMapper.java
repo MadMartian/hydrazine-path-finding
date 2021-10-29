@@ -1,4 +1,4 @@
-package com.extollit.gaming.ai.path.persistence;
+package com.extollit.gaming.ai.path.persistence.internal;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -6,6 +6,10 @@ import java.io.ObjectOutput;
 import java.text.MessageFormat;
 import java.util.*;
 
+/**
+ * Internal API, do not use this directly
+ * @see com.extollit.gaming.ai.path.persistence.Persistence
+ */
 public class IdentityMapper<T, RW extends PartialObjectReader<T> & PartialObjectWriter<T>> {
     private final Map<T, Short> reverseMap = new IdentityHashMap<>();
     private final List<T> map = new ArrayList<>();

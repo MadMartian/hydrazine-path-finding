@@ -1,9 +1,9 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.gaming.ai.path.persistence.LinkableReader;
-import com.extollit.gaming.ai.path.persistence.LinkableWriter;
-import com.extollit.gaming.ai.path.persistence.ReferableObjectInput;
-import com.extollit.gaming.ai.path.persistence.ReferableObjectOutput;
+import com.extollit.gaming.ai.path.persistence.internal.LinkableReader;
+import com.extollit.gaming.ai.path.persistence.internal.LinkableWriter;
+import com.extollit.gaming.ai.path.persistence.internal.ReferableObjectInput;
+import com.extollit.gaming.ai.path.persistence.internal.ReferableObjectOutput;
 import com.extollit.linalg.immutable.Vec3i;
 
 import java.io.IOException;

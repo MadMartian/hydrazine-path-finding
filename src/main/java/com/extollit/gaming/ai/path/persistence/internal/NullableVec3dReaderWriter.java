@@ -1,15 +1,19 @@
-package com.extollit.gaming.ai.path.persistence;
+package com.extollit.gaming.ai.path.persistence.internal;
 
-import com.extollit.linalg.mutable.Vec3d;
+import com.extollit.linalg.immutable.Vec3d;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class NullableMutableVec3dReaderWriter extends MutableVec3dReaderWriter {
-    public static final NullableMutableVec3dReaderWriter INSTANCE = new NullableMutableVec3dReaderWriter();
+/**
+ * Internal API, do not use this directly
+ * @see com.extollit.gaming.ai.path.persistence.Persistence
+ */
+public class NullableVec3dReaderWriter extends Vec3dReaderWriter {
+    public static final NullableVec3dReaderWriter INSTANCE = new NullableVec3dReaderWriter();
 
-    private NullableMutableVec3dReaderWriter() {}
+    private NullableVec3dReaderWriter() {}
 
     @Override
     public Vec3d readPartialObject(ObjectInput in) throws IOException {

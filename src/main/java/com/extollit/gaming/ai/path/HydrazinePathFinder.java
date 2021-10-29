@@ -1,7 +1,7 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
-import com.extollit.gaming.ai.path.persistence.*;
+import com.extollit.gaming.ai.path.persistence.internal.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
 import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
@@ -1218,7 +1218,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     }
     
     @Override
-    public void writeVersioned(byte version, Persistence.ReaderWriters readerWriters, ObjectOutput out) throws IOException {
+    public void writeVersioned(byte version, ReaderWriters readerWriters, ObjectOutput out) throws IOException {
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         out.writeByte(this.unreachableFromSource.size());
@@ -1253,7 +1253,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     }
 
     @Override
-    public void readVersioned(byte version, Persistence.ReaderWriters readerWriters, ObjectInput in) throws IOException {
+    public void readVersioned(byte version, ReaderWriters readerWriters, ObjectInput in) throws IOException {
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         byte count = in.readByte();
