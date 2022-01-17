@@ -28,6 +28,18 @@ public enum Passibility {
      */
     impassible;
 
+    private static final Passibility[] VALUES = values();
+
+    /**
+     * Retrieves the passibility having the given ordinal value
+     *
+     * @param index The ordinal value of the passibility to return
+     * @return the passibility corresponding to the given ordinal
+     */
+    public static Passibility of(int index) {
+        return VALUES[index];
+    }
+
     /**
      * Renders the least passibility between this and the given passibility rating.  For example, if this is
      * {@link #passible} and the parameter is {@link #risky} then the result is <em>risky</em>.  Also, if this
@@ -37,7 +49,7 @@ public enum Passibility {
      * @return the lesser of the two passibility ratings
      */
     public Passibility between(Passibility other) {
-        return values()[Math.max(ordinal(), other.ordinal())];
+        return VALUES[Math.max(ordinal(), other.ordinal())];
     }
 
     /**

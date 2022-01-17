@@ -85,7 +85,7 @@ public class Node implements INode {
 
     @Override
     public final Passibility passibility() {
-        return Passibility.values()[this.word & Mask_Passibility];
+        return Passibility.of(this.word & Mask_Passibility);
     }
     public final void passibility(Passibility passibility) {
         final Node previous = up();
