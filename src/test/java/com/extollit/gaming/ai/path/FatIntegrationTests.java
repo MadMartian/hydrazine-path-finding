@@ -1,7 +1,7 @@
 package com.extollit.gaming.ai.path;
 
+import com.extollit.gaming.ai.path.model.Coords;
 import com.extollit.gaming.ai.path.model.IPath;
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -29,10 +29,10 @@ public class FatIntegrationTests extends AbstractHydrazinePathFinderTests {
 
         final IPath path = pathFinder.initiatePathTo(0, 0, -2);
         assertNotNull(path);
-        final Vec3i [] expectedPath = {
+        final Coords[] expectedPath = {
                 ORIGIN,
-                new Vec3i(0, -1, -1),
-                new Vec3i(0, -1, -2)
+                new Coords(0, -1, -1),
+                new Coords(0, -1, -2)
         };
         assertPath(path, expectedPath);
     }

@@ -2,7 +2,6 @@ package com.extollit.gaming.ai.path.model;
 
 import com.extollit.gaming.ai.path.IConfigModel;
 import com.extollit.gaming.ai.path.persistence.internal.*;
-import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
 import com.extollit.num.FloatRange;
 
@@ -188,8 +187,8 @@ public final class PathObject implements IPath {
 
         for (int i = nextAdjacentIndex = this.adjacentIndex; i < this.length && i < end; ++i) {
             final Node node = this.nodes[i];
-            final Vec3i pp = node.key;
-            d.sub(pp);
+            final Coords pp = node.key;
+            d.sub(pp.x, pp.y, pp.z);
             d.sub(offset, 0, offset);
             d.y *= fy;
 
@@ -224,7 +223,7 @@ public final class PathObject implements IPath {
         this.taxiUntil = index;
     }
 
-    public static com.extollit.linalg.immutable.Vec3d positionFor(IPathingEntity subject, Vec3i point) {
+    public static com.extollit.linalg.immutable.Vec3d positionFor(IPathingEntity subject, Coords point) {
         final double offset = pointToPositionOffset(subject.width());
         return new com.extollit.linalg.immutable.Vec3d(
                 point.x + offset,
@@ -257,11 +256,11 @@ public final class PathObject implements IPath {
 
         final Node[] nodes = this.nodes;
         final Node node0 = nodes[i];
-        Vec3i p0 = node0.key;
+        Coords p0 = node0.key;
 
         while (i++ < n) {
             final Node node = nodes[i];
-            final Vec3i p = node.key;
+            final Coords p = node.key;
             final int
                 dx = p.x - p0.x,
                 dy = p.y - p0.y,
@@ -341,7 +340,7 @@ public final class PathObject implements IPath {
         p0 = nodes[i].key;
         while (i++ < n) {
             final Node node = nodes[i];
-            final Vec3i p = node.key;
+            final Coords p = node.key;
             final int
                     dx = p.x - p0.x,
                     dy = p.y - p0.y,
@@ -476,7 +475,7 @@ public final class PathObject implements IPath {
 
         while(++c < length) {
             final INode node = nodes[c];
-            final Vec3i p = node.coordinates();
+            final Coords p = node.coordinates();
             if (p.equals(lastPointVisited.coordinates())) {
                 i = c;
                 break;

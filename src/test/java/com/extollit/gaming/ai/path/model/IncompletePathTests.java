@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 
 import static com.extollit.gaming.ai.path.model.PathObjectUtil.pathObject;
@@ -52,7 +51,7 @@ public class IncompletePathTests {
 
     @Test
     public void sameDisjoint() {
-        final PathObject path = pathObject(new Vec3i(7, 8, 9));
+        final PathObject path = pathObject(new Coords(7, 8, 9));
         final IncompletePath single = new IncompletePath(new Node(7, 8, 9));
 
         path.i = 2;

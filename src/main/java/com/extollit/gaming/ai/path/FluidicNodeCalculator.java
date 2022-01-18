@@ -1,7 +1,6 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
-import com.extollit.linalg.immutable.Vec3i;
 
 import static com.extollit.gaming.ai.path.PassibilityHelpers.*;
 import static java.lang.Math.round;
@@ -13,7 +12,7 @@ class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalcu
     }
 
     @Override
-    public Node passibleNodeNear(int x0, int y0, int z0, Vec3i origin, FlagSampler flagSampler) {
+    public Node passibleNodeNear(int x0, int y0, int z0, Coords origin, FlagSampler flagSampler) {
         final Node point;
         final IPathingEntity.Capabilities capabilities = this.capabilities;
 

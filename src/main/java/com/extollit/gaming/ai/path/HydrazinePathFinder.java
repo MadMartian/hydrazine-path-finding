@@ -3,8 +3,8 @@ package com.extollit.gaming.ai.path;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.gaming.ai.path.persistence.internal.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
-import com.extollit.linalg.immutable.Vec3i;
 import com.extollit.linalg.mutable.Vec3d;
+import com.extollit.linalg.mutable.Vec3i;
 import com.extollit.num.FloatRange;
 
 import java.io.IOException;
@@ -45,6 +45,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     private final Set<Vec3i> unreachableFromSource = new HashSet<>(3);
     private final IPathingEntity subject;
     private final IInstanceSpace instanceSpace;
+    private final Vec3i vec3i = new Vec3i(0, 0, 0);
 
     private com.extollit.linalg.mutable.Vec3d sourcePosition, destinationPosition;
     private com.extollit.linalg.immutable.Vec3d targetPosition;
@@ -128,7 +129,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
      *
      * @return an approximate (rounded) position near the destination entity being tracked, null if this is not tracking an entity destination
      */
-    public final Vec3i trackingDestination() {
+    public final Coords trackingDestination() {
         if (this.destinationEntity != null && this.destinationPosition != null) {
             final Node pointAtDestination = edgeAtDestination();
             if (pointAtDestination == null)
@@ -145,7 +146,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
      *
      * @return the current target destination, can be null if there is no target available.
      */
-    public final Vec3i currentTarget() { return this.target == null ? null : this.target.key; }
+    public final Coords currentTarget() { return this.target == null ? null : this.target.key; }
 
     /**
      * Begin path-finding to a destination entity and update the path as necessary as the destination entity changes
@@ -288,7 +289,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         return sourcePos.subOf(x, y, z).mg2() > rangeSquared;
     }
 
-    private boolean tooFarTo(Vec3i target) {
+    private boolean tooFarTo(Coords target) {
         return tooFarTo(target.x, target.y, target.z);
     }
 
@@ -323,7 +324,8 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         final INode last = path.last();
         if (last != null) {
             final Vec3d dd = new Vec3d(this.destinationPosition);
-            dd.sub(last.coordinates());
+            final Coords coordinates = last.coordinates();
+            dd.sub(coordinates.x, coordinates.y, coordinates.z);
             if (dd.mg2() < 1)
                 return path;
             else if (last == edgeAtDestination())
@@ -412,9 +414,9 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
                 dt = new com.extollit.linalg.mutable.Vec3d(this.targetPosition),
                 dd = new com.extollit.linalg.mutable.Vec3d(destinationPosition);
 
-        final Vec3i source = this.source.key;
-        dt.sub(source);
-        dd.sub(source);
+        final Coords source = this.source.key;
+        dt.sub(source.x, source.y, source.z);
+        dd.sub(source.x, source.y, source.z);
 
         if (dt.mg2() > dd.mg2())
             return true;
@@ -427,7 +429,8 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
 
         if (this.bound && PathObject.active(this.currentPath))
         {
-            dt.set(this.currentPath.current().coordinates());
+            final Coords coordinates = this.currentPath.current().coordinates();
+            dt.set(coordinates.x, coordinates.y, coordinates.z);
             dd.x = destinationPosition.x;
             dd.y = destinationPosition.y;
             dd.z = destinationPosition.z;
@@ -512,7 +515,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         this.passiblePointPathTimeLimit = PASSIBLE_POINT_TIME_LIMIT.next(this.random);
     }
 
-    protected final boolean refinePassibility(Vec3i sourcePoint) {
+    protected final boolean refinePassibility(Coords sourcePoint) {
         this.unreachableFromSource.clear();
 
         if (!fuzzyPassibility(sourcePoint.x, sourcePoint.y, sourcePoint.z))
@@ -526,7 +529,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         final Vec3d
             c = new Vec3d(subject.coordinates());
 
-        c.sub(sourcePoint);
+        c.sub(sourcePoint.x, sourcePoint.y, sourcePoint.z);
         final com.extollit.linalg.immutable.Vec3d delta = new com.extollit.linalg.immutable.Vec3d(c);
 
         c.sub(bounds.center());
@@ -605,9 +608,10 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         else if (this.targetingStrategy == PathOptions.TargetingStrategy.bestEffort) {
             int distance = Node.MAX_PATH_DISTANCE;
             while (distance > 0 && !source.target(this.target.key)) {
+                final Coords key = source.key;
                 final Vec3d
                         v = new Vec3d(destinationPosition),
-                        init = new Vec3d(source.key);
+                        init = new Vec3d(key.x, key.y, key.z);
 
                 distance--;
 
@@ -641,7 +645,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         if (node == null)
             return;
 
-        Vec3i pp = node.coordinates();
+        Coords pp = node.coordinates();
 
         final com.extollit.linalg.mutable.Vec3i
                 min = new com.extollit.linalg.mutable.Vec3i(pp.x, pp.y, pp.z),
@@ -718,7 +722,8 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
                 if (impassible(node))
                     return null;
 
-                final Vec3d dl = new Vec3d(node.coordinates());
+                final Coords coordinates = node.coordinates();
+                final Vec3d dl = new Vec3d(coordinates.x, coordinates.y, coordinates.z);
                 dl.sub(destinationPosition);
                 if (dl.mg2() > 1)
                     return null;
@@ -965,7 +970,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     private void processNode(Node current) {
         current.visited(true);
 
-        final Vec3i coords = current.key;
+        final Coords coords = current.key;
         final Node
                 west = cachedPassiblePointNear(coords.x - 1, coords.y, coords.z, coords),
                 east = cachedPassiblePointNear(coords.x + 1, coords.y, coords.z, coords),
@@ -1024,7 +1029,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         }
     }
 
-    private com.extollit.linalg.mutable.AxisAlignedBBox blockBounds(Vec3i coords, int dx, int dy, int dz) {
+    private com.extollit.linalg.mutable.AxisAlignedBBox blockBounds(Coords coords, int dx, int dy, int dz) {
         final int
             x = coords.x + dx,
             y = coords.y + dy,
@@ -1069,7 +1074,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         return cachedPassiblePointNear(x0, y0, z0, null);
     }
 
-    private Node cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
+    private Node cachedPassiblePointNear(final int x0, final int y0, final int z0, final Coords origin) {
         final Node result = this.nodeMap.cachedPassiblePointNear(x0, y0, z0, origin);
         if (Node.passible(result) && origin != null && unreachableFromSource(origin, x0, y0, z0))
             return null;
@@ -1085,9 +1090,17 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         return impedesMovement(flags, this.capabilities) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
     }
 
-    protected final boolean unreachableFromSource(Vec3i current, int tx, int ty, int tz) {
-        final Vec3i sourcePoint = this.source.key;
-        return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(new Vec3i(tx, ty, tz)); // TODO: Eliminate temporary
+    protected final boolean unreachableFromSource(Coords current, int tx, int ty, int tz) {
+        final Coords sourcePoint = this.source.key;
+        return sourcePoint != null && current.equals(sourcePoint) && unreachableFromSource(tx, ty, tz);
+    }
+
+    private boolean unreachableFromSource(int x, int y, int z) {
+        final Vec3i vec3i = this.vec3i;
+        vec3i.x = x;
+        vec3i.y = y;
+        vec3i.z = z;
+        return this.unreachableFromSource.contains(vec3i);
     }
 
     /**
@@ -1222,7 +1235,7 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
 
         out.writeByte(this.unreachableFromSource.size());
         for (Vec3i coords : this.unreachableFromSource)
-            readerWriters.v3i.writePartialObject(coords, out);
+            readerWriters.v3i.writePartialObject(new Coords(coords.x, coords.y, coords.z), out);
 
         readerWriters.mv3d.writePartialObject(this.sourcePosition, out);
         readerWriters.v3d.writePartialObject(this.targetPosition, out);
@@ -1256,8 +1269,10 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         final IdentityMapper<Node, Node.ReaderWriter> identities = new IdentityMapper<Node, Node.ReaderWriter>(Node.ReaderWriter.INSTANCE);
 
         byte count = in.readByte();
-        while (count-- > 0)
-            this.unreachableFromSource.add(readerWriters.v3i.readPartialObject(in));
+        while (count-- > 0) {
+            final Coords coords = readerWriters.v3i.readPartialObject(in);
+            this.unreachableFromSource.add(new Vec3i(coords.x, coords.y, coords.z));
+        }
 
         this.sourcePosition = readerWriters.mv3d.readPartialObject(in);
         if (version > 1)

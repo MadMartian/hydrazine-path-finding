@@ -1,7 +1,6 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.gaming.ai.path.persistence.internal.*;
-import com.extollit.linalg.immutable.Vec3i;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -48,7 +47,7 @@ public final class NodeMap {
         queue.clear();
     }
 
-    public final void cullBranchAt(Vec3i coords, SortedPointQueue queue) {
+    public final void cullBranchAt(Coords coords, SortedPointQueue queue) {
         cullBranchAt(coords.x, coords.y, coords.z, queue);
     }
     public final void cullBranchAt(int x, int y, int z, SortedPointQueue queue) {
@@ -128,7 +127,7 @@ public final class NodeMap {
 
         if (point == null) {
             point = passibleNodeNear(x, y, z, null);
-            final Vec3i key = point.key;
+            final Coords key = point.key;
             if (key.x != x || key.y != y || key.z != z)
                 point = new Node(x, y, z, Passibility.impassible, false);
 
@@ -142,7 +141,7 @@ public final class NodeMap {
         return cachedPassiblePointNear(x, y, z, null);
     }
 
-    public final Node cachedPassiblePointNear(int x, int y, int z, Vec3i origin) {
+    public final Node cachedPassiblePointNear(int x, int y, int z, Coords origin) {
         final SparseSpatialMap<Node> nodeMap = this.it;
         final Node point0 = nodeMap.get(x, y, z);
         Node point = point0;
@@ -159,7 +158,7 @@ public final class NodeMap {
                 point0.isolate();
         }
 
-        final Vec3i key = point.key;
+        final Coords key = point.key;
         if (key.x != x || key.y != y || key.z != z) {
             final Node existing = nodeMap.get(key.x, key.y, key.z);
             if (existing == null)
@@ -174,7 +173,7 @@ public final class NodeMap {
         return point;
     }
 
-    private Node passibleNodeNear(int x, int y, int z, Vec3i origin) {
+    private Node passibleNodeNear(int x, int y, int z, Coords origin) {
         final Node node = this.calculator.passibleNodeNear(x, y, z, origin, new FlagSampler(this.occlusionProvider));
         final IGraphNodeFilter filter = this.filter;
         if (filter != null) {
@@ -216,14 +215,14 @@ public final class NodeMap {
         return it.hashCode();
     }
 
-    private final class MapReaderWriter extends Vec3iReaderWriter implements LinkableReader<Vec3i, Node>, LinkableWriter<Vec3i, Node> {
+    private final class MapReaderWriter extends Vec3iReaderWriter implements LinkableReader<Coords, Node>, LinkableWriter<Coords, Node> {
         @Override
-        public void readLinkages(Vec3i object, ReferableObjectInput<Node> in) throws IOException {
+        public void readLinkages(Coords object, ReferableObjectInput<Node> in) throws IOException {
             it.put(object.x, object.y, object.z, in.readRef());
         }
 
         @Override
-        public void writeLinkages(Vec3i object, ReferableObjectOutput<Node> out) throws IOException {
+        public void writeLinkages(Coords object, ReferableObjectOutput<Node> out) throws IOException {
             out.writeRef(it.get(object.x, object.y, object.z));
         }
     }

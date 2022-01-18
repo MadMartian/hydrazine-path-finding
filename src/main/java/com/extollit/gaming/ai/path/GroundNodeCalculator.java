@@ -1,7 +1,6 @@
 package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
-import com.extollit.linalg.immutable.Vec3i;
 
 import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
 import static com.extollit.gaming.ai.path.PassibilityHelpers.passibilityFrom;
@@ -25,7 +24,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
     }
 
     @Override
-    public Node passibleNodeNear(final int x0, final int y0, final int z0, Vec3i origin, final FlagSampler flagSampler) {
+    public Node passibleNodeNear(final int x0, final int y0, final int z0, Coords origin, final FlagSampler flagSampler) {
         final Node point;
         final IPathingEntity.Capabilities capabilities = this.capabilities;
 

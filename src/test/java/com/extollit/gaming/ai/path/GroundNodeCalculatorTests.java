@@ -1,10 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.Element;
-import com.extollit.gaming.ai.path.model.IInstanceSpace;
-import com.extollit.gaming.ai.path.model.Node;
-import com.extollit.gaming.ai.path.model.Passibility;
-import com.extollit.linalg.immutable.Vec3i;
+import com.extollit.gaming.ai.path.model.*;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -131,10 +127,10 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         longFence(1, 1, 1);
         pos(0, 1, 1);
 
-        final Node actual = calculator.passibleNodeNear(1, 1, 0, new Vec3i(0, 1, 1), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(1, 1, 0, new Coords(0, 1, 1), super.flagSampler);
 
         assertTrue(actual.passibility().betterThan(Passibility.impassible));
-        assertEquals(new Vec3i(1, 1, 0), actual.key);
+        assertEquals(new Coords(1, 1, 0), actual.key);
     }
 
     @Test
@@ -162,7 +158,7 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, 0, 1);
         solid(0, 1, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.impassible, actual.passibility());
     }
@@ -173,7 +169,7 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, 0, 1);
         slabDown(0, 1, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertTrue(actual.passibility().betterThan(Passibility.impassible));
         assertEquals(2, actual.key.y);
@@ -224,7 +220,7 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -1, 0);
         solid(1, -2, 0);
 
-        final Node actual = calculator.passibleNodeNear(1, 1, 0, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(1, 1, 0, new Coords(0, 1, 0), super.flagSampler);
 
         assertTrue(actual.passibility().betterThan(Passibility.impassible));
         assertEquals(Passibility.risky, actual.passibility());
@@ -375,7 +371,7 @@ public class GroundNodeCalculatorTests extends AbstractNodeCalculatorTests {
         final Node actual = calculator.passibleNodeNear(1, 0, 0, ORIGIN, super.flagSampler);
 
         assertEquals(Passibility.passible, actual.passibility());
-        assertEquals(new Vec3i(1, 1, 0), actual.key);
+        assertEquals(new Coords(1, 1, 0), actual.key);
     }
 
     @Test

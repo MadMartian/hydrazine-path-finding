@@ -2,7 +2,6 @@ package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.Vec3d;
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -18,6 +17,8 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
+    private static final Coords ZERO = new Coords(0, 0, 0);
+
     @Mock
     private IPathProcessor pathProcessor;
 
@@ -35,8 +36,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, +1, 0, 0));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, -1, 0, 0));
+        assertTrue(pathFinder.unreachableFromSource(ZERO, +1, 0, 0));
+        assertFalse(pathFinder.unreachableFromSource(ZERO, -1, 0, 0));
     }
 
     @Test
@@ -52,8 +53,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, +1, 0, 0));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, -1, 0, 0));
+        assertTrue(pathFinder.unreachableFromSource(ZERO, +1, 0, 0));
+        assertFalse(pathFinder.unreachableFromSource(ZERO, -1, 0, 0));
     }
 
     @Test
@@ -69,8 +70,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, -1, 0, 0));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, +1, 0, 0));
+        assertTrue(pathFinder.unreachableFromSource(ZERO, -1, 0, 0));
+        assertFalse(pathFinder.unreachableFromSource(ZERO, +1, 0, 0));
     }
 
     @Test
@@ -86,8 +87,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, +1));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, -1));
+        assertTrue(pathFinder.unreachableFromSource(ZERO, 0, 0, +1));
+        assertFalse(pathFinder.unreachableFromSource(ZERO, 0, 0, -1));
     }
 
     @Test
@@ -103,8 +104,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, -1));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, +1));
+        assertTrue(pathFinder.unreachableFromSource(ZERO, 0, 0, -1));
+        assertFalse(pathFinder.unreachableFromSource(ZERO, 0, 0, +1));
     }
 
     @Test
@@ -136,26 +137,26 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         IPath path = pathFinder.initiatePathTo(0, 0, 7);
         assertPath(path,
-                new Vec3i(0, 0, 0),
-                new Vec3i(0, 0, 1),
-                new Vec3i(0, 0, 2)
+                new Coords(0, 0, 0),
+                new Coords(0, 0, 1),
+                new Coords(0, 0, 2)
         );
 
         pos(0, 0, 2);
         pathFinder.updatePathFor(this.pathingEntity);
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
-            new Vec3i(0, 0, 2),
-            new Vec3i(0, 0, 3),
-            new Vec3i(0, 0, 4),
-            new Vec3i(0, 0, 5)
+            new Coords(0, 0, 2),
+            new Coords(0, 0, 3),
+            new Coords(0, 0, 4),
+            new Coords(0, 0, 5)
         );
         pos(0, 0, 4);
         this.pathFinder.schedulingPriority(SchedulingPriority.high);
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
-            new Vec3i(0, 0, 4),
-            new Vec3i(0, 0, 5)
+            new Coords(0, 0, 4),
+            new Coords(0, 0, 5)
         );
 
         path = pathFinder.updatePathFor(this.pathingEntity);
@@ -167,18 +168,18 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
-            new Vec3i(0, 0, 4),
-            new Vec3i(0, 0, 3),
-            new Vec3i(0, 0, 2),
-            new Vec3i(1, 0, 2),
-            new Vec3i(2, 0, 2),
-            new Vec3i(2, 0, 3),
-            new Vec3i(2, 0, 4),
-            new Vec3i(2, 0, 5),
-            new Vec3i(2, 0, 6),
-            new Vec3i(2, 0, 7),
-            new Vec3i(1, 0, 7),
-            new Vec3i(0, 0, 7)
+            new Coords(0, 0, 4),
+            new Coords(0, 0, 3),
+            new Coords(0, 0, 2),
+            new Coords(1, 0, 2),
+            new Coords(2, 0, 2),
+            new Coords(2, 0, 3),
+            new Coords(2, 0, 4),
+            new Coords(2, 0, 5),
+            new Coords(2, 0, 6),
+            new Coords(2, 0, 7),
+            new Coords(1, 0, 7),
+            new Coords(0, 0, 7)
         );
     }
 
@@ -211,43 +212,43 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNotNull(path);
         assertPath(path,
-            new Vec3i(0, 0, 5),
-            new Vec3i(0, 0, 4)
+            new Coords(0, 0, 5),
+            new Coords(0, 0, 4)
         );
 
         pos(0, 0, 4);
 
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertPath(path,
-                new Vec3i(0, 0, 5),
-                new Vec3i(0, 0, 4),
-                new Vec3i(0, 0, 3),
-                new Vec3i(0, 0, 2),
-                new Vec3i(-1, 0, 2),
-                new Vec3i(-2, 0, 2),
-                new Vec3i(-2, 0, 3),
-                new Vec3i(-2, 0, 4),
-                new Vec3i(-2, 0, 5),
-                new Vec3i(-2, 0, 6)
+                new Coords(0, 0, 5),
+                new Coords(0, 0, 4),
+                new Coords(0, 0, 3),
+                new Coords(0, 0, 2),
+                new Coords(-1, 0, 2),
+                new Coords(-2, 0, 2),
+                new Coords(-2, 0, 3),
+                new Coords(-2, 0, 4),
+                new Coords(-2, 0, 5),
+                new Coords(-2, 0, 6)
         );
         path = pathFinder.updatePathFor(this.pathingEntity);
         assertNotNull(path);
         path = pathFinder.updatePathFor(this.pathingEntity);
 
         assertPath(path,
-                new Vec3i(0, 0, 5),
-                new Vec3i(0, 0, 4),
-                new Vec3i(0, 0, 3),
-                new Vec3i(0, 0, 2),
-                new Vec3i(1, 0, 2),
-                new Vec3i(2, 0, 2),
-                new Vec3i(2, 0, 3),
-                new Vec3i(2, 0, 4),
-                new Vec3i(2, 0, 5),
-                new Vec3i(2, 0, 6),
-                new Vec3i(2, 0, 7),
-                new Vec3i(1, 0, 7),
-                new Vec3i(0, 0, 7)
+                new Coords(0, 0, 5),
+                new Coords(0, 0, 4),
+                new Coords(0, 0, 3),
+                new Coords(0, 0, 2),
+                new Coords(1, 0, 2),
+                new Coords(2, 0, 2),
+                new Coords(2, 0, 3),
+                new Coords(2, 0, 4),
+                new Coords(2, 0, 5),
+                new Coords(2, 0, 6),
+                new Coords(2, 0, 7),
+                new Coords(1, 0, 7),
+                new Coords(0, 0, 7)
         );
     }
 
@@ -259,16 +260,16 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertNotNull(path);
 
         assertPath(path,
-            new Vec3i(1, 0, 3),
-            new Vec3i(2, 0, 3)
+            new Coords(1, 0, 3),
+            new Coords(2, 0, 3)
         );
 
         pos(2, 0, 3);
         path = pathFinder.updatePathFor(this.pathingEntity);
 
         assertPathNot(path,
-            new Vec3i(2, 0, 3),
-            new Vec3i(1, 0, 3)
+            new Coords(2, 0, 3),
+            new Coords(1, 0, 3)
         );
     }
 
@@ -280,15 +281,15 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertNotNull(path);
 
         assertPath(path,
-                new Vec3i(1, 0, 3),
-                new Vec3i(2, 0, 3)
+                new Coords(1, 0, 3),
+                new Coords(2, 0, 3)
         );
 
         path = pathFinder.updatePathFor(this.pathingEntity);
 
         assertPath(path,
-                new Vec3i(1, 0, 3),
-                new Vec3i(2, 0, 3)
+                new Coords(1, 0, 3),
+                new Coords(2, 0, 3)
         );
     }
 
@@ -319,8 +320,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         final IPath path = pathFinder.initiatePathTo(3, 3, 0);
         assertPath(path,
-                new Vec3i(2, 3, 0),
-                new Vec3i(3, 3, 0)
+                new Coords(2, 3, 0),
+                new Coords(3, 3, 0)
         );
     }
 
@@ -347,9 +348,9 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         pathFinder.resetTriage();
         path = pathFinder.updatePathFor(pathingEntity);
         assertPath(path,
-                new Vec3i(0, 0, -1),
-                new Vec3i(0, 0, 0),
-                new Vec3i(0, 0, +1)
+                new Coords(0, 0, -1),
+                new Coords(0, 0, 0),
+                new Coords(0, 0, +1)
         );
     }
 
@@ -372,8 +373,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertPath(
                 path,
-                new Vec3i(0, 1, 0),
-                new Vec3i(1, 1, 0)
+                new Coords(0, 1, 0),
+                new Coords(1, 1, 0)
         );
     }
     
@@ -518,7 +519,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertNotNull(path);
         path = pathFinder.updatePathFor(pathingEntity);
 
-        assertEquals(new Vec3i(0, 0, 4), path.last().coordinates());
+        assertEquals(new Coords(0, 0, 4), path.last().coordinates());
     }
 
     @Test
@@ -557,11 +558,11 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertPath(
             path,
 
-            new Vec3i(0, 0, 0),
-            new Vec3i(0, 0, 1),
-            new Vec3i(0, 0, 2),
-            new Vec3i(0, 0, 3),
-            new Vec3i(0, 0, 4)
+            new Coords(0, 0, 0),
+            new Coords(0, 0, 1),
+            new Coords(0, 0, 2),
+            new Coords(0, 0, 3),
+            new Coords(0, 0, 4)
         );
     }
 
@@ -574,7 +575,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         final IPath path = pathFinder.updatePathFor(pathingEntity);
 
         // This is a round-about way to detect that resetTriage WAS called
-        assertPath(path, new Vec3i(0, 0, 5), new Vec3i(0, 0, 6));
+        assertPath(path, new Coords(0, 0, 5), new Coords(0, 0, 6));
     }
 
     @Test
@@ -588,11 +589,11 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         assertPath(
                 path,
 
-                new Vec3i(0, 0, 0),
-                new Vec3i(0, 0, 1),
-                new Vec3i(0, 0, 2),
-                new Vec3i(0, 0, 3),
-                new Vec3i(0, 0, 4)
+                new Coords(0, 0, 0),
+                new Coords(0, 0, 1),
+                new Coords(0, 0, 2),
+                new Coords(0, 0, 3),
+                new Coords(0, 0, 4)
         );
     }
 
@@ -644,7 +645,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         IPath path = pathFinder.initiatePathTo(0, 0, 2);
 
-        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+        assertPath(path, new Coords(0, 0, 0), new Coords(0, 0, 1), new Coords(0, 0, 2));
     }
 
     @Test
@@ -661,7 +662,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         IPath path = pathFinder.initiatePathTo(0, 0, 2);
 
-        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+        assertPath(path, new Coords(0, 0, 0), new Coords(0, 0, 1), new Coords(0, 0, 2));
     }
 
     @Test
@@ -695,6 +696,6 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         IPath path = pathFinder.initiatePathTo(0, 0, 2);
 
-        assertPath(path, new Vec3i(0, 0, 0), new Vec3i(0, 0, 1), new Vec3i(0, 0, 2));
+        assertPath(path, new Coords(0, 0, 0), new Coords(0, 0, 1), new Coords(0, 0, 2));
     }
 }

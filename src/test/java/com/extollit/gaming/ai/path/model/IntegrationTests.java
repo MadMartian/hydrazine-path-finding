@@ -1,7 +1,6 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.linalg.immutable.Vec3d;
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,10 +30,10 @@ public class IntegrationTests {
     @Test
     public void jackknife() {
         PathObject path = pathObject(
-                new Vec3i(-1, 4, 10),
-                new Vec3i(-2, 4, 11),
-                new Vec3i(-3, 4, 11),
-                new Vec3i(-4, 4, 11)
+                new Coords(-1, 4, 10),
+                new Coords(-2, 4, 11),
+                new Coords(-3, 4, 11),
+                new Coords(-4, 4, 11)
         );
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(-0.5, 4, 10.5));
 
@@ -46,17 +45,17 @@ public class IntegrationTests {
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(-1.5, 4, 11.5));
 
         path = pathObject(
-                new Vec3i(-1, 4, 10),
-                new Vec3i(-2, 4, 11),
-                new Vec3i(-3, 4, 11),
-                new Vec3i(-4, 4, 11),
-                new Vec3i(-4, 4, 10),
-                new Vec3i(-4, 4, 9),
-                new Vec3i(-3, 4, 9),
-                new Vec3i(-2, 4, 9),
-                new Vec3i(-1, 4, 9),
-                new Vec3i(0, 4, 9),
-                new Vec3i(1, 4, 9)
+                new Coords(-1, 4, 10),
+                new Coords(-2, 4, 11),
+                new Coords(-3, 4, 11),
+                new Coords(-4, 4, 11),
+                new Coords(-4, 4, 10),
+                new Coords(-4, 4, 9),
+                new Coords(-3, 4, 9),
+                new Coords(-2, 4, 9),
+                new Coords(-1, 4, 9),
+                new Coords(0, 4, 9),
+                new Coords(1, 4, 9)
         );
 
         path.update(pathingEntity);
@@ -78,11 +77,11 @@ public class IntegrationTests {
     @Test
     public void taxi() {
         PathObject path = pathObject(
-                new Vec3i(0, 4, 2),
-                new Vec3i(0, 4, 3),
-                new Vec3i(1, 4, 3),
-                new Vec3i(1, 4, 4),
-                new Vec3i(2, 4, 4)
+                new Coords(0, 4, 2),
+                new Coords(0, 4, 3),
+                new Coords(1, 4, 3),
+                new Coords(1, 4, 4),
+                new Coords(2, 4, 4)
         );
 
         when(pathingEntity.coordinates()).thenReturn(new Vec3d(0.4, 4.5, 2.4));

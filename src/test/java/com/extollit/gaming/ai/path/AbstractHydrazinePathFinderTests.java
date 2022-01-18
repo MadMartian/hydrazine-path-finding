@@ -3,7 +3,6 @@ package com.extollit.gaming.ai.path;
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
 import com.extollit.linalg.immutable.Vec3d;
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -15,7 +14,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractHydrazinePathFinderTests {
-    protected static final Vec3i ORIGIN = new Vec3i(0, 0, 0);
+    protected static final Coords ORIGIN = new Coords(0, 0, 0);
 
     protected HydrazinePathFinder pathFinder;
 
@@ -74,7 +73,7 @@ public abstract class AbstractHydrazinePathFinderTests {
 
     protected void advance(IPathingEntity mockedPathing, IPath path) {
         final INode node = path.current();
-        final Vec3i coordinates = node.coordinates();
+        final Coords coordinates = node.coordinates();
         pos(coordinates.x + 0.5, coordinates.y + 0.1, coordinates.z + 0.5);
     }
 

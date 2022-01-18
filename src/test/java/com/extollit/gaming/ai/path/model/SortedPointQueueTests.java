@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,11 +46,11 @@ public class SortedPointQueueTests {
         add(add(middle, 1, 0, 3), 2, 0, 3);
 
         assertQueuePoints(
-                new Vec3i(0, 0, 3),
-                new Vec3i(0, 0, 4),
-                new Vec3i(0, 0, 5),
-                new Vec3i(1, 0, 3),
-                new Vec3i(2, 0, 3)
+                new Coords(0, 0, 3),
+                new Coords(0, 0, 4),
+                new Coords(0, 0, 5),
+                new Coords(1, 0, 3),
+                new Coords(2, 0, 3)
         );
     }
 
@@ -76,9 +75,9 @@ public class SortedPointQueueTests {
         assertTrue(up.infecund() && !up.orphaned());
 
         assertQueuePoints(
-            new Vec3i(0, 0, 5),
-            new Vec3i(2, 0, 3),
-            new Vec3i(2, 0, 1)
+            new Coords(0, 0, 5),
+            new Coords(2, 0, 3),
+            new Coords(2, 0, 1)
         );
     }
 
@@ -163,9 +162,9 @@ public class SortedPointQueueTests {
         graph.cullBranchAt(leftRoot.key, q);
 
         assertQueuePoints(
-            new Vec3i(-1, 0, 0),
-            new Vec3i(2, 0, 1),
-            new Vec3i(1, 0, 1)
+            new Coords(-1, 0, 0),
+            new Coords(2, 0, 1),
+            new Coords(1, 0, 1)
         );
 
         assertTrue(rightHead.assigned());
@@ -189,12 +188,12 @@ public class SortedPointQueueTests {
                 rightHead = add(right, +1, 0, 1),
                 rightOutlier = add(right, +2, 0, 1);
 
-        final Vec3i candidate = new Vec3i(5, 6, 7);
+        final Coords candidate = new Coords(5, 6, 7);
         graph.cullBranchAt(candidate, q);
 
         assertQueuePoints(
-                new Vec3i(+1, 0, 1),
-                new Vec3i(2, 0, 1)
+                new Coords(+1, 0, 1),
+                new Coords(2, 0, 1)
         );
 
         assertTrue(rightHead.assigned());
@@ -206,7 +205,7 @@ public class SortedPointQueueTests {
         final Node
                 node = visited(source, +1, 0, 0);
 
-        final Vec3i key = node.key;
+        final Coords key = node.key;
 
         assertSame(node, graph.cachedPointAt(key.x, key.y, key.z));
 
@@ -239,12 +238,12 @@ public class SortedPointQueueTests {
         assertQueuePoints(
                 prune.key,
                 next.key,
-                new Vec3i(-1, 0, -1),
+                new Coords(-1, 0, -1),
                 another.key,
-                new Vec3i(0, 0, -1),
-                new Vec3i(0, 0, -2),
-                new Vec3i(-1, 0, -2),
-                new Vec3i(1, 0, -2)
+                new Coords(0, 0, -1),
+                new Coords(0, 0, -2),
+                new Coords(-1, 0, -2),
+                new Coords(1, 0, -2)
         );
 
         assertEquals(3, test.length());
@@ -343,11 +342,11 @@ public class SortedPointQueueTests {
         assertArrayEquals(expected, actual);
     }
 
-    protected void assertQueuePoints(Vec3i... expected) {
+    protected void assertQueuePoints(Coords... expected) {
         assertQueueIndices();
 
         List<Node> view = q.view();
-        final Vec3i[] actual = new Vec3i[view.size()];
+        final Coords[] actual = new Coords[view.size()];
         {
             int c = 0;
             for (Node p : view)

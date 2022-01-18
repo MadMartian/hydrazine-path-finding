@@ -1,10 +1,10 @@
 package com.extollit.gaming.ai.path;
 
+import com.extollit.gaming.ai.path.model.Coords;
 import com.extollit.gaming.ai.path.model.IPath;
 import com.extollit.gaming.ai.path.model.IPathingEntity;
 import com.extollit.gaming.ai.path.model.PathObject;
 import com.extollit.gaming.ai.path.persistence.Persistence;
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -24,7 +24,7 @@ public class HPODIntegrationTests extends AbstractHydrazinePathFinderTests {
 
         assertNotNull(pathFinder);
 
-        final Vec3i expectedSource = new Vec3i(-578, 77, 1117);
+        final Coords expectedSource = new Coords(-578, 77, 1117);
         assertTrue(pathFinder.unreachableFromSource(expectedSource, -577, 77, 1116));
         assertTrue(pathFinder.unreachableFromSource(expectedSource, -578, 77, 1116));
         assertTrue(pathFinder.unreachableFromSource(expectedSource, -579, 77, 1116));
@@ -42,7 +42,7 @@ public class HPODIntegrationTests extends AbstractHydrazinePathFinderTests {
             path = pathFinder.updatePathFor(subject);
 
         assertTrue(PathObject.active(path));
-        assertPath(path, new Vec3i(-332, 63, 67), new Vec3i(-333, 63, 67));
+        assertPath(path, new Coords(-332, 63, 67), new Coords(-333, 63, 67));
 
         path = pathFinder.updatePathFor(subject);
         assertNull(path);
@@ -72,6 +72,6 @@ public class HPODIntegrationTests extends AbstractHydrazinePathFinderTests {
         path = pathFinder.updatePathFor(subject);
         path = pathFinder.updatePathFor(subject);
 
-        assertPath(path, new Vec3i(-7, 4, 11), new Vec3i(-8, 4, 11), new Vec3i(-8, 4, 12));
+        assertPath(path, new Coords(-7, 4, 11), new Coords(-8, 4, 11), new Coords(-8, 4, 12));
     }
 }

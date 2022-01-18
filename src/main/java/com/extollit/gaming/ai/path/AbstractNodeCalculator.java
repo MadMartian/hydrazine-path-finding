@@ -2,7 +2,6 @@ package com.extollit.gaming.ai.path;
 
 import com.extollit.gaming.ai.path.model.*;
 import com.extollit.linalg.immutable.AxisAlignedBBox;
-import com.extollit.linalg.immutable.Vec3i;
 
 import static com.extollit.gaming.ai.path.PassibilityHelpers.impedesMovement;
 import static java.lang.Math.floor;
@@ -118,7 +117,7 @@ abstract class AbstractNodeCalculator implements INodeCalculator {
         return (float)block.bounds().max.y - 1;
     }
 
-    protected final Passibility originHeadClearance(FlagSampler sampler, Passibility passibility, Vec3i origin, int minY, float minPartY) {
+    protected final Passibility originHeadClearance(FlagSampler sampler, Passibility passibility, Coords origin, int minY, float minPartY) {
         final int
                 yN0 = origin.y + this.tall,
                 yN = Math.max(minY, origin.y) + this.tall,

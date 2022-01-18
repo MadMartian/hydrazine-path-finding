@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.Vec3i;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,7 +55,7 @@ public class NodeMapTests {
 
         this.nodeMap.cachedPassiblePointNear(1, 2, 3);
 
-        verify(this.calculator).passibleNodeNear(eq(1), eq(2), eq(3), isNull(Vec3i.class), any());
+        verify(this.calculator).passibleNodeNear(eq(1), eq(2), eq(3), isNull(Coords.class), any());
     }
 
     @Test

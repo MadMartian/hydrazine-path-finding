@@ -1,10 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.IInstanceSpace;
-import com.extollit.gaming.ai.path.model.INodeCalculator;
-import com.extollit.gaming.ai.path.model.Node;
-import com.extollit.gaming.ai.path.model.Passibility;
-import com.extollit.linalg.immutable.Vec3i;
+import com.extollit.gaming.ai.path.model.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -77,7 +73,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         slabUp(0, 3, 0);
         slabUp(0, 3, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.impassible, actual.passibility());
     }
@@ -90,7 +86,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         slabUp(0, 3, 0);
         slabUp(0, 3, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.passible, actual.passibility());
     }
@@ -103,7 +99,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, 4, 0);
         solid(0, 4, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.passible, actual.passibility());
     }
@@ -117,7 +113,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, 4, 1);
         lava(0, 3, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.dangerous, actual.passibility());
     }
@@ -129,7 +125,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, 1, 1);
         fuzzy(0, 3, 0);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.impassible, actual.passibility());
     }
@@ -174,7 +170,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -1, 1);
         solid(0, 2, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.impassible, actual.passibility());
     }
@@ -185,7 +181,7 @@ public class ClearanceNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -1, 1);
         slabUp(0, 2, 1);
 
-        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Vec3i(0, 1, 0), super.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 1, new Coords(0, 1, 0), super.flagSampler);
 
         assertEquals(Passibility.passible, actual.passibility());
     }

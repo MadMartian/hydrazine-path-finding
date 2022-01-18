@@ -2,7 +2,6 @@ package com.extollit.gaming.ai.path.model;
 
 import com.extollit.collect.FilterIterable;
 import com.extollit.collect.FlattenIterable;
-import com.extollit.linalg.immutable.Vec3i;
 
 import java.util.*;
 
@@ -208,16 +207,16 @@ class SparseSpatialMap<T extends INode> {
         protected abstract V map(T value);
     }
 
-    private final class KeySet extends AbstractSet<Vec3i> {
-        private final class Iter extends AbstractIterator<Vec3i> {
+    private final class KeySet extends AbstractSet<Coords> {
+        private final class Iter extends AbstractIterator<Coords> {
             @Override
-            protected final Vec3i map(T value) {
+            protected final Coords map(T value) {
                 return value.coordinates();
             }
         }
 
         @Override
-        public Iterator<Vec3i> iterator() {
+        public Iterator<Coords> iterator() {
             return new Iter();
         }
 
@@ -227,7 +226,7 @@ class SparseSpatialMap<T extends INode> {
         }
     }
 
-    public Set<Vec3i> keySet() {
+    public Set<Coords> keySet() {
         return new KeySet();
     }
     private final class ValueCollection extends AbstractCollection<T> {

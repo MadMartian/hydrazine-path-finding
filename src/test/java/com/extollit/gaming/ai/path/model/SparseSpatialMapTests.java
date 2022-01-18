@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.Vec3i;
 import net.jqwik.api.*;
 import net.jqwik.api.constraints.Size;
 import net.jqwik.api.constraints.Unique;
@@ -10,22 +9,22 @@ import java.util.*;
 public class SparseSpatialMapTests {
     @Property(tries = 50000)
     public boolean complex(@ForAll @Size(min = 10, max = 50) List<@From("value") @Unique TestNodeValue> init,
-                           @ForAll @Size(min = 2, max = 50) List<@From("coord") @Unique Vec3i> remove,
+                           @ForAll @Size(min = 2, max = 50) List<@From("coord") @Unique Coords> remove,
                            @ForAll @Size(min = 2, max = 20)  List<@From("value") @Unique TestNodeValue> more,
-                           @ForAll @Size(min = 2, max = 20) List<@From("coord") @Unique Vec3i> nerf) {
+                           @ForAll @Size(min = 2, max = 20) List<@From("coord") @Unique Coords> nerf) {
         final SparseSpatialMap<TestNodeValue> sparse = new SparseSpatialMap<>();
-        final Map<Vec3i, TestNodeValue> control = new HashMap<>();
+        final Map<Coords, TestNodeValue> control = new HashMap<>();
 
         for (TestNodeValue value : init)
             put(sparse, control, value);
 
-        for (Vec3i coord : remove)
+        for (Coords coord : remove)
             remove(sparse, control, coord);
 
         for (TestNodeValue value : more)
             put(sparse, control, value);
 
-        for (Vec3i coord : nerf)
+        for (Coords coord : nerf)
             remove(sparse, control, coord);
 
         final Collection<TestNodeValue>
@@ -35,23 +34,23 @@ public class SparseSpatialMapTests {
         return actual.containsAll(expected) && expected.containsAll(actual);
     }
 
-    private void remove(SparseSpatialMap<TestNodeValue> sparse, Map<Vec3i, TestNodeValue> control, Vec3i coord) {
+    private void remove(SparseSpatialMap<TestNodeValue> sparse, Map<Coords, TestNodeValue> control, Coords coord) {
         sparse.remove(coord.x, coord.y, coord.z);
         control.remove(coord);
     }
 
-    private void put(SparseSpatialMap<TestNodeValue> sparse, Map<Vec3i, TestNodeValue> control, TestNodeValue value) {
+    private void put(SparseSpatialMap<TestNodeValue> sparse, Map<Coords, TestNodeValue> control, TestNodeValue value) {
         sparse.put(value.p.x, value.p.y, value.p.z, value);
         control.put(value.p, value);
     }
 
     @Provide
-    Arbitrary<Vec3i> coord() {
+    Arbitrary<Coords> coord() {
         return Combinators.combine(
             Arbitraries.integers().between(-100, +200),
             Arbitraries.integers().between(-100, +200),
             Arbitraries.integers().between(-100, +200)
-        ).as(Vec3i::new);
+        ).as(Coords::new);
     }
 
     @Provide
@@ -61,14 +60,14 @@ public class SparseSpatialMapTests {
 }
 
 final class TestNodeValue implements INode {
-    public final Vec3i p;
+    public final Coords p;
 
-    public TestNodeValue(Vec3i coordinates) {
+    public TestNodeValue(Coords coordinates) {
         this.p = coordinates;
     }
 
     @Override
-    public Vec3i coordinates() {
+    public Coords coordinates() {
         return this.p;
     }
 

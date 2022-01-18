@@ -1,12 +1,10 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.Vec3i;
-
 public final class PassibilityResult {
     public final Passibility passibility;
-    public final Vec3i pos;
+    public final Coords pos;
 
-    public PassibilityResult(Passibility passibility, Vec3i pos) {
+    public PassibilityResult(Passibility passibility, Coords pos) {
         this.passibility = passibility;
         this.pos = pos;
     }

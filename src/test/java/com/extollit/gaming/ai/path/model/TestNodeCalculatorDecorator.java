@@ -1,7 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.linalg.immutable.Vec3i;
-
 public class TestNodeCalculatorDecorator implements INodeCalculator {
     public final INodeCalculator delegate;
 
@@ -15,7 +13,7 @@ public class TestNodeCalculatorDecorator implements INodeCalculator {
     }
 
     @Override
-    public Node passibleNodeNear(int x0, int y0, int z0, Vec3i origin, FlagSampler flagSampler) {
+    public Node passibleNodeNear(int x0, int y0, int z0, Coords origin, FlagSampler flagSampler) {
         final Node node = this.delegate.passibleNodeNear(x0, y0, z0, origin, flagSampler);
         return node == null ? new Node(x0, y0, z0) : node;
     }

@@ -4,7 +4,6 @@ import com.extollit.gaming.ai.path.persistence.internal.LinkableReader;
 import com.extollit.gaming.ai.path.persistence.internal.LinkableWriter;
 import com.extollit.gaming.ai.path.persistence.internal.ReferableObjectInput;
 import com.extollit.gaming.ai.path.persistence.internal.ReferableObjectOutput;
-import com.extollit.linalg.immutable.Vec3i;
 
 import java.io.IOException;
 import java.util.*;
@@ -40,7 +39,17 @@ public final class SortedPointQueue implements LinkableReader<SortedPointQueue, 
             return source;
 
         final Node root0 = source.root();
-        final Vec3i dd = source.key.subOf(root0.key);
+        final int ddX, ddY, ddZ;
+        {
+            final Coords
+                root0Key = root0.key,
+                sourceKey = source.key;
+
+            ddX = sourceKey.x - root0Key.x;
+            ddY = sourceKey.y - root0Key.y;
+            ddZ = sourceKey.z - root0Key.z;
+        }
+
         final List<Node> list = this.list;
 
         final byte length0 = source.length();
@@ -71,7 +80,7 @@ public final class SortedPointQueue implements LinkableReader<SortedPointQueue, 
                 else
                     root = path.pop();
 
-                if (head == point || head.key.subOf(point.key).dot(dd) <= 0) {
+                if (head == point || dotProductBetween(ddX, ddY, ddZ, head, point) <= 0) {
                     head.dirty(true);
                     while (!path.isEmpty())
                         path.pop().dirty(true);
@@ -97,6 +106,17 @@ public final class SortedPointQueue implements LinkableReader<SortedPointQueue, 
         treeTransitional.finish(this);
 
         return root0;
+    }
+
+    private static int dotProductBetween(int ddX, int ddY, int ddZ, Node head, Node target) {
+        final Coords
+            headKey = head.key,
+            pointKey = target.key;
+        final int
+            dx = headKey.x - pointKey.x,
+            dy = headKey.y - pointKey.y,
+            dz = headKey.z - pointKey.z;
+        return dx * ddX + dy * ddY + dz * ddZ;
     }
 
     void cullBranch(Node ancestor) {
@@ -228,7 +248,7 @@ public final class SortedPointQueue implements LinkableReader<SortedPointQueue, 
         originalPoint.index(index);
     }
 
-    public boolean appendTo(Node point, Node parent, Vec3i targetPoint) {
+    public boolean appendTo(Node point, Node parent, Coords targetPoint) {
         return appendTo(point, parent, (int)Math.sqrt(squareDelta(point, targetPoint)));
     }
 

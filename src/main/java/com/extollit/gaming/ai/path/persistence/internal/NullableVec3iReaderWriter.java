@@ -1,6 +1,6 @@
 package com.extollit.gaming.ai.path.persistence.internal;
 
-import com.extollit.linalg.immutable.Vec3i;
+import com.extollit.gaming.ai.path.model.Coords;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,7 +16,7 @@ public class NullableVec3iReaderWriter extends Vec3iReaderWriter {
     private NullableVec3iReaderWriter() {}
 
     @Override
-    public Vec3i readPartialObject(ObjectInput in) throws IOException {
+    public Coords readPartialObject(ObjectInput in) throws IOException {
         if (in.readBoolean())
             return super.readPartialObject(in);
         else
@@ -24,7 +24,7 @@ public class NullableVec3iReaderWriter extends Vec3iReaderWriter {
     }
 
     @Override
-    public void writePartialObject(Vec3i object, ObjectOutput out) throws IOException {
+    public void writePartialObject(Coords object, ObjectOutput out) throws IOException {
         final boolean nonNull = object != null;
         out.writeBoolean(nonNull);
         if (nonNull)

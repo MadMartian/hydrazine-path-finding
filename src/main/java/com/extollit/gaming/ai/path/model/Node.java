@@ -1,7 +1,6 @@
 package com.extollit.gaming.ai.path.model;
 
 import com.extollit.gaming.ai.path.persistence.internal.*;
-import com.extollit.linalg.immutable.Vec3i;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -32,45 +31,45 @@ public class Node implements INode {
 
     static final int MAX_INDICES = (1 << BitWidth_512) - 1;
 
-    public final Vec3i key;
+    public final Coords key;
 
     private int word;
     private Node previous;
     private NodeLinkedList children;
 
-    Node(Vec3i key) {
+    Node(Coords key) {
         this.key = key;
         unassign();
     }
-    Node(Vec3i key, Passibility passibility) {
+    Node(Coords key, Passibility passibility) {
         this(key, passibility, false);
     }
 
-    Node(Vec3i key, Passibility passibility, boolean volatility) {
+    Node(Coords key, Passibility passibility, boolean volatility) {
         this(key, passibility, volatility, Gravitation.grounded);
     }
-    Node(Vec3i key, Passibility passibility, boolean volatility, Gravitation gravitation) {
+    Node(Coords key, Passibility passibility, boolean volatility, Gravitation gravitation) {
         this.key = key;
         this.word = (Mask_512 << Index_BitOffs) | ((gravitation.ordinal() & Mask_Gravitation) << Gravitation_BitOffs) | (passibility.ordinal() & Mask_Passibility) | ((volatility ? 1 : 0) << Volatile_BitOffs);
     }
 
     public Node(int x, int y, int z) {
-        this(new Vec3i(x, y, z));
+        this(new Coords(x, y, z));
     }
 
     public Node(int x, int y, int z, Passibility passibility) {
-        this(new Vec3i(x, y, z), passibility);
+        this(new Coords(x, y, z), passibility);
     }
 
     public Node(int x, int y, int z, Passibility passibility, boolean volatility) {
-        this(new Vec3i(x, y, z), passibility, volatility);
+        this(new Coords(x, y, z), passibility, volatility);
     }
     public Node(int x, int y, int z, Passibility passibility, boolean volatility, Gravitation gravitation) {
-        this(new Vec3i(x, y, z), passibility, volatility, gravitation);
+        this(new Coords(x, y, z), passibility, volatility, gravitation);
     }
 
     @Override
-    public Vec3i coordinates() { return this.key; }
+    public Coords coordinates() { return this.key; }
 
     private static int wordReset(Node copy) {
         return (copy.word & (Mask_Passibility | (1 << Volatile_BitOffs) | (Mask_Gravitation << Gravitation_BitOffs))) | ((Mask_512 << Index_BitOffs) | (1 << LengthDirty_BitOffs));
@@ -172,7 +171,7 @@ public class Node implements INode {
         return index() != -1;
     }
 
-    public boolean target(Vec3i targetPoint) {
+    public boolean target(Coords targetPoint) {
         final int distance = (int)Math.sqrt(squareDelta(this, targetPoint));
         if (distance > Mask_128)
             return false;
@@ -265,8 +264,8 @@ public class Node implements INode {
         return squareDelta(left, right.key);
     }
 
-    public static int squareDelta(Node left, Vec3i rightCoords) {
-        final Vec3i
+    public static int squareDelta(Node left, Coords rightCoords) {
+        final Coords
                 leftCoords = left.key;
 
         final int
@@ -332,7 +331,7 @@ public class Node implements INode {
 
     @Override
     public final int hashCode() {
-        final Vec3i key = this.key;
+        final Coords key = this.key;
         int result = key.x >> 4;
         result = 31 * result + (key.y >> 4);
         result = 31 * result + (key.z >> 4);
@@ -375,7 +374,7 @@ public class Node implements INode {
 
         @Override
         public Node readPartialObject(ObjectInput in) throws IOException {
-            final Vec3i key = Vec3iReaderWriter.INSTANCEz.readPartialObject(in);
+            final Coords key = Vec3iReaderWriter.INSTANCEz.readPartialObject(in);
             final Node node = new Node(key);
             node.word = in.readInt();
             return node;

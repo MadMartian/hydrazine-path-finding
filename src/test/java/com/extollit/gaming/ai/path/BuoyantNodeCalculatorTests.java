@@ -1,10 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.Gravitation;
-import com.extollit.gaming.ai.path.model.IInstanceSpace;
-import com.extollit.gaming.ai.path.model.Node;
-import com.extollit.gaming.ai.path.model.Passibility;
-import com.extollit.linalg.immutable.Vec3i;
+import com.extollit.gaming.ai.path.model.*;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -68,8 +64,8 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, -1, 2);
 
         final Node grounded = calculator.passibleNodeNear(0, 0, 1, ORIGIN, this.flagSampler);
-        final Node buoyant = calculator.passibleNodeNear(0, -1, 2, new Vec3i(0, 0, 2), this.flagSampler);
-        final Node airborne = calculator.passibleNodeNear(0, 0, 3, new Vec3i(0, 0, 2), this.flagSampler);
+        final Node buoyant = calculator.passibleNodeNear(0, -1, 2, new Coords(0, 0, 2), this.flagSampler);
+        final Node airborne = calculator.passibleNodeNear(0, 0, 3, new Coords(0, 0, 2), this.flagSampler);
 
         assertEquals(Gravitation.grounded, grounded.gravitation());
         assertEquals(Gravitation.buoyant, buoyant.gravitation());
@@ -136,7 +132,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, -1, 0);
         solid(1, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(1, 0, 0, new Vec3i(0, -1, 0), this.flagSampler);
+        final Node node = calculator.passibleNodeNear(1, 0, 0, new Coords(0, -1, 0), this.flagSampler);
         assertEquals(Passibility.impassible, node.passibility());
     }
 
@@ -147,7 +143,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, -1, 0);
         solid(1, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(1, 0, 0, new Vec3i(0, -1, 0), this.flagSampler);
+        final Node node = calculator.passibleNodeNear(1, 0, 0, new Coords(0, -1, 0), this.flagSampler);
         assertEquals(Passibility.dangerous, node.passibility());
     }
 }
