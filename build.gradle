@@ -9,7 +9,7 @@ repositories {
 
 group 'com.extollit.gaming'
 description = "An iterative A* path-finding engine designed for blocky sandbox games having entities with differing path requirements"
-version '1.7.3'
+version '1.8.0'
 
 apply plugin: 'java'
 apply plugin: 'signing'
@@ -38,6 +38,7 @@ sourceSets {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile group: "org.mockito", name: "mockito-core", version: "1.10.19"
+    testCompile group: 'net.jqwik', name: 'jqwik', version: '1.3.0'
 
     compile group: 'com.extollit', name: 'data-structures', version: '2.18'
 }

@@ -25,22 +25,21 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
     }
 
     @Override
-    public Node passibleNodeNear(Vec3i coords0, Vec3i origin, final FlagSampler flagSampler) {
+    public Node passibleNodeNear(final int x0, final int y0, final int z0, Vec3i origin, final FlagSampler flagSampler) {
         final Node point;
         final IPathingEntity.Capabilities capabilities = this.capabilities;
+
         final int
-                x0 = coords0.x,
-                y0 = coords0.y,
-                z0 = coords0.z;
+            dx, dy, dz;
 
-        final Vec3i d;
+        if (origin != null) {
+            dx = x0 - origin.x;
+            dy = y0 - origin.y;
+            dz = z0 - origin.z;
+        } else
+            dx = dy = dz = 0;
 
-        if (origin != null)
-            d = coords0.subOf(origin);
-        else
-            d = Vec3i.ZERO;
-
-        final boolean hasOrigin = d != Vec3i.ZERO && !d.equals(Vec3i.ZERO);
+        final boolean hasOrigin = (dx != 0 || dy != 0 || dz != 0);
 
         final boolean
                 climbsLadders = this.capabilities.climber();
@@ -69,9 +68,9 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
 
                 final float partY0 = topOffsetAt(
                         flagSampler,
-                        x - d.x,
-                        y - d.y - 1,
-                        z - d.z
+                        x - dx,
+                        y - dy - 1,
+                        z - dz
                 );
 
                 byte flags = flagSampler.flagsAt(x, y, z);
@@ -82,23 +81,23 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
 
                     if (partialDisparity < 0 || impedesMovement(flags, capabilities)) {
                         if (!hasOrigin)
-                            return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
+                            return new Node(x0, y0, z0, Passibility.impassible, flagSampler.volatility() > 0);
 
-                        if (d.x * d.x + d.z * d.z <= 1) {
-                            y -= d.y + 1;
+                        if (dx * dx + dz * dz <= 1) {
+                            y -= dy + 1;
 
                             do
-                                flags = flagSampler.flagsAt(x - d.x, y++, z - d.z);
+                                flags = flagSampler.flagsAt(x - dx, y++, z - dz);
                             while (climbsLadders && Logic.climbable(flags));
                         }
 
                         if (impedesMovement(flags = flagSampler.flagsAt(x, --y, z), capabilities) && (impedesMovement(flags = flagSampler.flagsAt(x, ++y, z), capabilities) || partY0 < 0))
-                            return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
+                            return new Node(x0, y0, z0, Passibility.impassible, flagSampler.volatility() > 0);
                     }
                 }
                 float partY = topOffsetAt(flagSampler, x, y - 1, z);
                 final int ys;
-                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, ys = y, z, Math.min(partY, partY0));
+                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, dy, x, ys = y, z, Math.min(partY, partY0));
 
                 boolean swimable = false;
                 {
@@ -129,7 +128,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
                 }
 
                 partY = topOffsetAt(flags, x, y++, z);
-                passibility = verticalClearanceAt(flagSampler, ys - y, flagSampler.flagsAt(x, y, z), passibility, d, x, y, z, Math.min(partY, partY0));
+                passibility = verticalClearanceAt(flagSampler, ys - y, flagSampler.flagsAt(x, y, z), passibility, dy, x, y, z, Math.min(partY, partY0));
 
                 if (y > minY) {
                     minY = y;
@@ -139,7 +138,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
 
                 passibility = passibility.between(passibilityFrom(flagSampler.flagsAt(x, y, z), capabilities));
                 if (passibility.impassible(capabilities))
-                    return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0);
+                    return new Node(x0, y0, z0, Passibility.impassible, flagSampler.volatility() > 0);
             }
 
         if (hasOrigin && !passibility.impassible(capabilities))
@@ -151,7 +150,7 @@ class GroundNodeCalculator extends AbstractNodeCalculator {
         if (passibility.impassible(capabilities))
             passibility = Passibility.impassible;
 
-        point = new Node(new Vec3i(x0, minY + round(minPartY), z0));
+        point = new Node(x0, minY + round(minPartY), z0);
         point.passibility(passibility);
         point.volatile_(flagSampler.volatility() > 0);
 

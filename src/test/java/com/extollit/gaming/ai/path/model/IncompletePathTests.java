@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 public class IncompletePathTests {
     @Test
     public void truncateState() {
-        final IncompletePath path = new IncompletePath(new Node(new Vec3i(1, 2, 3)));
+        final IncompletePath path = new IncompletePath(new Node(1, 2, 3));
 
         path.truncateTo(0);
 
@@ -26,7 +26,7 @@ public class IncompletePathTests {
 
     @Test
     public void truncatedComparisons() {
-        final Node node = new Node(new Vec3i(1, 2, 3));
+        final Node node = new Node(1, 2, 3);
         final IncompletePath
             alpha = new IncompletePath(node),
             beta = new IncompletePath(node);
@@ -53,7 +53,7 @@ public class IncompletePathTests {
     @Test
     public void sameDisjoint() {
         final PathObject path = pathObject(new Vec3i(7, 8, 9));
-        final IncompletePath single = new IncompletePath(new Node(new Vec3i(7, 8, 9)));
+        final IncompletePath single = new IncompletePath(new Node(7, 8, 9));
 
         path.i = 2;
         assertTrue(single.sameAs(path));

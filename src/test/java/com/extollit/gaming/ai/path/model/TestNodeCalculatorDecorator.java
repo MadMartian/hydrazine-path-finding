@@ -15,9 +15,9 @@ public class TestNodeCalculatorDecorator implements INodeCalculator {
     }
 
     @Override
-    public Node passibleNodeNear(Vec3i coords0, Vec3i origin, FlagSampler flagSampler) {
-        final Node node = this.delegate.passibleNodeNear(coords0, origin, flagSampler);
-        return node == null ? new Node(coords0) : node;
+    public Node passibleNodeNear(int x0, int y0, int z0, Vec3i origin, FlagSampler flagSampler) {
+        final Node node = this.delegate.passibleNodeNear(x0, y0, z0, origin, flagSampler);
+        return node == null ? new Node(x0, y0, z0) : node;
     }
 
     @Override

@@ -38,21 +38,35 @@ public class Node implements INode {
     private Node previous;
     private NodeLinkedList children;
 
-    public Node(Vec3i key) {
+    Node(Vec3i key) {
         this.key = key;
         unassign();
     }
-
-    public Node(Vec3i key, Passibility passibility) {
+    Node(Vec3i key, Passibility passibility) {
         this(key, passibility, false);
     }
 
-    public Node(Vec3i key, Passibility passibility, boolean volatility) {
+    Node(Vec3i key, Passibility passibility, boolean volatility) {
         this(key, passibility, volatility, Gravitation.grounded);
     }
-    public Node(Vec3i key, Passibility passibility, boolean volatility, Gravitation gravitation) {
+    Node(Vec3i key, Passibility passibility, boolean volatility, Gravitation gravitation) {
         this.key = key;
         this.word = (Mask_512 << Index_BitOffs) | ((gravitation.ordinal() & Mask_Gravitation) << Gravitation_BitOffs) | (passibility.ordinal() & Mask_Passibility) | ((volatility ? 1 : 0) << Volatile_BitOffs);
+    }
+
+    public Node(int x, int y, int z) {
+        this(new Vec3i(x, y, z));
+    }
+
+    public Node(int x, int y, int z, Passibility passibility) {
+        this(new Vec3i(x, y, z), passibility);
+    }
+
+    public Node(int x, int y, int z, Passibility passibility, boolean volatility) {
+        this(new Vec3i(x, y, z), passibility, volatility);
+    }
+    public Node(int x, int y, int z, Passibility passibility, boolean volatility, Gravitation gravitation) {
+        this(new Vec3i(x, y, z), passibility, volatility, gravitation);
     }
 
     @Override

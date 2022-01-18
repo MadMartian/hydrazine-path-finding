@@ -35,8 +35,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(+1, 0, 0)));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(-1, 0, 0)));
+        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, +1, 0, 0));
+        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, -1, 0, 0));
     }
 
     @Test
@@ -52,8 +52,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(+1, 0, 0)));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(-1, 0, 0)));
+        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, +1, 0, 0));
+        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, -1, 0, 0));
     }
 
     @Test
@@ -69,8 +69,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(-1, 0, 0)));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(+1, 0, 0)));
+        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, -1, 0, 0));
+        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, +1, 0, 0));
     }
 
     @Test
@@ -86,8 +86,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(0, 0, +1)));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(0, 0, -1)));
+        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, +1));
+        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, -1));
     }
 
     @Test
@@ -103,8 +103,8 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
 
         assertNull(path);
 
-        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(0, 0, -1)));
-        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, new Vec3i(0, 0, +1)));
+        assertTrue(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, -1));
+        assertFalse(pathFinder.unreachableFromSource(Vec3i.ZERO, 0, 0, +1));
     }
 
     @Test
@@ -451,7 +451,7 @@ public class HydrazinePathFinderTests extends AbstractHydrazinePathFinderTests {
         final List<Node> q = pathFinder.queue.view();
         final Node
             parent = q.get(7),
-            enigma = new Node(new Vec3i(-20, 0, 1));
+            enigma = new Node(-20, 0, 1);
 
         boolean lengthSetResult = parent.length(109);
         assertTrue(lengthSetResult);

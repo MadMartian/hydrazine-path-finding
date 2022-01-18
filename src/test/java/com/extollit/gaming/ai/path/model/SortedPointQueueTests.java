@@ -129,12 +129,12 @@ public class SortedPointQueueTests {
     public void addLimit() {
         int c;
         for (c = 0; c < Node.MAX_INDICES; ++c) {
-            final Node node = new Node(new Vec3i(0, 0, c));
+            final Node node = new Node(0, 0, c);
             node.remaining((c % (Node.MAX_PATH_DISTANCE - 1)) + 1);
             q.add(node);
         }
 
-        final Node pivot = new Node(new Vec3i(1, 0, c));
+        final Node pivot = new Node(1, 0, c);
         pivot.remaining(Node.MAX_PATH_DISTANCE);
         q.add(pivot);
 
@@ -206,11 +206,13 @@ public class SortedPointQueueTests {
         final Node
                 node = visited(source, +1, 0, 0);
 
-        assertSame(node, graph.cachedPointAt(node.key));
+        final Vec3i key = node.key;
 
-        graph.cullBranchAt(node.key, q);
+        assertSame(node, graph.cachedPointAt(key.x, key.y, key.z));
 
-        assertNotSame(node, graph.cachedPointAt(node.key));
+        graph.cullBranchAt(key, q);
+
+        assertNotSame(node, graph.cachedPointAt(key.x, key.y, key.z));
     }
 
     @Test

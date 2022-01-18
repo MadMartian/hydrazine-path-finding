@@ -1070,9 +1070,8 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
     }
 
     private Node cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
-        final Vec3i coords0 = new Vec3i(x0, y0, z0);
-        final Node result = this.nodeMap.cachedPassiblePointNear(coords0, origin);
-        if (Node.passible(result) && origin != null && unreachableFromSource(origin, coords0))
+        final Node result = this.nodeMap.cachedPassiblePointNear(x0, y0, z0, origin);
+        if (Node.passible(result) && origin != null && unreachableFromSource(origin, x0, y0, z0))
             return null;
 
         return result;
@@ -1086,9 +1085,9 @@ public class HydrazinePathFinder implements IVersionedReadable, IVersionedWritea
         return impedesMovement(flags, this.capabilities) && (Logic.fuzzy.in(flags) || Logic.doorway.in(flags));
     }
 
-    protected final boolean unreachableFromSource(Vec3i current, Vec3i target) {
+    protected final boolean unreachableFromSource(Vec3i current, int tx, int ty, int tz) {
         final Vec3i sourcePoint = this.source.key;
-        return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(target);
+        return sourcePoint != null && current.equals(sourcePoint) && this.unreachableFromSource.contains(new Vec3i(tx, ty, tz)); // TODO: Eliminate temporary
     }
 
     /**

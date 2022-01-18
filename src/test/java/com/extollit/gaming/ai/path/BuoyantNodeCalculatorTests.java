@@ -34,7 +34,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, 1, 0);
         water(0, 2, 0);
 
-        final Node actual = calculator.passibleNodeNear(new Vec3i(0, 1, 0), ORIGIN, this.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 0, ORIGIN, this.flagSampler);
         assertNotNull(actual);
         assertEquals(Passibility.passible, actual.passibility());
         assertEquals(1, actual.key.y);
@@ -46,7 +46,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, 0, 0);
         water(0, 1, 0);
 
-        final Node actual = calculator.passibleNodeNear(new Vec3i(0, 1, 0), ORIGIN, this.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 1, 0, ORIGIN, this.flagSampler);
         assertEquals(Passibility.impassible, actual.passibility());
         assertEquals(1, actual.key.y);
     }
@@ -56,7 +56,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -1, 0);
         solid(0, 0, 1);
 
-        final Node actual = calculator.passibleNodeNear(new Vec3i(0, 0, 1), ORIGIN, this.flagSampler);
+        final Node actual = calculator.passibleNodeNear(0, 0, 1, ORIGIN, this.flagSampler);
         assertNotNull(actual);
         assertEquals(Passibility.impassible, actual.passibility());
         assertEquals(1, actual.key.z);
@@ -67,9 +67,9 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -1, 1);
         water(0, -1, 2);
 
-        final Node grounded = calculator.passibleNodeNear(new Vec3i(0, 0, 1), ORIGIN, this.flagSampler);
-        final Node buoyant = calculator.passibleNodeNear(new Vec3i(0, -1, 2), new Vec3i(0, 0, 2), this.flagSampler);
-        final Node airborne = calculator.passibleNodeNear(new Vec3i(0, 0, 3), new Vec3i(0, 0, 2), this.flagSampler);
+        final Node grounded = calculator.passibleNodeNear(0, 0, 1, ORIGIN, this.flagSampler);
+        final Node buoyant = calculator.passibleNodeNear(0, -1, 2, new Vec3i(0, 0, 2), this.flagSampler);
+        final Node airborne = calculator.passibleNodeNear(0, 0, 3, new Vec3i(0, 0, 2), this.flagSampler);
 
         assertEquals(Gravitation.grounded, grounded.gravitation());
         assertEquals(Gravitation.buoyant, buoyant.gravitation());
@@ -85,7 +85,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -2, 0);
         water(0, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(0, -1, 0), ORIGIN, this.flagSampler);
+        final Node node = calculator.passibleNodeNear(0, -1, 0, ORIGIN, this.flagSampler);
 
         assertEquals(Gravitation.grounded, node.gravitation());
     }
@@ -94,7 +94,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
     public void grounded() {
         solid(0, -2, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(0, -1, 0), ORIGIN, this.flagSampler);
+        final Node node = calculator.passibleNodeNear(0, -1, 0, ORIGIN, this.flagSampler);
 
         assertEquals(Gravitation.grounded, node.gravitation());
     }
@@ -105,7 +105,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, -2, 0);
         water(0, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(0, -1, 0), ORIGIN, this.flagSampler);
+        final Node node = calculator.passibleNodeNear(0, -1, 0, ORIGIN, this.flagSampler);
 
         assertEquals(Gravitation.buoyant, node.gravitation());
     }
@@ -115,7 +115,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         solid(0, -3, 0);
         water(0, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(0, -1, 0), ORIGIN, this.flagSampler);
+        final Node node = calculator.passibleNodeNear(0, -1, 0, ORIGIN, this.flagSampler);
 
         assertEquals(Gravitation.buoyant, node.gravitation());
     }
@@ -124,7 +124,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
     public void airborne() {
         solid(0, -3, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(0, -1, 0), ORIGIN, this.flagSampler);
+        final Node node = calculator.passibleNodeNear(0, -1, 0, ORIGIN, this.flagSampler);
 
         assertEquals(Gravitation.airborne, node.gravitation());
     }
@@ -136,7 +136,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, -1, 0);
         solid(1, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(1, 0, 0), new Vec3i(0, -1, 0), this.flagSampler);
+        final Node node = calculator.passibleNodeNear(1, 0, 0, new Vec3i(0, -1, 0), this.flagSampler);
         assertEquals(Passibility.impassible, node.passibility());
     }
 
@@ -147,7 +147,7 @@ public class BuoyantNodeCalculatorTests extends AbstractNodeCalculatorTests {
         water(0, -1, 0);
         solid(1, -1, 0);
 
-        final Node node = calculator.passibleNodeNear(new Vec3i(1, 0, 0), new Vec3i(0, -1, 0), this.flagSampler);
+        final Node node = calculator.passibleNodeNear(1, 0, 0, new Vec3i(0, -1, 0), this.flagSampler);
         assertEquals(Passibility.dangerous, node.passibility());
     }
 }

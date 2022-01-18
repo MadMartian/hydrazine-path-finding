@@ -1,6 +1,5 @@
 package com.extollit.gaming.ai.path.model;
 
-import com.extollit.collect.SparseSpatialMap;
 import com.extollit.gaming.ai.path.persistence.internal.*;
 import com.extollit.linalg.immutable.Vec3i;
 
@@ -10,7 +9,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 
 public final class NodeMap {
-    private final SparseSpatialMap<Node> it = new SparseSpatialMap<>(3);
+    private final SparseSpatialMap<Node> it = new SparseSpatialMap<>();
     private final IInstanceSpace instanceSpace;
     private final IOcclusionProviderFactory occlusionProviderFactory;
 
@@ -50,8 +49,11 @@ public final class NodeMap {
     }
 
     public final void cullBranchAt(Vec3i coords, SortedPointQueue queue) {
+        cullBranchAt(coords.x, coords.y, coords.z, queue);
+    }
+    public final void cullBranchAt(int x, int y, int z, SortedPointQueue queue) {
         final Node
-                node = this.it.get(coords);
+                node = this.it.get(x, y, z);
 
         if (node == null)
             return;
@@ -65,7 +67,7 @@ public final class NodeMap {
             queue.add(parent);
         }
 
-        this.it.remove(coords);
+        this.it.remove(x, y, z);
     }
 
     public final void reset() {
@@ -117,25 +119,20 @@ public final class NodeMap {
     }
 
     public final void cullOutside(int x0, int z0, int xN, int zN) {
-        for (Node p : this.it.cullOutside(new Vec3i(x0, Integer.MIN_VALUE, z0), new Vec3i(xN, Integer.MAX_VALUE, zN)))
+        for (Node p : this.it.cullOutside(x0, Integer.MIN_VALUE, z0, xN, Integer.MAX_VALUE, zN))
             p.rollback();
     }
 
-    public final Node cachedPointAt(int x, int y, int z)
-    {
-        final Vec3i coords = new Vec3i(x, y, z);
-        return cachedPointAt(coords);
-    }
-
-    public final Node cachedPointAt(Vec3i coords) {
-        Node point = this.it.get(coords);
+    public final Node cachedPointAt(int x, int y, int z) {
+        Node point = this.it.get(x, y, z);
 
         if (point == null) {
-            point = passibleNodeNear(coords, null);
-            if (!point.key.equals(coords))
-                point = new Node(coords, Passibility.impassible, false);
+            point = passibleNodeNear(x, y, z, null);
+            final Vec3i key = point.key;
+            if (key.x != x || key.y != y || key.z != z)
+                point = new Node(x, y, z, Passibility.impassible, false);
 
-            this.it.put(coords, point);
+            this.it.put(x, y, z, point);
         }
 
         return point;
@@ -145,20 +142,15 @@ public final class NodeMap {
         return cachedPassiblePointNear(x, y, z, null);
     }
 
-    public final Node cachedPassiblePointNear(final int x0, final int y0, final int z0, final Vec3i origin) {
-        final Vec3i coords0 = new Vec3i(x0, y0, z0);
-        return cachedPassiblePointNear(coords0, origin);
-    }
-
-    public final Node cachedPassiblePointNear(Vec3i coords, Vec3i origin) {
+    public final Node cachedPassiblePointNear(int x, int y, int z, Vec3i origin) {
         final SparseSpatialMap<Node> nodeMap = this.it;
-        final Node point0 = nodeMap.get(coords);
+        final Node point0 = nodeMap.get(x, y, z);
         Node point = point0;
 
         if (point == null)
-             point = passibleNodeNear(coords, origin);
+             point = passibleNodeNear(x, y, z, origin);
         else if (point.volatile_()) {
-            point = passibleNodeNear(coords, origin);
+            point = passibleNodeNear(x, y, z, origin);
             if (point.key.equals(point0.key)) {
                 point0.passibility(point.passibility());
                 point0.volatile_(point.volatile_());
@@ -167,22 +159,23 @@ public final class NodeMap {
                 point0.isolate();
         }
 
-        if (!coords.equals(point.key)) {
-            final Node existing = nodeMap.get(point.key);
+        final Vec3i key = point.key;
+        if (key.x != x || key.y != y || key.z != z) {
+            final Node existing = nodeMap.get(key.x, key.y, key.z);
             if (existing == null)
-                nodeMap.put(point.key, point);
+                nodeMap.put(key.x, key.y, key.z, point);
             else
                 point = existing;
         }
 
         if (point != point0)
-            nodeMap.put(coords, point);
+            nodeMap.put(x, y, z, point);
 
         return point;
     }
 
-    private Node passibleNodeNear(Vec3i coords, Vec3i origin) {
-        final Node node = this.calculator.passibleNodeNear(coords, origin, new FlagSampler(this.occlusionProvider));
+    private Node passibleNodeNear(int x, int y, int z, Vec3i origin) {
+        final Node node = this.calculator.passibleNodeNear(x, y, z, origin, new FlagSampler(this.occlusionProvider));
         final IGraphNodeFilter filter = this.filter;
         if (filter != null) {
             final Passibility newPassibility = filter.mapPassibility(node);
@@ -194,11 +187,7 @@ public final class NodeMap {
     }
 
     public boolean remove(int x, int y, int z) {
-        return remove(new Vec3i(x, y, z));
-    }
-
-    public boolean remove(Vec3i coords) {
-        final Node existing = this.it.remove(coords);
+        final Node existing = this.it.remove(x, y, z);
         if (existing != null) {
             existing.rollback();
             return true;
@@ -230,12 +219,12 @@ public final class NodeMap {
     private final class MapReaderWriter extends Vec3iReaderWriter implements LinkableReader<Vec3i, Node>, LinkableWriter<Vec3i, Node> {
         @Override
         public void readLinkages(Vec3i object, ReferableObjectInput<Node> in) throws IOException {
-            it.put(object, in.readRef());
+            it.put(object.x, object.y, object.z, in.readRef());
         }
 
         @Override
         public void writeLinkages(Vec3i object, ReferableObjectOutput<Node> out) throws IOException {
-            out.writeRef(it.get(object));
+            out.writeRef(it.get(object.x, object.y, object.z));
         }
     }
 

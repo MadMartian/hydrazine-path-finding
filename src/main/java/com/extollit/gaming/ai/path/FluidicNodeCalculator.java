@@ -13,22 +13,21 @@ class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalcu
     }
 
     @Override
-    public Node passibleNodeNear(Vec3i coords0, Vec3i origin, FlagSampler flagSampler) {
+    public Node passibleNodeNear(int x0, int y0, int z0, Vec3i origin, FlagSampler flagSampler) {
         final Node point;
         final IPathingEntity.Capabilities capabilities = this.capabilities;
+
         final int
-                x0 = coords0.x,
-                y0 = coords0.y,
-                z0 = coords0.z;
+            dx, dy, dz;
 
-        final Vec3i d;
+        if (origin != null) {
+            dx = x0 - origin.x;
+            dy = y0 - origin.y;
+            dz = z0 - origin.z;
+        } else
+            dx = dy = dz = 0;
 
-        if (origin != null)
-            d = coords0.subOf(origin);
-        else
-            d = Vec3i.ZERO;
-
-        final boolean hasOrigin = d != Vec3i.ZERO && !d.equals(Vec3i.ZERO);
+        final boolean hasOrigin = (dx != 0 || dy != 0 || dz != 0);
 
         Passibility passibility = Passibility.passible;
         Gravitation gravitation = Gravitation.airborne;
@@ -60,18 +59,18 @@ class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalcu
                 gravitation = gravitation.between(gravitationFrom(flagsBeneath));
 
                 if (impedesMovement(flags, capabilities))
-                    return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
+                    return new Node(x0, y0, z0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
                 else
                     passibility = passibility.between(passibilityFrom(flags, capabilities));
 
                 final float partY0 = topOffsetAt(
                         flagSampler,
-                        x - d.x,
-                        y0 - d.y - 1,
-                        z - d.z
+                        x - dx,
+                        y0 - dy - 1,
+                        z - dz
                 );
                 final float partY = topOffsetAt(flagsBeneath, x, yb, z);
-                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, d, x, y0, z, Math.min(partY, partY0));
+                passibility = verticalClearanceAt(flagSampler, this.tall, flags, passibility, dy, x, y0, z, Math.min(partY, partY0));
 
                 if (y0 > minY) {
                     minY = y0;
@@ -80,7 +79,7 @@ class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalcu
                     minPartY = partY;
 
                 if (passibility.impassible(capabilities))
-                    return new Node(coords0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
+                    return new Node(x0, y0, z0, Passibility.impassible, flagSampler.volatility() > 0, gravitation);
             }
 
         if (passibility.impassible(capabilities))
@@ -88,7 +87,7 @@ class FluidicNodeCalculator extends AbstractNodeCalculator implements INodeCalcu
         else if (hasOrigin)
             passibility = originHeadClearance(flagSampler, passibility, origin, minY, minPartY);
 
-        point = new Node(new Vec3i(x0, minY + round(minPartY), z0));
+        point = new Node(x0, minY + round(minPartY), z0);
         point.passibility(passibility);
         point.gravitation(gravitation);
         point.volatile_(flagSampler.volatility() > 0);
