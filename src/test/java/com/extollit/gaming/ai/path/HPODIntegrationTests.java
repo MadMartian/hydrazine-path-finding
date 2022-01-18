@@ -1,9 +1,6 @@
 package com.extollit.gaming.ai.path;
 
-import com.extollit.gaming.ai.path.model.Coords;
-import com.extollit.gaming.ai.path.model.IPath;
-import com.extollit.gaming.ai.path.model.IPathingEntity;
-import com.extollit.gaming.ai.path.model.PathObject;
+import com.extollit.gaming.ai.path.model.*;
 import com.extollit.gaming.ai.path.persistence.Persistence;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +42,7 @@ public class HPODIntegrationTests extends AbstractHydrazinePathFinderTests {
         assertPath(path, new Coords(-332, 63, 67), new Coords(-333, 63, 67));
 
         path = pathFinder.updatePathFor(subject);
-        assertNull(path);
+        assertTrue(path instanceof IncompletePath);
     }
 
     @Test
