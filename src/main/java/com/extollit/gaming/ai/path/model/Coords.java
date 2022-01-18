@@ -1,5 +1,7 @@
 package com.extollit.gaming.ai.path.model;
 
+import java.text.MessageFormat;
+
 /**
  * Represents location in 3-dimensional space with signed integral (whole numbers) components
  */
@@ -50,5 +52,11 @@ public final class Coords {
         result = 31 * result + y;
         result = 31 * result + z;
         return result;
+    }
+
+    @Override
+    public String toString()
+    {
+        return MessageFormat.format("<{0,number,#}, {1,number,#}, {2,number,#}>", x, y, z);
     }
 }
