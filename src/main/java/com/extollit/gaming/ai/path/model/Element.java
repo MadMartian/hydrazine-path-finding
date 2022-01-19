@@ -58,6 +58,8 @@ public enum Element {
      */
     fire;
 
+    private static final Element[] VALUES = values();
+
     public static final int MASK = 4 - 1;
 
     public final byte mask = (byte)ordinal();
@@ -83,7 +85,7 @@ public enum Element {
      * @return the element represented by the nibble
      */
     public static Element of(byte flags) {
-        return Element.values()[flags & MASK];
+        return VALUES[flags & MASK];
     }
 
     /**

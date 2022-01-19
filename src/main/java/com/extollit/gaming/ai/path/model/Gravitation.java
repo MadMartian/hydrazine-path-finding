@@ -19,6 +19,8 @@ public enum Gravitation {
      */
     airborne;
 
+    private static final Gravitation[] VALUES = values();
+
     /**
      * Determines the greatest gravitation restriction between this and the passed parameter.  For example, if
      * this is {@link #buoyant} and the parameter is {@link #grounded} then the result is <em>grounded</em>.  Also,
@@ -28,6 +30,6 @@ public enum Gravitation {
      * @return the more restrictive gravitation between this and the parameter
      */
     public Gravitation between(Gravitation other) {
-        return values()[Math.min(ordinal(), other.ordinal())];
+        return VALUES[Math.min(ordinal(), other.ordinal())];
     }
 }

@@ -9,7 +9,7 @@ repositories {
 
 group 'com.extollit.gaming'
 description = "An iterative A* path-finding engine designed for blocky sandbox games having entities with differing path requirements"
-version '1.8.0'
+version '1.8.1'
 
 apply plugin: 'java'
 apply plugin: 'signing'

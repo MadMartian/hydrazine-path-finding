@@ -56,6 +56,8 @@ public enum Logic {
      */
     doorway;
 
+    private static final Logic[] VALUES = values();
+
     public static final int
             BIT_OFFSET = 2,
             MASK = 4 - 1;
@@ -83,7 +85,7 @@ public enum Logic {
      * @return the logic indicator represented by the nibble
      */
     public static Logic of(byte flags) {
-        return Logic.values()[(flags & (MASK << BIT_OFFSET)) >> BIT_OFFSET];
+        return VALUES[(flags & (MASK << BIT_OFFSET)) >> BIT_OFFSET];
     }
 
     /**
